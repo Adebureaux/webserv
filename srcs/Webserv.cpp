@@ -1,4 +1,4 @@
-#include "../includes/Webserv.hpp"
+#include "Webserv.hpp"
 
 Webserv::Webserv()
 {
