@@ -7,4 +7,4 @@
 - Provide documentation DOCS.md
 
 ## Sources
-[Documention used for this project](DOCS.md)
+[DOCS.md](DOCS.md)
