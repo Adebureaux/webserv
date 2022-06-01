@@ -6,14 +6,16 @@
 #include <cerrno>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 class SimpleSocket
 {
-	protected:
+	public:
 		SimpleSocket();
 		~SimpleSocket();
 
-	protected:
+	private:
 		int _socket;
+		int _csocket;
 };
 #endif

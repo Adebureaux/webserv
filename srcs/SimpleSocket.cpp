@@ -11,18 +11,29 @@ SimpleSocket::SimpleSocket()
 	}
 
 	/* Create interface */
-	struct sockaddr_in sin = { 0 };
-
-	sin.sin_addr.s_addr = htonl(INADDR_ANY); /* nous sommes un serveur, nous acceptons n'importe quelle adresse */
-
+	struct sockaddr_in sin;
+	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	sin.sin_family = AF_INET;
-
-	sin.sin_port = htons(PORT);
-
-	if(bind (sock, (SOCKADDR *) &sin, sizeof sin) == SOCKET_ERROR)
+	sin.sin_port = htons(8080);
+	if (bind(_socket, (sockaddr*)&sin, sizeof(sin)) == -1)
 	{
 		perror("bind()");
 		exit(errno);
+	}
+
+	/* Listening client connexion */
+	if (listen(_socket, 5) == -1)
+	{
+		perror("listen()");
+		exit(errno);
+	}
+	struct sockaddr_in csin;
+	unsigned int size =  sizeof(csin);
+	_csocket = accept(_socket, (sockaddr*)&csin, &size);
+	if (_csocket == -1)
+	{
+		perror("accept()");
+    	exit(errno);
 	}
 }
 
