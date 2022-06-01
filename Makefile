@@ -1,12 +1,10 @@
-NAME		= program
+NAME		= webserv
 
-SRCS		= srcs/main.cpp srcs/Webserv.cpp
+SRCS		= srcs/main.cpp srcs/Server.cpp srcs/SimpleSocket.cpp
 
-INC			= -I includes
+INCS		= -I includes
 
 OBJS		= ${SRCS:.cpp=.o}
-
-DEPS		= ${SRCS:.cpp=.d}
 
 RM			= rm -f
 
@@ -18,13 +16,12 @@ ${NAME}: ${OBJS}
 	${COMPILER} ${CFLAGS} ${OBJS} -o ${NAME}
 
 %.o: %.cpp
-	$(COMPILER) $(CFLAGS) $(INC) -c $< -o $@
+	$(COMPILER) $(CFLAGS) $(INCS) -c $< -o $@
 
 all: ${NAME}
 
 clean:
 	${RM} ${OBJS}
-	${RM} ${DEPS}
 
 fclean: clean
 	${RM} ${NAME}
