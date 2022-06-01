@@ -1,40 +1,61 @@
 #include "SimpleSocket.hpp"
 
-SimpleSocket::SimpleSocket()
+SimpleSocket::SimpleSocket(void)
 {
-	/* Create socket */
-	_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if(_socket == -1)
+	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
-		perror("socket()");
+		perror("cannot create socket");
 		exit(errno);
 	}
+	identify();
+	wait();
+	communicate();
+}
 
-	/* Create interface */
-	struct sockaddr_in sin;
-	sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(8080);
-	if (bind(_socket, (sockaddr*)&sin, sizeof(sin)) == -1)
-	{
-		perror("bind()");
-		exit(errno);
-	}
+SimpleSocket::~SimpleSocket(void)
+{
+	close(_socket);
+}
 
-	/* Listening client connexion */
-	if (listen(_socket, 5) == -1)
+void SimpleSocket::identify(void)
+{
+	_port = 8080; // Where the clients can reach at
+	/* htonl converts a long integer (e.g. address) to a network representation */ 
+	/* htons converts a short integer (e.g. port) to a network representation */ 
+	memset((char*)&_address, 0, sizeof(_address)); 
+	_address.sin_family = AF_INET; 
+	_address.sin_addr.s_addr = htonl(INADDR_ANY); 
+	_address.sin_port = htons(_port);
+	if (bind(_server_fd, (struct sockaddr *)&_address, sizeof(_address)) == -1) 
 	{
-		perror("listen()");
-		exit(errno);
-	}
-	struct sockaddr_in csin;
-	unsigned int size =  sizeof(csin);
-	_csocket = accept(_socket, (sockaddr*)&csin, &size);
-	if (_csocket == -1)
-	{
-		perror("accept()");
-    	exit(errno);
+		perror("bind failed"); 
+		exit(errno); 
 	}
 }
 
-SimpleSocket::~SimpleSocket() {}
+void SimpleSocket::wait(void)
+{
+	/* Change the '3' value after Charles parsing */
+	if (listen(_server_fd, 3) == -1)
+	{
+		perror("In listen");
+		exit(errno);
+	}
+	unsigned int addrlen = sizeof(_address);
+	if ((_socket = accept(_server_fd, (struct sockaddr *)&_address, (socklen_t*)&addrlen)) == -1)
+	{
+		perror("In accept");
+		exit(errno);
+	}
+}
+
+void SimpleSocket::communicate(void)
+{
+	char buffer[1024] = {0};
+	int valread = read(_socket, buffer, 1024);
+	std::cout << buffer << std::endl;
+	if (valread < 0)
+		printf("No bytes are there to read");
+	char hello[] = "Hello from the server"; //IMPORTANT! WE WILL GET TO IT
+	write(_socket, hello, strlen(hello));
+}
