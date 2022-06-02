@@ -7,6 +7,9 @@ SimpleSocket::SimpleSocket(void)
 		perror("cannot create socket");
 		exit(errno);
 	}
+	int enable = 1;
+	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) == -1)
+		perror("cannot set socket option 'SO_REUSEADDR'");
 	identify();
 	wait();
 	communicate();
@@ -53,9 +56,9 @@ void SimpleSocket::communicate(void)
 {
 	char buffer[1024] = {0};
 	int valread = read(_socket, buffer, 1024);
-	std::cout << buffer << std::endl;
-	if (valread < 0)
-		printf("No bytes are there to read");
-	char hello[] = "Hello from the server"; //IMPORTANT! WE WILL GET TO IT
+	std::cout << buffer;
+	if (valread == -1)
+			exit(1);
+	char hello[] = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nBonjour!";
 	write(_socket, hello, strlen(hello));
 }
