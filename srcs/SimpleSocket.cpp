@@ -59,6 +59,6 @@ void SimpleSocket::communicate(void)
 	std::cout << buffer;
 	if (valread == -1)
 			exit(1);
-	char hello[] = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nBonjour!";
-	write(_socket, hello, strlen(hello));
+	std::string hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
+	write(_socket, hello.c_str(), hello.size());
 }
