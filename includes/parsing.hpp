@@ -18,13 +18,14 @@ class config
 {
 	public :
 
-	int nbrSrv;
-	std::multimap<int, std::multimap<std::string, std::string> > server; //int : index du serveur. dans ce serveur : string 1 = "listen" par ex, et string 2 = "5000"...
+	int 															nbrSrv;
+	std::string 													file;
+	std::multimap<int, std::multimap<std::string, std::string> > 	server; //int : index du serveur. dans ce serveur : string 1 = "listen" par ex, et string 2 = "5000"...
 
-	
+
 
 };
 
-config parser(char *file_name);
+int parser(char *file_name);
 
 #endif
