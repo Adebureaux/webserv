@@ -16,7 +16,7 @@ SimpleSocket::~SimpleSocket(void)
 {
 	close(_server_fd);
 	close(_socket_fd);
-	close(_epoll_fd);
+	// close(_epoll_fd);
 }
 
 void SimpleSocket::identify(void)
