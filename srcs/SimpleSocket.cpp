@@ -51,9 +51,7 @@ void SimpleSocket::communicate(void)
 	if (valread == -1)
 		exit(1);
 	std::string hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
-	std::string hell2 = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nBjrlemonde!!";
 	write(_socket_fd, hello.c_str(), hello.size());
-	write(_socket_fd, hell2.c_str(), hell2.size());
 }
 
 void SimpleSocket::perror_exit(std::string err)
