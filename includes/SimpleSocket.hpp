@@ -29,10 +29,8 @@ class SimpleSocket
 	private:
 		int 				_server_fd;
 		int					_socket_fd;
-		// int					_epoll_fd;
+		int					_epoll_fd;
 		int					_port;
 		struct sockaddr_in	_address;
-		// struct epoll_event	_event;
-		// struct epoll_event	_events[MAX_EVENTS];
 };
 #endif
