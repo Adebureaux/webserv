@@ -56,6 +56,7 @@ void SimpleSocket::communicate(void)
 	if (valread == -1)
 		exit(1);
 	buffer[valread] = '\0';
+	std::cout << buffer << std::endl;
 	// GET FILE NAME HERE
 
 	// OPEN index.html as html page
@@ -70,7 +71,6 @@ void SimpleSocket::communicate(void)
 	hello.append(numero);
 	hello.append("\n\n");
 	hello.append(buff);
-	std::cout << hello << std::endl;
 	write(_socket_fd, hello.c_str(), hello.size());
 }
 
