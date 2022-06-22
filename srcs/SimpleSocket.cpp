@@ -1,4 +1,5 @@
 #include "SimpleSocket.hpp"
+#include "Request.hpp"
 
 SimpleSocket::SimpleSocket(void)
 {
@@ -51,6 +52,9 @@ void SimpleSocket::acceptSocket(void)
 
 void SimpleSocket::communicate(void)
 {
+	Bundle_for_response bd;
+	bd.init_re();
+
 	char buffer[1024];
 	int valread = read(_socket_fd, buffer, 1024);
 	if (valread == -1)
@@ -58,6 +62,8 @@ void SimpleSocket::communicate(void)
 	buffer[valread] = '\0';
 	std::cout << buffer << std::endl;
 	// GET FILE NAME HERE
+
+	first_dispatch(buffer, &bd.re);
 
 	// OPEN index.html as html page
 	std::ifstream file("index.html");
