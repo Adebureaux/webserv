@@ -134,8 +134,6 @@ void get_elements(std::string content, int *index, int serverIndex)
 		if (content[i] == '}' && smallBracket)
 		{
 			smallBracket = 0;
-			locations.insert(std::pair<int, std::multimap<std::string, std::string> >(serverIndex, lBloc));
-			lBloc.clear();
 			i++;
 		}
 		while (isspace(content[i]))
@@ -145,6 +143,8 @@ void get_elements(std::string content, int *index, int serverIndex)
 			bigBracket = 0;
 			i++;
 			*index = i;
+			locations.insert(std::pair<int, std::multimap<std::string, std::string> >(serverIndex, lBloc));
+			lBloc.clear();
 			break ;
 		}
 		while (isspace(content[i]))
@@ -329,9 +329,9 @@ int parser(char *file_name)
 	}
 	//AFFICHAGE fin
 
-	//std::cout << "test get serv value : " << getAServerValue(1, "listen") << std::endl;
-	//std::cout << "test get loc value : " << getALocationValue(0, "1default") << std::endl;
-	//std::cout << "test get loc value : " << getALocationValue(0, "1cgi") << std::endl;
+	std::cout << "test get serv value : " << getAServerValue(1, "listen") << std::endl;
+	std::cout << "test get loc value : " << getALocationValue(0, "2default") << std::endl;
+	std::cout << "test get loc value : " << getALocationValue(0, "2root") << std::endl;
 	
 	return (TRUE);
 }
