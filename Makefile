@@ -1,7 +1,7 @@
 NAME		= webserv
 
 SRCS		=	srcs/main.cpp srcs/Server.cpp srcs/SimpleSocket.cpp\
-				srcs/Request.cpp
+				srcs/Request.cpp srcs/Response.cpp
 
 INCS		= -I includes
 

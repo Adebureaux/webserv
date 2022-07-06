@@ -1,5 +1,6 @@
 #include "SimpleSocket.hpp"
 #include "Request.hpp"
+#include "Response.hpp"
 
 SimpleSocket::SimpleSocket(void)
 {
@@ -60,24 +61,22 @@ void SimpleSocket::communicate(void)
 	if (valread == -1)
 		exit(1);
 	buffer[valread] = '\0';
-	std::cout << buffer << std::endl;
+	//std::cout << buffer << std::endl;
 	// GET FILE NAME HERE
 
-	first_dispatch(buffer, &bd.re);
+	first_dispatch(buffer, &bd.re);	// request parsing
+
+	std::cout << "request done." << std::endl;
+
+	std::string res = get_response(bd);	// response
+
+	std::cout << "response done." << std::endl;
+
+	std::cout << "reeeeeeeees = |" << res << "| reeeeeeeeees" << std::endl;	//////// a effacer //////
 
 	// OPEN index.html as html page
-	std::ifstream file("index.html");
-	std::stringstream buf;
-	buf << file.rdbuf();
-	file.close();
-	std::string hello = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-	std::string buff(buf.str());
-	int num = buff.size();
-	std::string numero = SSTR("" << num);
-	hello.append(numero);
-	hello.append("\n\n");
-	hello.append(buff);
-	write(_socket_fd, hello.c_str(), hello.size());
+
+	write(_socket_fd, res.c_str(), res.size());
 }
 
 void SimpleSocket::perror_exit(std::string err)

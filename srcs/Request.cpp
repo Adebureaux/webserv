@@ -79,7 +79,7 @@ void fill_request_basic(char *msg, int n, Request *r)
 	r->host_ip = atoi(ip.c_str());
 	r->error_type = 200;
 
-	std::cout << r->page << std::endl;
+	//std::cout << r->page << std::endl;		///////// a effacer /////////
 
 	return ;
 }
@@ -125,7 +125,7 @@ void chunked_post(std::string mess, Request *r)
 
 void	first_dispatch(char *msg, Request *r)
 {
-	//std::cout << msg << std::endl;		///////// a effacer /////////
+	//std::cout << "yoooooooo\n" << msg << std::endl;		///////// a effacer /////////
 
 	if (r->encoding == "chunked" && r->pure_content != "")
 		chunked_post(msg, r);
