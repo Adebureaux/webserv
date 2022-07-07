@@ -66,17 +66,21 @@ void SimpleSocket::communicate(void)
 
 	first_dispatch(buffer, &bd.re);	// request parsing
 
-	std::cout << "request done." << std::endl;
+	std::cout << "request done." << std::endl << std::endl;
 
 	std::string res = get_response(bd);	// response
 
-	std::cout << "response done." << std::endl;
+	std::cout << "response done." << std::endl << std::endl;
 
-	std::cout << "reeeeeeeees = |" << res << "| reeeeeeeeees" << std::endl;	//////// a effacer //////
+	std::cout << "reeeeeeeees = |\n" << res << "\n| reeeeeeeeees" << std::endl << std::endl;	//////// a effacer //////
 
 	// OPEN index.html as html page
 
-	write(_socket_fd, res.c_str(), res.size());
+	int ret = send(_socket_fd, res.c_str(), res.size(), 0);
+
+	std::cout << "ret = " << ret << std::endl;
+
+	// write(_socket_fd, res.c_str(), res.size());
 }
 
 void SimpleSocket::perror_exit(std::string err)

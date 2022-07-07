@@ -125,7 +125,7 @@ void chunked_post(std::string mess, Request *r)
 
 void	first_dispatch(char *msg, Request *r)
 {
-	//std::cout << "yoooooooo\n" << msg << std::endl;		///////// a effacer /////////
+	//std::cout << "yoooooooo\n" << msg << std::endl << std::endl;		///////// a effacer /////////
 
 	if (r->encoding == "chunked" && r->pure_content != "")
 		chunked_post(msg, r);
