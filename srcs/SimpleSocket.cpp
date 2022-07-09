@@ -1,81 +1,81 @@
 #include "SimpleSocket.hpp"
 
-SimpleSocket::SimpleSocket(void)
-{
+SimpleSocket::SimpleSocket() {
+	int opt = 1;
+
+	// Socket domain and type
 	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		perror_exit("cannot create socket");
-	int enable = 1;
-	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) == -1)
-		perror_exit("cannot set socket option 'SO_REUSEADDR'");
-	identify();
-	listenSocket();
-	while (1)
-	{
-		acceptSocket();
-		communicate();
-	}
+		_perrorExit("cannot create socket");
+
+	// Socket option to reuse our address
+	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
+		_perrorExit("cannot set socket option 'SO_REUSEADDR'");
+
+	// No blocking socket ? (Valgrind : generate a syscall error)
+	// fcntl(_socket_fd, F_GETFL, &opt);
+	// _socket_fd |= O_NDELAY;
+	// fcntl(_socket_fd, F_SETFL, &opt);
 }
 
-SimpleSocket::~SimpleSocket(void)
-{
+SimpleSocket::~SimpleSocket(void) {
 	close(_server_fd);
 	close(_socket_fd);
-	close(_epoll_fd);
 }
 
-void SimpleSocket::identify(void)
-{
-	_port = 8080; // Where the clients can reach at
-	/* htonl converts a long integer (e.g. address) to a network representation */ 
-	/* htons converts a short integer (e.g. port) to a network representation */ 
+void SimpleSocket::identifySocket(unsigned int port) {
+	_port = port;
 	memset((char*)&_address, 0, sizeof(_address));
 	_address.sin_family = AF_INET;
 	_address.sin_addr.s_addr = htonl(INADDR_ANY);
 	_address.sin_port = htons(_port);
 	if (bind(_server_fd, (struct sockaddr *)&_address, sizeof(_address)) == -1) 
-		perror_exit("bind failed"); 
+		_perrorExit("bind failed"); 
 }
 
-void SimpleSocket::listenSocket(void)
-{
+void SimpleSocket::listenSocket(void) const {
 	if (listen(_server_fd, 1) == -1)
-		perror_exit("listen failed");
+		_perrorExit("listen failed");
 }
 
-void SimpleSocket::acceptSocket(void)
-{
+void SimpleSocket::acceptSocket(void) {
 	unsigned int addrlen = sizeof(_address);
 	if ((_socket_fd = accept(_server_fd, (struct sockaddr *)&_address, (socklen_t*)&addrlen)) == -1)
-		perror_exit("accept failed");
+		_perrorExit("accept failed");
 }
 
-void SimpleSocket::communicate(void)
-{
+void SimpleSocket::communicateSocket(void) const {
+	// Here is the client request, which is stored in "buffer"
 	char buffer[1024];
 	int valread = read(_socket_fd, buffer, 1024);
 	if (valread == -1)
 		exit(1);
 	buffer[valread] = '\0';
-	std::cout << buffer << std::endl;
-	// GET FILE NAME HERE
 
-	// OPEN index.html as html page
-	std::ifstream file("index.html");
-	std::stringstream buf;
-	buf << file.rdbuf();
-	file.close();
-	std::string hello = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-	std::string buff(buf.str());
-	int num = buff.size();
-	std::string numero = SSTR("" << num);
-	hello.append(numero);
-	hello.append("\n\n");
-	hello.append(buff);
-	write(_socket_fd, hello.c_str(), hello.size());
+	std::cout << buffer << std::endl;
+	// Use the content inside the buffer to determine wich file the client is asking
+	// If the client HTTP request is a GET,
+	// check which file the client is asking and display it with HTTPGet function
+	HTTPGet("index.html");
+
 }
 
-void SimpleSocket::perror_exit(std::string err)
-{
+void SimpleSocket::HTTPGet(const char* filename) const {
+	std::ifstream file(filename);
+	std::stringstream ssbuffer;
+	std::string buffer;
+	std::string header;
+
+	ssbuffer << file.rdbuf();
+	file.close();
+	header = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+	buffer = ssbuffer.str();
+	header.append(SSTR("" << buffer.size()));
+	header.append("\n\n");
+	header.append(buffer);
+	write(_socket_fd, header.c_str(), header.size());
+}
+
+void SimpleSocket::_perrorExit(std::string err) const {
 	std::cerr << err << " : " << strerror(errno) << std::endl;
 	this->~SimpleSocket();
 	exit(errno);

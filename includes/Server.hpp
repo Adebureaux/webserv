@@ -6,11 +6,8 @@
 class Server
 {
 	public:
-		Server();
+		Server(unsigned int port);
 		~Server();
-
-	private:
-		SimpleSocket _socket;
 };
 
 #endif
