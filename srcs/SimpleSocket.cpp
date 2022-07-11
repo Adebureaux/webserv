@@ -10,11 +10,6 @@ SimpleSocket::SimpleSocket() {
 	// Socket option to reuse our address
 	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
 		_perrorExit("cannot set socket option 'SO_REUSEADDR'");
-
-	// No blocking socket ? (Valgrind : generate a syscall error)
-	// fcntl(_socket_fd, F_GETFL, &opt);
-	// _socket_fd |= O_NDELAY;
-	// fcntl(_socket_fd, F_SETFL, &opt);
 }
 
 SimpleSocket::~SimpleSocket(void) {
@@ -39,6 +34,7 @@ void SimpleSocket::listenSocket(void) const {
 
 void SimpleSocket::acceptSocket(void) {
 	unsigned int addrlen = sizeof(_address);
+
 	if ((_socket_fd = accept(_server_fd, (struct sockaddr *)&_address, (socklen_t*)&addrlen)) == -1)
 		_perrorExit("accept failed");
 }
@@ -59,6 +55,7 @@ void SimpleSocket::communicateSocket(void) const {
 
 }
 
+
 void SimpleSocket::HTTPGet(const char* filename) const {
 	std::ifstream file(filename);
 	std::stringstream ssbuffer;
@@ -73,6 +70,10 @@ void SimpleSocket::HTTPGet(const char* filename) const {
 	header.append("\n\n");
 	header.append(buffer);
 	write(_socket_fd, header.c_str(), header.size());
+}
+
+int SimpleSocket::getSocketFd(void) const {
+	return (_socket_fd);
 }
 
 void SimpleSocket::_perrorExit(std::string err) const {

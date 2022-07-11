@@ -32,6 +32,7 @@ class SimpleSocket
 		void acceptSocket(void);
 		void communicateSocket(void) const;
 		void HTTPGet(const char* filename) const;
+		int getSocketFd(void) const;
 
 	private:
 		void _perrorExit(std::string err) const;
