@@ -1,5 +1,27 @@
 #include "Request.hpp"
 
+////////////////////////////////////////////////////////////////
+//                           UTILS                            //
+////////////////////////////////////////////////////////////////
+
+long get_content_size(std::string mess){
+    std::size_t file_start = mess.find("Content-Length: ") + 16;
+    if (file_start == 16)
+        return -1;
+    std::size_t file_end = file_start;
+    while (mess[file_end] != '\r' && mess[file_end] != '\n' && mess[file_end] != ' ')
+        file_end++;
+    std::string size = mess.substr(file_start, file_end - file_start);
+    return atoi(size.c_str());
+}
+
+std::string get_body(std::string mess){
+    std::size_t start = mess.find("\r\n\r\n");
+    if (start == mess.npos)
+        return "";
+    start += 4;
+    return mess.substr(start, mess.size() - start);
+}
 
 std::string get_filename(std::string mess)
 {
@@ -23,6 +45,10 @@ std::string get_query(std::string page)
 
     return page.substr(test, page.size() - test);
 }
+
+////////////////////////////////////////////////////////////////
+//                           GET                              //
+////////////////////////////////////////////////////////////////
 
 void fill_request_basic(char *msg, int n, Request *r)
 {
@@ -84,6 +110,27 @@ void fill_request_basic(char *msg, int n, Request *r)
 	return ;
 }
 
+////////////////////////////////////////////////////////////////
+//                           POST                             //
+////////////////////////////////////////////////////////////////
+
+void classic_post(std::string mess, Request *r){
+    r->content_size = get_content_size(mess);
+    if (r->content_size == -1){
+        r->error_type = 411;
+        return ;
+    }
+    r->body = get_body(mess);
+    if (r->body == "")
+        r->error_type = 400;
+    r->status_is_finished = true;
+    if (r->content_type != "application/x-www-form-urlencoded"){
+        r->filename = get_filename(mess);
+        if (r->filename == "")
+            r->error_type = 400;
+    }
+}
+
 void chunked_post(std::string mess, Request *r)
 {
 
@@ -123,9 +170,64 @@ void chunked_post(std::string mess, Request *r)
 
 }
 
+void fill_request_post(char *msg, Request *r){
+    std::string mess = msg;
+    std::size_t type = mess.find("Content-Type: ") + 14;
+    if (type == 14){
+        r->error_type = 400;
+        r->status_is_finished = true;
+        return ;
+    }
+    size_t end = type;
+    while (mess[end] != '\n' && mess[end] != ' ' && mess[end] != '\r')
+        end++;
+    std::string content_type = mess.substr(type, end - type);
+    if (content_type == "multipart/form-data"){
+        r->content_size = get_content_size(mess);
+        if (r->content_size == -1){
+            r->error_type = 411;
+            return ;
+        }   
+        std::size_t start = mess.find("boundary=\"");
+        if (start == mess.npos){
+            r->error_type = 400;
+            r->status_is_finished = true;
+            return ;
+        }
+        r->body = mess.substr(start, mess.size() - start);
+        r->status_is_finished = true;
+    }
+    else if (content_type == "application/x-www-form-urlencoded"){
+        classic_post(mess, r);
+        if (r->error_type != 200)
+            return ;
+    }
+    else if (content_type == "text/plain"){
+        std::size_t type = mess.find("Transfer-Encoding: ") + 19;
+        if (type != 19){
+            size_t end = type;
+            while (mess[end] != '\n' && mess[end] != ' ' && mess[end] != '\r')
+                end++;
+            r->encoding = mess.substr(type, end - type);
+            if (r->encoding == "chunked")
+                chunked_post(mess, r);
+        }
+        classic_post(mess, r);
+        if (r->error_type != 200)
+            return ;
+    }
+    else
+        classic_post(mess, r);
+    return ;
+}
+
+////////////////////////////////////////////////////////////////
+//                          DISPATCH                          //
+////////////////////////////////////////////////////////////////
+
 void	first_dispatch(char *msg, Request *r)
 {
-	//std::cout << "yoooooooo\n" << msg << std::endl << std::endl;		///////// a effacer /////////
+	std::cout << "yoooooooo\n" << msg << std::endl << std::endl;		///////// a effacer /////////
 
 	if (r->encoding == "chunked" && r->pure_content != "")
 		chunked_post(msg, r);
@@ -134,5 +236,9 @@ void	first_dispatch(char *msg, Request *r)
 	{
         fill_request_basic(msg, 1, r);
         r->status_is_finished = true;
+    }
+    else if (msg[0] == 'P' && msg[1] == 'O' && msg[2] == 'S' && msg[3] == 'T' && msg[4] == ' '){
+        fill_request_basic(msg, 3, r);
+        fill_request_post(msg, r);
     }
 }
