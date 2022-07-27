@@ -230,15 +230,27 @@ void	first_dispatch(char *msg, Request *r)
 	std::cout << "yoooooooo\n" << msg << std::endl << std::endl;		///////// a effacer /////////
 
 	if (r->encoding == "chunked" && r->pure_content != "")
-		chunked_post(msg, r);
-
-	else if (msg[0] == 'G' && msg[1] == 'E' && msg[2] == 'T' && msg[3] == ' ')
-	{
+        chunked_post(msg, r);
+    else if (msg[0] == 'G' && msg[1] == 'E' && msg[2] == 'T' && msg[3] == ' '){
         fill_request_basic(msg, 1, r);
+        r->status_is_finished = true;
+    }
+    else if (msg[0] == 'D' && msg[1] == 'E' && msg[2] == 'L' && msg[3] == 'E' && msg[4] == 'T' && msg[5] == 'E' && msg[6] == ' '){
+        fill_request_basic(msg, 2, r);
         r->status_is_finished = true;
     }
     else if (msg[0] == 'P' && msg[1] == 'O' && msg[2] == 'S' && msg[3] == 'T' && msg[4] == ' '){
         fill_request_basic(msg, 3, r);
         fill_request_post(msg, r);
+    }
+    else if (msg == NULL){
+        r->error_type = 400;
+        r->page = "/";
+        r->status_is_finished = true;
+    }
+    else{
+        r->error_type = 405;
+        r->page = "/";
+        r->status_is_finished = true;
     }
 }
