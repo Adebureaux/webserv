@@ -1,6 +1,7 @@
 NAME		= webserv
 
-SRCS		= srcs/main.cpp srcs/Server.cpp srcs/SimpleSocket.cpp
+SRCS		=	srcs/main.cpp srcs/SimpleSocket.cpp\
+				srcs/Request.cpp srcs/Response.cpp srcs/cgi.cpp srcs/parsing.cpp
 
 INCS		= -I includes
 
@@ -8,7 +9,7 @@ OBJS		= ${SRCS:.cpp=.o}
 
 RM			= rm -f
 
-CFLAGS		= -Wall -Wextra -Werror -std=c++98
+CFLAGS		= -Wall -Wextra -Werror -std=c++98 -g3
 
 COMPILER	= c++
 
