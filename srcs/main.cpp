@@ -153,6 +153,7 @@ int fd_in_queue(int fd, int queue)
     struct epoll_event event;
     event.events = EPOLLIN | EPOLLRDHUP;
     event.data.fd = fd;
+    event.data.u64 = event.data.u32;
     if (epoll_ctl(queue, EPOLL_CTL_ADD, fd, &event)) //https://man7.org/linux/man-pages/man2/epoll_ctl.2.html
 	{
         close(fd);
@@ -290,7 +291,7 @@ int launch(nginx server)
 
 					event.events = EPOLLIN;
 					event.data.fd = serv[i].getServerFd();
-
+                    event.data.u64 = event.data.u32;
 					if (epoll_ctl(queue, EPOLL_CTL_ADD, serv[i].getServerFd(), &event)) // modifies queue by performing EPOLL_CTL_ADD on serv[i].getServerFd(). &event is the object linked to the file descriptor serv[i].getServerFd() https://man7.org/linux/man-pages/man2/epoll_ctl.2.html
 					{
 						close(serv[i].getServerFd());
