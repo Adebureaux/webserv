@@ -25,26 +25,22 @@ class SimpleSocket
 {
 	public:
 		SimpleSocket();
+		~SimpleSocket();
 	
-		const char *create_socket(unsigned int port);
-		const char *identifySocket();
-		const char *listenSocket(void) const;
-		int acceptSocket(void);
-		int getServerFd(void) const;
+		void identifySocket(unsigned int port);
+		void listenSocket(void) const;
+		void acceptSocket(void);
+		void communicateSocket(void) const;
+		void HTTPGet(const char* filename) const;
+		int getSocketFd(void) const;
 
 	private:
 		void _perrorExit(std::string err) const;
 
-	public:
+	private:
 		int 				_server_fd;
+		int					_socket_fd;
 		int					_port;
 		struct sockaddr_in	_address;
 };
-
-/*
-struct epoll_event {
-               uint32_t     events;    // Epoll events
-               epoll_data_t data;      // User data variable
-           };*/
-
 #endif
