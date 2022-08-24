@@ -39,37 +39,14 @@ void SimpleSocket::acceptSocket(void) {
 		_perrorExit("accept failed");
 }
 
-void SimpleSocket::communicateSocket(void) const {
-	// Here is the client request, which is stored in "buffer"
+std::string SimpleSocket::communicateSocket(void) const {
 	char buffer[1024];
 	int valread = read(_socket_fd, buffer, 1024);
+
 	if (valread == -1)
 		exit(1);
 	buffer[valread] = '\0';
-
-	std::cout << buffer << std::endl;
-	// Use the content inside the buffer to determine wich file the client is asking
-	// If the client HTTP request is a GET,
-	// check which file the client is asking and display it with HTTPGet function
-	HTTPGet("index.html");
-
-}
-
-
-void SimpleSocket::HTTPGet(const char* filename) const {
-	std::ifstream file(filename);
-	std::stringstream ssbuffer;
-	std::string buffer;
-	std::string header;
-
-	ssbuffer << file.rdbuf();
-	file.close();
-	header = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-	buffer = ssbuffer.str();
-	header.append(SSTR("" << buffer.size()));
-	header.append("\n\n");
-	header.append(buffer);
-	write(_socket_fd, header.c_str(), header.size());
+	return (buffer);
 }
 
 int SimpleSocket::getSocketFd(void) const {

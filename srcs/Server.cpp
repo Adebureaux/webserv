@@ -1,14 +1,14 @@
 #include "Server.hpp"
 
 Server::Server(unsigned int port) {
-	SimpleSocket socket;
-
-	socket.identifySocket(port);
-	socket.listenSocket();
+	_socket.identifySocket(port);
+	_socket.listenSocket();
 	while (1)
 	{
-		socket.acceptSocket();
-		socket.communicateSocket();
+		_socket.acceptSocket();
+		_request.fill(_socket.communicateSocket());
+		_response.respond(_request);
+		write(_socket.getSocketFd(), _response.send().c_str(), _response.send().size());
 	}
 }
 
