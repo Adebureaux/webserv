@@ -1,5 +1,6 @@
 #ifndef SIMPLE_SOCKET_HPP
 # define SIMPLE_SOCKET_HPP
+# define BUFFER_SIZE 4096
 # include <string>
 # include <iostream>
 # include <cstdlib>

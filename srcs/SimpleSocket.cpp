@@ -40,12 +40,12 @@ void SimpleSocket::acceptSocket(void) {
 }
 
 std::string SimpleSocket::communicateSocket(void) const {
-	char buffer[1024];
-	int valread = read(_socket_fd, buffer, 1024);
+	char buffer[BUFFER_SIZE];
+	int rd = read(_socket_fd, buffer, BUFFER_SIZE);
 
-	if (valread == -1)
-		exit(1);
-	buffer[valread] = '\0';
+	if (rd < 1)
+		_perrorExit("read failed");
+	buffer[rd] = '\0';
 	return (buffer);
 }
 

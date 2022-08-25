@@ -1,5 +1,6 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
+# include <list>
 # include "SimpleSocket.hpp"
 # include "Request.hpp"
 # include "Response.hpp"
@@ -11,9 +12,9 @@ class Server
 		~Server();
 
 	private:
-		SimpleSocket	_socket;
-		Request			_request;
-		Response		_response;
+		SimpleSocket		_socket;
+		Request				_request;
+		Response			_response;
 };
 
 #endif
