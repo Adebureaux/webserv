@@ -1,5 +1,12 @@
 #include "Server.hpp"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 Server::Server(unsigned int port) {
 	_socket.identifySocket(port);
 	_socket.listenSocket();

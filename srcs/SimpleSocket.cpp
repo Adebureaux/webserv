@@ -53,6 +53,10 @@ int SimpleSocket::getSocketFd(void) const {
 	return (_socket_fd);
 }
 
+int SimpleSocket::getServerFd(void) const {
+	return (_server_fd);
+}
+
 void SimpleSocket::_perrorExit(std::string err) const {
 	std::cerr << err << " : " << strerror(errno) << std::endl;
 	this->~SimpleSocket();

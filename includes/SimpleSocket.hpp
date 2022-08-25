@@ -20,6 +20,7 @@ class SimpleSocket
 		void acceptSocket(void);
 		std::string communicateSocket(void) const;
 		int getSocketFd(void) const;
+		int getServerFd(void) const;
 
 	private:
 		void _perrorExit(std::string err) const;

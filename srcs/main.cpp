@@ -6,5 +6,5 @@ int main(int ac, char **argv, char **envp)
 	(void)argv;
 	(void)envp;
 	Server server(8080);
-	return (0);	
+	return (0);
 }
