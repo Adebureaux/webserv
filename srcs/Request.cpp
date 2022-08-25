@@ -6,6 +6,7 @@ Request::~Request() {}
 
 void Request::fill(const std::string& header) {
 	std::istringstream _header(header);
+
 	std::getline(_header, _method, ' ');
 	std::getline(_header, _path, ' ');
 	_path.erase(0, 1);

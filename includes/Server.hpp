@@ -1,17 +1,17 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
-# include "SimpleSocket.hpp"
+# include "Socket.hpp"
 # include "Request.hpp"
 # include "Response.hpp"
 
 class Server
 {
 	public:
-		Server(unsigned int port);
+		Server(const std::string& address, unsigned int port);
 		~Server();
 
 	private:
-		SimpleSocket		_socket;
+		Socket		_socket;
 		Request				_request;
 		Response			_response;
 };

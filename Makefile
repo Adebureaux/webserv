@@ -1,5 +1,5 @@
 NAME		= webserv
-SRCS		= srcs/main.cpp srcs/Server.cpp srcs/SimpleSocket.cpp srcs/Request.cpp srcs/Response.cpp
+SRCS		= srcs/main.cpp srcs/Server.cpp srcs/Socket.cpp srcs/Request.cpp srcs/Response.cpp
 INCS		= -I includes
 OBJS		= ${SRCS:.cpp=.o}
 RM			= rm -f
