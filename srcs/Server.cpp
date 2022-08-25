@@ -8,6 +8,7 @@
 #include <fcntl.h>
 
 // https://cpp.hotexamples.com/fr/examples/-/-/FD_CLR/cpp-fd_clr-function-examples.html
+// https://cpp.hotexamples.com/fr/site/file?hash=0x055b3d85737835dd5cefc2335071a6e3e792b28c40843fbd9ee1345c4679bfc6&fullName=apparmor-master/tests/regression/apparmor/test_multi_receive.c&project=crossbuild/apparmor
 // Socket non bloquant
 
 Server::Server(unsigned int port) {

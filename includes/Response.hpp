@@ -1,6 +1,7 @@
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 # define SSTR(x) static_cast<std::ostringstream&>((std::ostringstream() << std::dec << x)).str()
+# include <fstream>
 # include "Request.hpp"
 
 class Response {

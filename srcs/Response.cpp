@@ -1,5 +1,4 @@
 #include "Response.hpp"
-# include <fstream>
 
 Response::Response() {}
 
