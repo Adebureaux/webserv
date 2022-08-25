@@ -1,6 +1,5 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
-# include <list>
 # include "SimpleSocket.hpp"
 # include "Request.hpp"
 # include "Response.hpp"

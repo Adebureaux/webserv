@@ -19,31 +19,31 @@ SimpleSocket::~SimpleSocket(void) {
 
 void SimpleSocket::identifySocket(unsigned int port) {
 	_port = port;
-	memset((char*)&_address, 0, sizeof(_address));
-	_address.sin_family = AF_INET;
-	_address.sin_addr.s_addr = htonl(INADDR_ANY);
-	_address.sin_port = htons(_port);
-	if (bind(_server_fd, (struct sockaddr *)&_address, sizeof(_address)) == -1) 
+	memset((char*)&_server_address, 0, sizeof(_server_address));
+	_server_address.sin_family = AF_INET;
+	_server_address.sin_addr.s_addr = htonl(INADDR_ANY); // IP HERE
+	_server_address.sin_port = htons(_port); // PORT HERE
+	if (bind(_server_fd, (struct sockaddr*)&_server_address, sizeof(_server_address)) == -1) 
 		_perrorExit("bind failed"); 
 }
 
 void SimpleSocket::listenSocket(void) const {
-	if (listen(_server_fd, 1) == -1)
+	if (listen(_server_fd, 5) == -1)
 		_perrorExit("listen failed");
 }
 
 void SimpleSocket::acceptSocket(void) {
-	unsigned int addrlen = sizeof(_address);
+	unsigned int addrlen = sizeof(_client_address);
 
-	if ((_socket_fd = accept(_server_fd, (struct sockaddr *)&_address, (socklen_t*)&addrlen)) == -1)
+	if ((_socket_fd = accept(_server_fd, (struct sockaddr*)&_client_address, (socklen_t*)&addrlen)) == -1)
 		_perrorExit("accept failed");
 }
 
-std::string SimpleSocket::communicateSocket(void) const {
+std::string SimpleSocket::communicateSocket(int fd) const {
 	char buffer[BUFFER_SIZE];
-	int rd = read(_socket_fd, buffer, BUFFER_SIZE);
+	int rd = read(fd, buffer, BUFFER_SIZE);
 
-	if (rd < 1)
+	if (rd == -1)
 		_perrorExit("read failed");
 	buffer[rd] = '\0';
 	return (buffer);
