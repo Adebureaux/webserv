@@ -29,6 +29,7 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 		_perrorExit("bind failed"); 
 	if (listen(_server_fd, 100) == -1) // Number of client listned
 		_perrorExit("listen failed");
+
 }
 
 int Socket::acceptClient(void) {
@@ -53,8 +54,7 @@ std::string Socket::getHeaderRequest(int fd) const {
 	return (buffer);
 }
 
-int Socket::getClientFd(void) const {
-	return (_client.rbegin()->first);
+void Socket::waitRequest(void) {
 }
 
 int Socket::getServerFd(void) const {

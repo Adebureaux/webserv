@@ -22,7 +22,7 @@ class Socket
 		void initialize(const std::string& address, unsigned int port);
 		int acceptClient(void);
 		std::string getHeaderRequest(int fd) const;
-		int getClientFd(void) const;
+		void waitRequest(void);
 		int getServerFd(void) const;
 
 	private:
@@ -34,6 +34,8 @@ class Socket
 	public:
 		struct sockaddr_in			_server_addr;
 		std::map<int, sockaddr_in>	_client;
+		fd_set						_read_fds;
+		fd_set						_test_fds;
 };
 
 #endif
