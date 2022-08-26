@@ -25,9 +25,9 @@ class Socket
 		void initialize(const std::string& address, unsigned int port);
 		void waitRequest(void);
 		void acceptClient(void);
+		bool communicate(map::iterator it);
 		std::string getHeaderRequest(int fd) const;
-		int closeClient(map::iterator it);
-		map getClient(void) const;
+		map& getClient(void);
 		fd_set* getReadFds(int n);
 		int getServerFd(void) const;
 
@@ -36,10 +36,8 @@ class Socket
 
 	private:
 		int 						_server_fd;
-
-	public:
 		struct sockaddr_in			_server_addr;
-		std::map<int, sockaddr_in>	_client;
+		map							_client;
 		fd_set						_read_fds[2];
 };
 

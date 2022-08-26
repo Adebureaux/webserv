@@ -50,21 +50,17 @@ void Socket::acceptClient(void) {
 	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl;
 }
 
-int Socket::closeClient(map::iterator it) {
+bool Socket::communicate(map::iterator it) {
 	int rd;
 
 	ioctl(it->first, FIONREAD, &rd);
 	if (!rd) {
-		printf("removing client on fd %d\n", it->first);
+		std::cerr << "\033[1;35mRemoving client " << it->first << "\033[0m" << std::endl;
 		close(it->first);
 		FD_CLR(it->first, &_read_fds[0]);
 		_client.erase(it->first);
 	}
 	return (rd);
-}
-
-std::map<int, sockaddr_in> Socket::getClient(void) const {
-	return (_client);
 }
 
 std::string Socket::getHeaderRequest(int fd) const {
@@ -76,6 +72,10 @@ std::string Socket::getHeaderRequest(int fd) const {
 	buffer[rd] = '\0';
 	std::cerr << "\033[1;35mServing client " << fd << "\033[0m" << std::endl;
 	return (buffer);
+}
+
+Socket::map& Socket::getClient(void) {
+	return (_client);
 }
 
 fd_set* Socket::getReadFds(int n) {
