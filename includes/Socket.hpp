@@ -20,9 +20,9 @@ class Socket
 		~Socket();
 	
 		void initialize(const std::string& address, unsigned int port);
+		void waitRequest(void);
 		int acceptClient(void);
 		std::string getHeaderRequest(int fd) const;
-		void waitRequest(void);
 		int getServerFd(void) const;
 
 	private:
