@@ -25,12 +25,13 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 	// fcntl(_server_fd, F_SETFL, O_NONBLOCK); // SETUP SELECT FIRST
 	if (bind(_server_fd, (struct sockaddr*)&_server_addr, sizeof(_server_addr)) == -1) 
 		_perrorExit("bind failed"); 
-	if (listen(_server_fd, 100) == -1) // Number of client listned
+	if (listen(_server_fd, 100) == -1) // Maximum number of client listned
 		_perrorExit("listen failed");
 	FD_ZERO(&_read_fds[0]);
 	FD_SET(_server_fd, &_read_fds[0]);
 	_client.insert(std::pair<int, sockaddr_in>(_server_fd, _server_addr));
 }
+
 void Socket::waitRequest(void) {
 	_read_fds[1] = _read_fds[0];
 	std::cout << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
@@ -44,9 +45,26 @@ void Socket::acceptClient(void) {
 
 	if ((fd = accept(_server_fd, (struct sockaddr*)&addr, (socklen_t*)&addrlen)) == -1)
 		_perrorExit("accept failed");
-	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl;
 	_client.insert(std::pair<int, sockaddr_in>(fd, addr));
 	FD_SET(fd, &_read_fds[0]);
+	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl;
+}
+
+int Socket::closeClient(map::iterator it) {
+	int rd;
+
+	ioctl(it->first, FIONREAD, &rd);
+	if (!rd) {
+		printf("removing client on fd %d\n", it->first);
+		close(it->first);
+		FD_CLR(it->first, &_read_fds[0]);
+		_client.erase(it->first);
+	}
+	return (rd);
+}
+
+std::map<int, sockaddr_in> Socket::getClient(void) const {
+	return (_client);
 }
 
 std::string Socket::getHeaderRequest(int fd) const {
@@ -56,6 +74,7 @@ std::string Socket::getHeaderRequest(int fd) const {
 	if (rd == -1)
 		_perrorExit("recv failed");
 	buffer[rd] = '\0';
+	std::cerr << "\033[1;35mServing client " << fd << "\033[0m" << std::endl;
 	return (buffer);
 }
 

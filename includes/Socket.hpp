@@ -16,6 +16,9 @@
 class Socket
 {
 	public:
+		typedef std::map<int, sockaddr_in> map;
+
+	public:
 		Socket();
 		~Socket();
 	
@@ -23,6 +26,8 @@ class Socket
 		void waitRequest(void);
 		void acceptClient(void);
 		std::string getHeaderRequest(int fd) const;
+		int closeClient(map::iterator it);
+		map getClient(void) const;
 		fd_set* getReadFds(int n);
 		int getServerFd(void) const;
 
