@@ -32,8 +32,7 @@ Server::Server(const std::string& address, unsigned int port) {
 				std::cout << "ENTER WITH FD = " << fd << std::endl;
 				if (fd == _socket.getServerFd()) {
 					client_len = sizeof(client_address);
-					client_sockfd = accept(_socket.getServerFd(),
-							(struct sockaddr *)&client_address, (socklen_t*)&client_len);
+					client_sockfd = _socket.acceptClient();
 					FD_SET(client_sockfd, &readfds);
 				} else {
 					ioctl(fd, FIONREAD, &nread);
