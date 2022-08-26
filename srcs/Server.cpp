@@ -5,13 +5,13 @@ Server::Server(const std::string& address, unsigned int port) {
 	while (1) {
 		_socket.waitRequest();
 		for (Socket::map::iterator it = _socket.getClient().begin(); it != _socket.getClient().end(); it++) {
-			if (FD_ISSET(it->first, _socket.getReadFds(1))) {
+			if (_socket.isSet(it->first)) { 
 				if (it->first == _socket.getServerFd())
 					_socket.acceptClient();
-				else if (_socket.communicate(it)) {
+				else if (_socket.communicate(it->first)) {
 					_request.fill(_socket.getHeaderRequest(it->first));
 					_response.respond(_request);
-					send(it->first, _response.send().c_str(), _response.send().size(), 0);
+					send(it->first, _response.send().c_str(), _response.send().size(), MSG_DONTWAIT);
 				}
 				else
 					it = _socket.getClient().begin();

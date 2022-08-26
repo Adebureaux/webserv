@@ -22,7 +22,7 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 	_server_addr.sin_port = htons(port);
 	inet_aton(address.c_str(), &_server_addr.sin_addr);
 	// _server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	// fcntl(_server_fd, F_SETFL, O_NONBLOCK); // SETUP SELECT FIRST
+	fcntl(_server_fd, F_SETFL, O_NONBLOCK);
 	if (bind(_server_fd, (struct sockaddr*)&_server_addr, sizeof(_server_addr)) == -1) 
 		_perrorExit("bind failed"); 
 	if (listen(_server_fd, 100) == -1) // Maximum number of client listned
@@ -35,7 +35,7 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 void Socket::waitRequest(void) {
 	_read_fds[1] = _read_fds[0];
 	std::cout << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
-	select(_server_fd + _client.size(), &_read_fds[1], (fd_set *)0, (fd_set *)0, (struct timeval*)0);
+	select(_server_fd + _client.size(), &_read_fds[1], NULL, NULL, NULL);
 }
 
 void Socket::acceptClient(void) {
@@ -47,25 +47,25 @@ void Socket::acceptClient(void) {
 		_perrorExit("accept failed");
 	_client.insert(std::pair<int, sockaddr_in>(fd, addr));
 	FD_SET(fd, &_read_fds[0]);
-	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl;
+	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl << std::endl;
 }
 
-bool Socket::communicate(map::iterator it) {
+bool Socket::communicate(int fd) {
 	int rd;
 
-	ioctl(it->first, FIONREAD, &rd);
+	ioctl(fd, FIONREAD, &rd);
 	if (!rd) {
-		std::cerr << "\033[1;35mRemoving client " << it->first << "\033[0m" << std::endl;
-		close(it->first);
-		FD_CLR(it->first, &_read_fds[0]);
-		_client.erase(it->first);
+		std::cerr << "\033[1;35mRemoving client " << fd << "\033[0m" << std::endl << std::endl;
+		close(fd);
+		FD_CLR(fd, &_read_fds[0]);
+		_client.erase(fd);
 	}
 	return (rd);
 }
 
 std::string Socket::getHeaderRequest(int fd) const {
 	char buffer[BUFFER_SIZE];
-	long rd = recv(fd, buffer, BUFFER_SIZE, 0);
+	long rd = recv(fd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
 
 	if (rd == -1)
 		_perrorExit("recv failed");
@@ -74,12 +74,12 @@ std::string Socket::getHeaderRequest(int fd) const {
 	return (buffer);
 }
 
-Socket::map& Socket::getClient(void) {
-	return (_client);
+bool Socket::isSet(int fd) const {
+	return (FD_ISSET(fd, &_read_fds[1]));
 }
 
-fd_set* Socket::getReadFds(int n) {
-	return (&_read_fds[n]);
+Socket::map& Socket::getClient(void) {
+	return (_client);
 }
 
 int Socket::getServerFd(void) const {

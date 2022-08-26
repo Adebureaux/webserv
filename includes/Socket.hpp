@@ -25,10 +25,10 @@ class Socket
 		void initialize(const std::string& address, unsigned int port);
 		void waitRequest(void);
 		void acceptClient(void);
-		bool communicate(map::iterator it);
+		bool communicate(int fd);
 		std::string getHeaderRequest(int fd) const;
+		bool isSet(int fd) const;
 		map& getClient(void);
-		fd_set* getReadFds(int n);
 		int getServerFd(void) const;
 
 	private:
