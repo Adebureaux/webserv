@@ -1,7 +1,5 @@
 #include "Socket.hpp"
 
-// https://bousk.developpez.com/cours/reseau-c++/TCP/05-envoi-reception-serveur/#LIII-B
-
 Socket::Socket() {
 	int opt = 1;
 
@@ -29,17 +27,17 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 		_perrorExit("bind failed"); 
 	if (listen(_server_fd, 100) == -1) // Number of client listned
 		_perrorExit("listen failed");
-	FD_ZERO(&_read_fds);
-	FD_SET(_server_fd, &_read_fds);
+	FD_ZERO(&_read_fds[0]);
+	FD_SET(_server_fd, &_read_fds[0]);
 	_client.insert(std::pair<int, sockaddr_in>(_server_fd, _server_addr));
 }
 void Socket::waitRequest(void) {
-	_test_fds = _read_fds;
+	_read_fds[1] = _read_fds[0];
 	std::cout << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
-	select(_server_fd + _client.size(), &_test_fds, (fd_set *)0, (fd_set *)0, (struct timeval*)0);
+	select(_server_fd + _client.size(), &_read_fds[1], (fd_set *)0, (fd_set *)0, (struct timeval*)0);
 }
 
-int Socket::acceptClient(void) {
+void Socket::acceptClient(void) {
 	int fd;
 	struct sockaddr_in addr;
 	unsigned int addrlen = sizeof(sockaddr_in);
@@ -48,7 +46,7 @@ int Socket::acceptClient(void) {
 		_perrorExit("accept failed");
 	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl;
 	_client.insert(std::pair<int, sockaddr_in>(fd, addr));
-	return (fd);
+	FD_SET(fd, &_read_fds[0]);
 }
 
 std::string Socket::getHeaderRequest(int fd) const {
@@ -59,6 +57,10 @@ std::string Socket::getHeaderRequest(int fd) const {
 		_perrorExit("recv failed");
 	buffer[rd] = '\0';
 	return (buffer);
+}
+
+fd_set* Socket::getReadFds(int n) {
+	return (&_read_fds[n]);
 }
 
 int Socket::getServerFd(void) const {
