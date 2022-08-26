@@ -16,12 +16,7 @@ Socket::Socket() {
 }
 
 Socket::~Socket(void) {
-	fd_set set;
 	close(_server_fd);
-	for (std::vector<Client>::iterator it = _client.begin(); it < _client.end(); it++) {
-		FD_CLR(it->fd, &set);
-		close(it->fd);
-	}
 }
 
 void Socket::initialize(const std::string& address, unsigned int port) {
@@ -32,46 +27,34 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 	// fcntl(_server_fd, F_SETFL, O_NONBLOCK); // SETUP SELECT FIRST
 	if (bind(_server_fd, (struct sockaddr*)&_server_addr, sizeof(_server_addr)) == -1) 
 		_perrorExit("bind failed"); 
-	if (listen(_server_fd, 5) == -1) // Number of client listned
+	if (listen(_server_fd, 100) == -1) // Number of client listned
 		_perrorExit("listen failed");
 }
 
-void Socket::acceptClient(void) {
-	Client client;
+int Socket::acceptClient(void) {
+	int fd;
+	struct sockaddr_in addr;
+	unsigned int addrlen = sizeof(sockaddr_in);
 
-	client.addrlen = sizeof(sockaddr_in);
-	if ((client.fd = accept(_server_fd, (struct sockaddr*)&client.addr, (socklen_t*)&client.addrlen)) == -1)
+	if ((fd = accept(_server_fd, (struct sockaddr*)&addr, (socklen_t*)&addrlen)) == -1)
 		_perrorExit("accept failed");
-	_client.push_back(client);
+	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl;
+	_client.insert(std::pair<int, sockaddr_in>(fd, addr));
+	return (fd);
 }
 
-std::string Socket::getHeaderRequest(void) const {
+std::string Socket::getHeaderRequest(int fd) const {
 	char buffer[BUFFER_SIZE];
-	long rd = read(getClientFd(), buffer, BUFFER_SIZE);
+	long rd = recv(fd, buffer, BUFFER_SIZE, 0);
 
 	if (rd == -1)
-		_perrorExit("read failed");
+		_perrorExit("recv failed");
 	buffer[rd] = '\0';
 	return (buffer);
 }
 
-int Socket::selects(void) const {
-	fd_set setReads;
-	fd_set setWrite;
-	fd_set setErrors;
-	int highestFd = 0;
-	for (std::vector<Client>::const_iterator it = _client.begin(); it < _client.end(); it++) {
-		FD_SET(it->fd, &setReads);
-		FD_SET(it->fd, &setWrite);
-		FD_SET(it->fd, &setErrors);
-		if (it->fd > highestFd)
-			highestFd = it->fd;
-	}
-	return (select(highestFd + 1, &setReads, &setWrite, &setErrors, NULL));
-}
-
 int Socket::getClientFd(void) const {
-	return (_client[_client.size() - 1].fd);
+	return (_client.rbegin()->first);
 }
 
 int Socket::getServerFd(void) const {
