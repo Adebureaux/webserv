@@ -27,7 +27,8 @@ class Socket
 		void acceptClient(void);
 		bool communicate(int fd);
 		std::string getHeaderRequest(int fd) const;
-		bool isSet(int fd) const;
+		bool isReadSet(int fd) const;
+		bool isWriteSet(int fd) const;
 		map& getClient(void);
 		int getServerFd(void) const;
 
@@ -35,10 +36,11 @@ class Socket
 		void _perrorExit(std::string err) const;
 
 	private:
-		int 						_server_fd;
-		struct sockaddr_in			_server_addr;
-		map							_client;
-		fd_set						_read_fds[2];
+		int 				_server_fd;
+		struct sockaddr_in	_server_addr;
+		map					_client;
+		fd_set				_read_fds[2];
+		fd_set				_write_fds;
 };
 
 #endif
