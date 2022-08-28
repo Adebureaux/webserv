@@ -10,7 +10,6 @@ Socket::Socket() {
 	// Socket option to reuse our address
 	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
 		_perrorExit("cannot set socket option 'SO_REUSEADDR'");
-
 }
 
 Socket::~Socket(void) {
@@ -26,15 +25,16 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 		_perrorExit("bind failed"); 
 	if (listen(_server_fd, SOMAXCONN) == -1) // Maximum number of client listned
 		_perrorExit("listen failed");
-	FD_ZERO(&_read_fds[0]);
-	FD_SET(_server_fd, &_read_fds[0]);
+	FD_ZERO(&_master_fds);
+	FD_SET(_server_fd, &_master_fds);
 	_client.insert(std::make_pair(_server_fd, _server_addr));
 }
 
 void Socket::waitRequest(void) {
-	_read_fds[1] = _read_fds[0];
-	std::cout << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
-	select(_server_fd + _client.size(), &_read_fds[1], NULL, NULL, NULL);
+	_read_fds = _master_fds;
+	_write_fds = _master_fds;
+	std::cerr << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
+	select(_server_fd + _client.size(), &_read_fds, NULL, NULL, NULL);
 }
 
 void Socket::acceptClient(void) {
@@ -45,7 +45,7 @@ void Socket::acceptClient(void) {
 	if ((fd = accept(_server_fd, (struct sockaddr*)&addr, (socklen_t*)&addrlen)) == -1)
 		_perrorExit("accept failed");
 	_client.insert(std::pair<int, sockaddr_in>(fd, addr));
-	FD_SET(fd, &_read_fds[0]);
+	FD_SET(fd, &_master_fds);
 	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl << std::endl;
 }
 
@@ -56,7 +56,7 @@ bool Socket::communicate(int fd) {
 	if (!rd) {
 		std::cerr << "\033[1;35mRemoving client " << fd << "\033[0m" << std::endl << std::endl;
 		close(fd);
-		FD_CLR(fd, &_read_fds[0]);
+		FD_CLR(fd, &_master_fds);
 		_client.erase(fd);
 	}
 	return (rd);
@@ -74,11 +74,11 @@ std::string Socket::getHeaderRequest(int fd) const {
 }
 
 bool Socket::isReadSet(int fd) const {
-	return (FD_ISSET(fd, &_read_fds[1]));
+	return (FD_ISSET(fd, &_read_fds));
 }
 
 bool Socket::isWriteSet(int fd) const {
-	return (FD_ISSET(fd, &_write_fds[1]));
+	return (FD_ISSET(fd, &_write_fds));
 }
 
 Socket::map& Socket::getClient(void) {

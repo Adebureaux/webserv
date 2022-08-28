@@ -39,8 +39,9 @@ class Socket
 		int 				_server_fd;
 		struct sockaddr_in	_server_addr;
 		map					_client;
-		fd_set				_read_fds[2];
-		fd_set				_write_fds[2];
+		fd_set				_master_fds;
+		fd_set				_read_fds;
+		fd_set				_write_fds;
 };
 
 #endif
