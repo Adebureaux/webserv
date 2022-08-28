@@ -40,7 +40,7 @@ class Socket
 		struct sockaddr_in	_server_addr;
 		map					_client;
 		fd_set				_read_fds[2];
-		fd_set				_write_fds;
+		fd_set				_write_fds[2];
 };
 
 #endif

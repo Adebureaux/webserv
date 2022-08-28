@@ -11,8 +11,7 @@ Server::Server(const std::string& address, unsigned int port) {
 				else if (_socket.communicate(it->first)) {
 					_request.fill(_socket.getHeaderRequest(it->first));
 					_response.respond(_request);
-					// if (_socket.isWriteSet(it->first))
-						send(it->first, _response.send().c_str(), _response.send().size(), MSG_DONTWAIT);
+					send(it->first, _response.send().c_str(), _response.send().size(), MSG_DONTWAIT);
 				}
 				else
 					it = _socket.getClient().begin();

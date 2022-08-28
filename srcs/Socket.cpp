@@ -27,16 +27,14 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 	if (listen(_server_fd, SOMAXCONN) == -1) // Maximum number of client listned
 		_perrorExit("listen failed");
 	FD_ZERO(&_read_fds[0]);
-	FD_ZERO(&_write_fds);
 	FD_SET(_server_fd, &_read_fds[0]);
-	FD_SET(_server_fd, &_write_fds);
-	_client.insert(std::pair<int, sockaddr_in>(_server_fd, _server_addr));
+	_client.insert(std::make_pair(_server_fd, _server_addr));
 }
 
 void Socket::waitRequest(void) {
 	_read_fds[1] = _read_fds[0];
 	std::cout << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
-	select(_server_fd + _client.size(), &_read_fds[1], &_write_fds, NULL, NULL);
+	select(_server_fd + _client.size(), &_read_fds[1], NULL, NULL, NULL);
 }
 
 void Socket::acceptClient(void) {
@@ -59,7 +57,6 @@ bool Socket::communicate(int fd) {
 		std::cerr << "\033[1;35mRemoving client " << fd << "\033[0m" << std::endl << std::endl;
 		close(fd);
 		FD_CLR(fd, &_read_fds[0]);
-		FD_CLR(fd, &_write_fds);
 		_client.erase(fd);
 	}
 	return (rd);
@@ -81,7 +78,7 @@ bool Socket::isReadSet(int fd) const {
 }
 
 bool Socket::isWriteSet(int fd) const {
-	return (FD_ISSET(fd, &_write_fds));
+	return (FD_ISSET(fd, &_write_fds[1]));
 }
 
 Socket::map& Socket::getClient(void) {

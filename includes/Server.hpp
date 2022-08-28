@@ -12,8 +12,8 @@ class Server
 
 	private:
 		Socket		_socket;
-		Request				_request;
-		Response			_response;
+		Request		_request;
+		Response	_response;
 };
 
 #endif
