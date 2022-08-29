@@ -14,6 +14,7 @@
 # include <arpa/inet.h>
 # include <sys/ioctl.h>
 
+
 class Socket
 {
 	public:
@@ -34,11 +35,12 @@ class Socket
 		int getServerFd(void) const;
 
 	private:
-		void _perrorExit(std::string err) const;
+		void _perrorExit(const std::string& err) const;
 
 	private:
 		int 				_server_fd;
 		struct sockaddr_in	_server_addr;
+		map					_client;
 		fd_set				_master_fds;
 		fd_set				_read_fds;
 		fd_set				_write_fds;

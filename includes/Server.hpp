@@ -4,6 +4,8 @@
 # include "Request.hpp"
 # include "Response.hpp"
 
+static Socket gsocket;
+
 class Server
 {
 	public:
@@ -11,7 +13,6 @@ class Server
 		~Server();
 
 	private:
-		Socket		_socket;
 		Request		_request;
 		Response	_response;
 };

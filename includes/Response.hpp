@@ -12,6 +12,7 @@ class Response {
 		void respond(const Request& request);
 		void get(const Request &request);
 		const std::string& send(void);
+		void clear(void);
 
 		void debug(void);
 	
