@@ -8,6 +8,7 @@
 # include <cstdio>
 # include <cerrno>
 # include <cstring>
+# include <csignal>
 # include <unistd.h>
 # include <fcntl.h>
 # include <arpa/inet.h>
@@ -38,7 +39,6 @@ class Socket
 	private:
 		int 				_server_fd;
 		struct sockaddr_in	_server_addr;
-		map					_client;
 		fd_set				_master_fds;
 		fd_set				_read_fds;
 		fd_set				_write_fds;

@@ -3,7 +3,7 @@ SRCS		= srcs/main.cpp srcs/Server.cpp srcs/Socket.cpp srcs/Request.cpp srcs/Resp
 INCS		= -I includes
 OBJS		= ${SRCS:.cpp=.o}
 RM			= rm -f
-CFLAGS		= -Wall -Wextra -Werror -std=c++98
+CFLAGS		= -Wall -Wextra -Werror -std=c++98 -g
 COMPILER	= c++
 
 ${NAME}: ${OBJS}
