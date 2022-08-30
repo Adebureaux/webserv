@@ -22,7 +22,6 @@ int main(int argc , char *argv[])
           max_clients = 30 , activity, i , valread , sd;  
     int max_sd;  
     struct sockaddr_in address;  
-    struct sockaddr_in address2;  
          
     char buffer[1025];  //data buffer of 1K 
          
@@ -30,7 +29,7 @@ int main(int argc , char *argv[])
     fd_set readfds, writefds;  
          
     //a message 
-    char *message = "ECHO Daemon v1.0 \r\n";  
+    const char *message = "ECHO Daemon v1.0 \r\n";  
      
     //initialise all client_socket[] to 0 so not checked 
     for (i = 0; i < max_clients; i++)  
@@ -107,9 +106,9 @@ int main(int argc , char *argv[])
         }  
      
         //wait for an activity on one of the sockets , timeout is NULL , 
-        //so wait indefinitely 
+        //so wait indefinitely
+        printf("select on %d\n", max_sd + 1);
         activity = select( max_sd + 1 , &readfds , &writefds , NULL , NULL); 
-        printf("activity = %d\n", activity);
        
         if ((activity < 0) && (errno!=EINTR))  
         {  

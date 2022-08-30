@@ -1,7 +1,7 @@
 #include "Socket.hpp"
 
 Socket::Socket() {
-	int opt = 1;
+	int opt = true;
 
 	// Socket domain and type
 	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -16,7 +16,12 @@ Socket::~Socket(void) {
 	close(_server_fd);
 }
 
+void signalHandler(int signal) {
+	exit(signal);
+}
+
 void Socket::initialize(const std::string& address, unsigned int port) {
+	signal(SIGINT, signalHandler);
 	_server_addr.sin_family = AF_INET;
 	_server_addr.sin_port = htons(port);
 	inet_aton(address.c_str(), &_server_addr.sin_addr);
@@ -25,16 +30,22 @@ void Socket::initialize(const std::string& address, unsigned int port) {
 		_perrorExit("bind failed"); 
 	if (listen(_server_fd, SOMAXCONN) == -1) // Maximum number of client listned
 		_perrorExit("listen failed");
-	FD_ZERO(&_master_fds);
-	FD_SET(_server_fd, &_master_fds);
-	_client.insert(std::make_pair(_server_fd, _server_addr));
+	// _client.insert(std::pair<int, sockaddr_in>(_server_fd, _server_addr));
 }
 
 void Socket::waitRequest(void) {
-	_read_fds = _master_fds;
-	_write_fds = _master_fds;
+	FD_ZERO(&_readfds);
+	FD_ZERO(&_writefds);
+	FD_SET(_server_fd, &_readfds);
+	FD_SET(_server_fd, &_writefds);
+	for (map::iterator it = _client.begin(); it != _client.end(); it++) {
+		FD_SET(it->first, &_readfds);
+		// FD_SET(it->first, &_writefds);
+	}
+	std::cout << "select on " << _server_fd + _client.size() + 1 << std::endl;
 	std::cerr << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
-	select(_server_fd + _client.size(), &_read_fds, NULL, NULL, NULL);
+	if (select(_server_fd + _client.size() + 1, &_readfds, &_writefds, NULL, NULL) == -1)
+		_perrorExit("select failed");
 }
 
 void Socket::acceptClient(void) {
@@ -42,24 +53,38 @@ void Socket::acceptClient(void) {
 	struct sockaddr_in addr;
 	unsigned int addrlen = sizeof(sockaddr_in);
 
-	if ((fd = accept(_server_fd, (struct sockaddr*)&addr, (socklen_t*)&addrlen)) == -1)
-		_perrorExit("accept failed");
-	_client.insert(std::pair<int, sockaddr_in>(fd, addr));
-	FD_SET(fd, &_master_fds);
-	std::cerr << "\033[1;35mAdd client " << fd << "\033[0m" << std::endl << std::endl;
+	if (FD_ISSET(_server_fd, &_readfds)) {
+		if ((fd = accept(_server_fd, (struct sockaddr*)&addr, (socklen_t*)&addrlen)) == -1)
+			_perrorExit("accept failed");
+		std::cerr << "\033[1;35mAdd client " << fd << " " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl << std::endl;
+		_client.insert(std::pair<int, sockaddr_in>(fd, addr));
+	}
 }
 
-bool Socket::communicate(int fd) {
-	int rd;
+void Socket::communicate(void) {
+	int rd = 0;
+	char buffer[BUFFER_SIZE];
+	Request request;
+	Response response;
 
-	ioctl(fd, FIONREAD, &rd);
-	if (!rd) {
-		std::cerr << "\033[1;35mRemoving client " << fd << "\033[0m" << std::endl << std::endl;
-		close(fd);
-		FD_CLR(fd, &_master_fds);
-		_client.erase(fd);
+	for (map::iterator it = _client.begin(); it != _client.end(); it++) {
+		if (FD_ISSET(it->first, &_readfds)) {
+			ioctl(it->first, FIONREAD, &rd);
+			if (!rd) {
+				std::cerr << "\033[1;35mRemove client " << it->first << " " << inet_ntoa(it->second.sin_addr) << ":" <<  ntohs(it->second.sin_port) << "\033[0m" << std::endl;
+				close(it->first);
+				FD_CLR(it->first, &_readfds);
+				_client.erase(it->first);
+				it = _client.begin();
+			}
+		}
+		// else if (FD_ISSET(_server_fd, &_writefds)) {
+		else {
+			getHeaderRequest(it->first);
+			request.fill(buffer);
+			response.respond(request);
+		}
 	}
-	return (rd);
 }
 
 std::string Socket::getHeaderRequest(int fd) const {
@@ -74,11 +99,11 @@ std::string Socket::getHeaderRequest(int fd) const {
 }
 
 bool Socket::isReadSet(int fd) const {
-	return (FD_ISSET(fd, &_read_fds));
+	return (FD_ISSET(fd, &_readfds));
 }
 
 bool Socket::isWriteSet(int fd) const {
-	return (FD_ISSET(fd, &_write_fds));
+	return (FD_ISSET(fd, &_writefds));
 }
 
 Socket::map& Socket::getClient(void) {
