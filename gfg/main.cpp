@@ -175,7 +175,7 @@ int main(int argc , char *argv[])
                 }  
                      
                 //Echo back the message that came in 
-                else if (FD_ISSET(sd, &writefds))
+                else
                 {  
                     //set the string terminating NULL byte on the end 
                     //of the data read 

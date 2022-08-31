@@ -33,7 +33,6 @@ class Socket
 		std::string getHeaderRequest(int fd) const;
 		bool isReadSet(int fd) const;
 		bool isWriteSet(int fd) const;
-		map& getClient(void);
 		int getServerFd(void) const;
 
 	private:
@@ -42,8 +41,8 @@ class Socket
 	private:
 		int 				_server_fd;
 		struct sockaddr_in	_server_addr;
-		map					_client;
-		fd_set				_master_fds;
+		// map					_client;
+		int					_client[SOMAXCONN];
 		fd_set				_readfds;
 		fd_set				_writefds;
 };
