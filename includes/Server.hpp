@@ -1,8 +1,6 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 # include "Socket.hpp"
-# include "Request.hpp"
-# include "Response.hpp"
 
 class Server
 {
@@ -11,9 +9,7 @@ class Server
 		~Server();
 
 	private:
-		Socket		_socket;
-		Request		_request;
-		Response	_response;
+		Socket _socket;
 };
 
 #endif

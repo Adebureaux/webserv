@@ -8,10 +8,14 @@
 # include <cstdio>
 # include <cerrno>
 # include <cstring>
+# include <csignal>
 # include <unistd.h>
 # include <fcntl.h>
 # include <arpa/inet.h>
 # include <sys/ioctl.h>
+# include "Request.hpp"
+# include "Response.hpp"
+
 
 class Socket
 {
@@ -25,23 +29,22 @@ class Socket
 		void initialize(const std::string& address, unsigned int port);
 		void waitRequest(void);
 		void acceptClient(void);
-		bool communicate(int fd);
+		void communicate(void);
 		std::string getHeaderRequest(int fd) const;
 		bool isReadSet(int fd) const;
 		bool isWriteSet(int fd) const;
-		map& getClient(void);
 		int getServerFd(void) const;
 
 	private:
-		void _perrorExit(std::string err) const;
+		void _perrorExit(const std::string& err) const;
 
 	private:
 		int 				_server_fd;
 		struct sockaddr_in	_server_addr;
-		map					_client;
-		fd_set				_master_fds;
-		fd_set				_read_fds;
-		fd_set				_write_fds;
+		// map					_client;
+		int					_client[SOMAXCONN];
+		fd_set				_readfds;
+		fd_set				_writefds;
 };
 
 #endif
