@@ -1,0 +1,37 @@
+http://www.wijata.com/cgi/cgispec.html#4.0
+
+env variables to pass to cgi program: (a passer en dernier parametre de execve)
+	REDIRECT_STATUS = 200
+	GATEWAY_INTERFACE = "CGI/1.1"
+	SCRIPT_NAME = path requested by client ( ex: /index.php) URL path that could identify the CGI script MANDATORY
+	SCRIPT_FILENAME = path requested by client ( ex: /index.php)
+	REQUEST_METHOD = methode type ( GET | POST | DELETE)
+	CONTENT_LENGTH = taille du body de la requete ( BODY QUI SERA PASSE AU CGI via standard input)
+	CONTENT_TYPE = Content-Type from header
+	PATH_INFO = path requested by client sans la partie QUERY
+	PATH_TRANSLATED = path requested by client but decoded from uri format ie: index%2ephp = index.php
+	QUERY_STRING = partie de l'uri qui se trouve apres premier "?" (definie par un formulaire du client) ex: name1=value1&name2=value2
+	REMOTEaddr = ?
+	REMOTE_IDENT = ? necesserary for authentification stuff PAS OBLIGATOIRE
+	REMOTE_USER = ? necesserary for authentification stuff
+	REQUEST_URI = full uri requested by client ?
+	SERVER_NAME = The SERVER_NAME meta-variable is set to the name for this of the server, as used in derived from the <host> part of the script-URI (see section 3.2). Thus either a fully qualified domain name, or an IP address.
+	SERVER_PORT = set to the port on which thise request was received, as used in the <port> part of the script-URI.
+	SERVER_PROTOCOL = HTTP/1.1 OBLIGATOIRE
+	SERVER_SOFTWARE = webserv/1.0 OBLIGATOIRE
+
+
+	MUST : (Servers MUST provide the following meta-variables to scripts. See the individual descriptions for exceptions and semantics.)
+		CONTENT_LENGTH	CONTENT_TYPE	GATEWAY_INTERFACE	PATH_INFO	QUERY_STRING	REQUEST_METHOD	REMOTE_ADDR	SCRIPT_NAME	SERVER_NAME	SERVER_PORT	SERVER_PROTOCOL	SERVER_SOFTWARE
+
+	SHOULD : (Servers SHOULD define the following meta-variables for scripts. See the individual descriptions for exceptions and semantics.
+				In addition, servers SHOULD provide meta-variables for all fields present in the HTTP request header, with the exception of those involved with access control. Servers MAY at their discretion provide meta-variables for access control fields.)
+		AUTH_TYPE	REMOTE_HOST
+
+	MAY: (Servers MAY define the following meta-variables. See the individual descriptions for exceptions and semantics.)
+		PATH_TRANSLATED		REMOTE_IDENT	REMOTE_USER
+
+
+
+dans response::response:
+si METHOD CGI lancer fonction qui parse la requete pour ensuite preparer le passtrought a l'exec du binaire cgi
