@@ -9,6 +9,7 @@
 #define POST 1
 #define DELETE 2
 #define NO_METHOD -1
+
 #define OR  0
 #define AND 1
 
@@ -30,10 +31,12 @@ class Request
     
     typedef void (Request::*pf)(void);
 
-
-    size_t      _head;
+    // _raw_request(raw_request), _head(0), _method(-1), _connection("keep alive"), _authority(""), _host(""), _request_target("")
     std::string _raw_request;
+    size_t      _head;
     int         _method;
+    std::string _connection;
+    std::string _authority;
     std::string _host;
     std::string _request_target;
 
@@ -50,20 +53,20 @@ class Request
     */
 
     va_list *ret_copy(va_list src);                                                             // ✓
-    void expand_va_arg(std::string::const_iterator &fct_it_tag, va_list arg);                   // ✓
+    void expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *arg);                   // ✓
     void _range(char start, char end);                                                          // ✓
     void _is_char(char c);                                                                      // ✓
     void _is_charset(std::string const &charset);                                               // ✓
     void _is_str(std::string const &str);                                                       // ✓
     void n_star_m(int n, int m,void (Request::*fct)(void));  //s                                // ✓
     void n_star_m_or(int n, int m, ...);                                                        // ✓
-    void n_star_m_or(int n, int m, va_list arg);    //S                                         // ✓
+    void n_star_m_or(int n, int m, va_list *arg);    //S                                         // ✓
     void n_star_m_and(int n, int m, ...);                                                       // ✓
-    void n_star_m_and(int n, int m, va_list arg);   //S                                         // ✓
+    void n_star_m_and(int n, int m, va_list *arg);   //S                                         // ✓
     void _or(const std::string &param, ... );       //o                                         // ✓
-    void _or(const std::string &param, va_list arg);                                            // ✓
+    void _or(const std::string &param, va_list *arg);                                            // ✓
     void _and(const std::string &param, ... );      //a                                         // ✓
-    void _and(const std::string &param, va_list arg);                                           // ✓                          
+    void _and(const std::string &param, va_list *arg);                                           // ✓                          
 
     void DIGIT();               // ✓
     void BIT();                 // ✓
@@ -108,6 +111,7 @@ class Request
                         void hier_part();
                             void path_abempty();
                             void path_absolute();
+                                void segment_nz();
                             void path_rootless();
                     void authority_form();
                         void authority();
@@ -119,6 +123,7 @@ class Request
                                         void ls32();
                                     void IPvFuture();
                                 void IPv4address();
+                                    void dec_octet();
                                 void reg_name();
                             void port();
                     void asterisk_form();
@@ -129,8 +134,10 @@ class Request
             void field_value();
                 void field_content();
                     void field_vchar();
+                        void VCHAR();
                         void obs_text();
-                void obs_fold();
+                    void obs_fold();
+                // void obs_fold();
         void message_body();
 };
 

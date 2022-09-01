@@ -9,8 +9,8 @@ CHAR = 0x01-7F
                     ; excluding NUL
 
 # CR = 0x0D
-                    ; '\r'
-                    ; carriage return
+                    # ; '\r'
+                    # ; carriage return
 
 # LF = 0x0A
 #                     ; '\n'
@@ -55,21 +55,21 @@ LWSP = *(WSP / CRLF WSP)
 # OCTET = 0x00-FF
 #                     ; 8 bits of data
 
-VCHAR = 0x21-7E
-                    ; visible (printing) characters
+# VCHAR = 0x21-7E
+                    # ; visible (printing) characters
 
 //// parser
 
-OWS = *( SP / HTAB )
+# OWS = *( SP / HTAB )
 
 
-dec_octet   = DIGIT                 ; 0-9
-			/ 0x31-39 DIGIT         ; 10-99   ; 1-9 0-9
-			/ "1" 2DIGIT            ; 100-199 ; "1" 0-9 0-9
-			/ "2" 0x30-34 DIGIT     ; 200-249 ; "2" 0-4 0-9
-			/ "25" 0x30-35          ; 250-255 ; "25" 0-5
+# dec_octet   = DIGIT                 ; 0-9
+			# / 0x31-39 DIGIT         ; 10-99   ; 1-9 0-9
+			# / "1" 2DIGIT            ; 100-199 ; "1" 0-9 0-9
+			# / "2" 0x30-34 DIGIT     ; 200-249 ; "2" 0-4 0-9
+			# / "25" 0x30-35          ; 250-255 ; "25" 0-5
 
-IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub_delims / ":" )
+# IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub_delims / ":" )
 
 # h16           = 1*4( HEXDIG )
 
@@ -77,28 +77,28 @@ IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub_delims / ":" )
 
 # IPv6address =                            
 #                                    6( h16 ":" ) ls32
-# 			/                       "::" 5( h16 ":" ) ls32
-# 			/ [               h16 ] "::" 4( h16 ":" ) ls32
-# 			/ [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
-# 			/ [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
-# 			/ [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
-# 			/ [ *4( h16 ":" ) h16 ] "::"              ls32
-# 			/ [ *5( h16 ":" ) h16 ] "::"              h16
-# 			/ [ *6( h16 ":" ) h16 ] "::"
+			# /                       "::" 5( h16 ":" ) ls32
+			# / [               h16 ] "::" 4( h16 ":" ) ls32
+			# / [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
+			# / [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
+			# / [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
+			# / [ *4( h16 ":" ) h16 ] "::"              ls32
+			# / [ *5( h16 ":" ) h16 ] "::"              h16
+			# / [ *6( h16 ":" ) h16 ] "::"#
 
-IPv4address = dec_octet "." dec_octet "." dec_octet "." dec_octet
+# IPv4address = dec_octet "." dec_octet "." dec_octet "." dec_octet
 
-segment_nz = 1*(pchar)
+# segment_nz = 1*(pchar)
 
-reg_name = *( unreserved / pct_encoded / sub_delims )
+# reg_name = *( unreserved / pct_encoded / sub_delims )
 
-IP_literal = "[" ( IPv6address / IPvFuture  ) "]"
+# IP_literal = "[" ( IPv6address / IPvFuture  ) "]"
 
-path_rootless = segment_nz *( "/" segment )
+# path_rootless = segment_nz *( "/" segment )
 
-path_absolute = "/" [ segment_nz *( "/" segment ) ]
+# path_absolute = "/" [ segment_nz *( "/" segment ) ]
 
-path_abempty = *( "/" segment )
+# path_abempty = *( "/" segment )
 
 # sub_delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
 
@@ -106,21 +106,21 @@ path_abempty = *( "/" segment )
 
 # unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
 
-port = *DIGIT
+# port = *DIGIT
 
-host = IP_literal / IPv4address / reg_name
+# host = IP_literal / IPv4address / reg_name
 
 # userinfo = *( unreserved / pct_encoded / sub_delims / ":" )
 
-hier_part = "//" [ authority / path_abempty / path_absolute / path_rootless ]
+# hier_part = "//" [ authority / path_abempty / path_absolute / path_rootless ]
 
 # scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
 
 # pchar = unreserved / pct_encoded / sub_delims / ":" / "@"
 
-segment = *pchar
+# segment = *pchar
 
-authority = [ userinfo "@" ] host [ ":" port ]
+# authority = [ userinfo "@" ] host [ ":" port ]
 
 # absolute_URI  = scheme ":" hier_part [ "?" query ]
 
@@ -130,41 +130,41 @@ authority = [ userinfo "@" ] host [ ":" port ]
 
 # tchar = "!" / "#" / "$" / "%" / "&" / "\'" / "*" / "+" / "-" / "." / "^" / "_" / "\`" / "|" / "~" / DIGIT / ALPHA
 
-HTTP_name = 0x48.54.54.50 ; HTTP
+# HTTP_name = 0x48.54.54.50 ; HTTP
 
-asterisk_form = "*"
+# asterisk_form = "*"
 
-authority_form = authority
+# authority_form = authority
 
 # absolute_form = absolute_URI
 
 # origin_form = absolute_path [ "?" query ]
 
-obs_fold = CRLF 1*( SP / HTAB )
+# obs_fold = CRLF 1*( SP / HTAB )
 
-obs_text = 0x80-FF
+# obs_text = 0x80-FF
 
-field_vchar = VCHAR / obs_text
+# field_vchar = VCHAR / obs_text
 
-field_content = field_vchar [ 1*( SP / HTAB ) field_vchar ]
+# field_content = field_vchar [ 1*( SP / HTAB ) field_vchar ]
 
-token = 1*tchar
+# token = 1*tchar
 
-HTTP_version = HTTP_name "/" 1*DIGIT "." 1*DIGIT
+# HTTP_version = HTTP_name "/" 1*DIGIT "." 1*DIGIT
 
 # request_target = origin_form / absolute_form / authority_form / asterisk_form
 
 # method = token
 
-field_value = *( field_content / obs_fold )
+# field_value = *( field_content / obs_fold )
 
-field_name = token
+# field_name = token
 
 # request_line = method SP request_target SP HTTP_version CRLF
 
-message_body = *OCTET
+# message_body = *OCTET
 
-header_field = field_name ":" OWS field_value OWS
+# header_field = field_name ":" OWS field_value OWS
 
 # start_line = request_line
 
@@ -172,3 +172,5 @@ header_field = field_name ":" OWS field_value OWS
 
 
 # ?index.html index%2Ehtml
+
+# connection var
