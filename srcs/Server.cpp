@@ -1,7 +1,7 @@
 #include "Server.hpp"
 
-Server::Server(const std::string& address, unsigned int port) {
-	_socket.initialize(address, port);
+Server::Server() {
+	_socket.initialize();
 	while (true) {
 		_socket.waitRequest();
 		_socket.acceptClient();

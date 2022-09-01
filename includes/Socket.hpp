@@ -3,7 +3,7 @@
 # define BUFFER_SIZE 4096
 # include <string>
 # include <iostream>
-# include <map>
+# include <set>
 # include <cstdlib>
 # include <cstdio>
 # include <cerrno>
@@ -16,15 +16,13 @@
 # include "Request.hpp"
 # include "Response.hpp"
 
-typedef std::map<int, sockaddr_in> map;
-
 class Socket
 {
 	public:
 		Socket();
 		~Socket();
 	
-		void initialize(const std::string& address, unsigned int port);
+		void initialize(void);
 		void waitRequest(void);
 		void acceptClient(void);
 		void communicate(void);

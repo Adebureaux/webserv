@@ -5,7 +5,7 @@
 class Server
 {
 	public:
-		Server(const std::string& address, unsigned int port);
+		Server();
 		~Server();
 
 	private:
