@@ -10,7 +10,8 @@ _raw_request(raw_request), _head(0), _method(-1), _connection("keep alive"), _au
     }
     catch(const std::exception& e)
     {
-        std::cerr << "error req/" << e.what() << '\n';
+        std::cout << "error req/" << e.what() << '\n';
+        std::cout << &_raw_request[_head] << '\n';
     }
     
 }
@@ -51,10 +52,11 @@ void Request::n_star_m_or(int n, int m, va_list *arg)
     {
         std::cout << "----n_star_m_or" << std::endl;
         _or(fct_ptr_tag, arg);
-        for (i = ((n > 0) ? 1 : 0); i != m; i++)
+        for (i = 1; i != m; i++)
         {
+             std::cout << "----n_star_m_or" << std::endl;
             // std::cout << "n_star_m_or" << std::endl;
-            _or(fct_ptr_tag, *ret_copy(*ap));
+            _or(fct_ptr_tag, ret_copy(*ap));
         }
     }
     catch(const std::exception& e)
@@ -78,24 +80,31 @@ void Request::n_star_m_and(int n, int m, ...)
 void Request::n_star_m_and(int n, int m, va_list *arg)
 {
     std::string fct_ptr_tag = va_arg(*arg, char *);
-
     va_list *ap = ret_copy(*arg);
     int i = 0;
-
-
+    std::cout << "n_star_m_and " << fct_ptr_tag <<std::endl;
     try
     {
         /* code */
+        std::cout << "----------------------------- before " << i << " " << n << std::endl;
         _and(fct_ptr_tag, arg);
-        for (i = ((n > 0) ? 1 : 0); i != m; i++)
+        std::cout << "----------------------------- 1" << std::endl;
+        for (i = 1; i != m; i++)
         {
-            _and(fct_ptr_tag, *ret_copy(*ap));
+            std::cout << "----------------------------- 2" << std::endl;
+            _and(fct_ptr_tag, ret_copy(*ap));
         }
     }
     catch(const std::exception& e)
     {
+        std::cout << "error in star _and" << std::endl;
+        if (i == n)
+        {std::cout << "----------------------------- 3" << std::endl;
+            return;}
+        std::cout << "n_star_m_and i=" << i << " n=" << n << std::endl;
         if(i < n || (m != -1 && i > m))
             throw std::invalid_argument(e.what());
+        std::cout << "n_star_m_and i=" << i << " n=" << n << std::endl;
         return;
     }
     
@@ -116,26 +125,98 @@ void Request::_and(const std::string &fct_ptr_tag, ...)
     _and(fct_ptr_tag, &arg);        
 }
 
+void Request::finish_expand(std::string::const_iterator start, std::string::const_iterator end, va_list *arg)
+{
+    int i;
+    char *str;
+    std::string string; 
+    void(Request::*pf)(void);
+
+    std::cout << "finish_expand _head" << _head << std::endl;
+    while ( start != end)
+    {
+        switch (*start)
+        {
+            case 's':
+                i = va_arg(*arg, int);
+                i = va_arg(*arg, int);
+                // pf = va_arg(*arg,void(Request::*)(void));
+                (void)(va_arg(*arg,void(Request::*)(void)));
+                (void)pf;
+                break;
+            case 'S':
+                i = va_arg(*arg, int);
+                i = va_arg(*arg, int);
+                i = va_arg(*arg, int);
+                string = std::string(va_arg(*arg, char *));
+                finish_expand(string.begin(), string.end(), arg);
+                break;
+            case 'o':
+                string = std::string(va_arg(*arg, char *));
+                finish_expand(string.begin(), string.end(), arg);
+                break;
+            case 'a':
+                string = std::string(va_arg(*arg, char *));
+                finish_expand(string.begin(), string.end(), arg);
+                break;
+            case 'n':
+                //  (this->*va_arg(*arg,void(Request::*)(void)))();
+                std::cout << "expand fct" << std::endl;
+                (void)(va_arg(*arg,void(Request::*)(void)));
+                // (void)pf;
+                break;
+            case 'r' :
+                i = va_arg(*arg, int);
+                i = va_arg(*arg, int);
+                break;
+            case 'R' :
+                str = va_arg(*arg, char *);
+                break;
+            case 'c' :
+                i = va_arg(*arg, int);
+                break;
+            case 'C' :
+                str = va_arg(*arg, char *);
+                break;
+            default:
+                throw std::invalid_argument("error _and wrong arg");
+                break;
+        }
+        start++;
+    }
+    (void)i;
+    (void)str;
+    (void)string;
+}
+
 void Request::expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *arg)
 {
     std::cout << "expand_va_arg it = " << *fct_it_tag << std::endl;
+    int n;
+    int m;
     switch (*fct_it_tag)
     {
         case 's':
-            n_star_m(va_arg(*arg, int), va_arg(*arg, int), va_arg(*arg,void(Request::*)(void)));
+            n = va_arg(*arg, int);
+            m = va_arg(*arg, int);
+            n_star_m(n, m, va_arg(*arg,void(Request::*)(void)));
             break;
         case 'S':
             switch (va_arg(*arg, int))
             {
-            case AND:
-                n_star_m_or(va_arg(*arg, int),va_arg(*arg, int), arg);
-                break;
-            case OR:
-                n_star_m_or(va_arg(*arg, int),va_arg(*arg, int), arg);
-                break;
-            default:
-                throw std::invalid_argument("error _and wrong arg S");
-                break;
+                case AND:
+                    n = va_arg(*arg, int);
+                    m = va_arg(*arg, int);
+                    n_star_m_and(n,m, arg);
+                    break;
+                case OR:
+                    n = va_arg(*arg, int);
+                    m = va_arg(*arg, int);
+                    n_star_m_or(n,m, arg);
+                    break;
+                default:
+                    throw std::invalid_argument("error _and wrong arg S");
+                    break;
             }
             break;
         case 'o':
@@ -151,7 +232,7 @@ void Request::expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *ar
             _range(va_arg(*arg, int),va_arg(*arg, int));
             break;
         case 'R' :
-            _is_str(va_arg(*arg, char *));
+            _is_str(std::string(va_arg(*arg, char *)));
             break;
         case 'c' :
             _is_char(va_arg(*arg, int));
@@ -173,11 +254,24 @@ void Request::_and(const std::string &fct_ptr_tag, va_list *arg)
     
     i++;
     std::cout << "_and" << std::endl;
-    while (start != end)
+    try
     {
-        std::cout << i << " _and" <<std::endl;
-        expand_va_arg(start, arg);
+        while (start != end)
+        {
+            std::cout << i << " _and" <<std::endl;
+            expand_va_arg(start, arg);
+            start++;
+        }
+    }
+    catch(const std::exception& e)
+    {
         start++;
+        std::cout << "error finish expand _and" << std::endl;
+        if (start != end)
+            finish_expand(start, end, arg);
+        
+        throw std::invalid_argument(e.what());
+        // std::cerr << e.what() << '\n';
     }
     std::cout << "_and done" << std::endl;
 }
@@ -188,24 +282,31 @@ void Request::_or(const std::string &fct_ptr_tag, va_list *arg)
     std::string::const_iterator end = fct_ptr_tag.end();
     static int i = -1;
     i++;
+    std::cout << i << " _or" <<std::endl;
     while (start != end)
     {
         try
         {
-            std::cout << i << " _or" <<std::endl;
             expand_va_arg(start, arg);
             std::cout << "_or done" << std::endl;
+            start++;
+            std::cout << "_or finish expand" << std::endl;
+            std::cout << *start << std::endl;
+            // (this->*va_arg(*arg,void(Request::*)(void)))();
+            if (start != end)
+                finish_expand(start, end, arg);
+            // exit(0);
             return;
         }
         catch(const std::exception& e)
         {
-            start++;
-            if(start >= end)
+            if(start +1 >= end)
             {
                 //    std::cout << i++ << " _or" <<std::endl;
                 throw std::invalid_argument("error _or" + std::string(e.what()));
             }
         }
+        start++;
         // start++;    
     }
     // throw std::invalid_argument("error _or wrong arg");
@@ -213,11 +314,13 @@ void Request::_or(const std::string &fct_ptr_tag, va_list *arg)
 
 void Request::CR()
 {
+    std::cout << "CR" << std::endl;
     _is_char('\r');
 }
 
 void Request::CRLF()
 {
+    std::cout << "Request::CRLF" << std::endl;
     _and("nn", &Request::CR, &Request::LF);
 }
 
@@ -226,13 +329,13 @@ void Request::http_message()
     try
     {
         std::cout << "http_message" << std::endl;
-        // _head = 14444444;
         _and("nSns", &Request::start_line, AND, STAR_NO_MIN, STAR_NO_MAX, "nn", &Request::header_field, &Request::CRLF, &Request::CRLF, STAR_NO_MIN, STAR_NO_MAX, &Request::message_body);
         /* code */
     }
     catch(const std::exception& e)
     {
-        std::cerr << "http_message/" << e.what() << '\n';
+        throw std::invalid_argument("http_message/" + std::string(e.what()));
+        // std::cerr << "http_message/" << e.what() << '\n';
     }
     
 }
@@ -326,7 +429,8 @@ void Request::origin_form()
     {
         std::cout << "origin_form" << std::endl;
         _and("nS", &Request::absolute_path, AND, STAR_NO_MIN, 1, "cn", '?', &Request::query);
-        /* code */
+        std::cout << "end origin_form" << std::endl;
+        /* code */ 
     }
     catch(const std::exception& e)
     {
@@ -342,6 +446,7 @@ void Request::absolute_path()
     {
         std::cout << "absolute_path" << std::endl;
         n_star_m_and(1, STAR_NO_MAX, "cn", '/', &Request::segment);
+        std::cout << "end absolute_path" << std::endl;
         /* code */
     }
     catch(const std::exception& e)
@@ -358,10 +463,12 @@ void Request::segment()
     {
         std::cout << "segment" << std::endl;
         n_star_m(STAR_NO_MIN, STAR_NO_MAX, &Request::PCHAR);
+        std::cout << "end segment_2" << std::endl;
         /* code */
     }
     catch(const std::exception& e)
     {
+        std::cout << "end segment" << std::endl;
         throw std::invalid_argument("segment/" + std::string(e.what()));
         // std::cerr << e.what() << '\n';
     }
@@ -369,11 +476,13 @@ void Request::segment()
 }
 void Request::query()
 {
-    n_star_m_or(STAR_NO_MAX, STAR_NO_MIN, "ncc", &Request::PCHAR, '/', '?');
+    std::cout << "query" << std::endl;
+    n_star_m_or(STAR_NO_MIN, STAR_NO_MAX, "ncc", &Request::PCHAR, '/', '?');
 }
 
 void Request::LF()
 {
+    std::cout << "LF" << std::endl;
     _is_char('\n');
 }
     
@@ -395,6 +504,7 @@ void Request::DIGIT()
 
 void Request::HEXDIG()
 {
+    std::cout << "HEXDIG" << std::endl;
     _or("nr", &Request::DIGIT, 'A', 'F');
 }
 
@@ -426,10 +536,11 @@ void Request::OCTET()
     _range(0x00, 0xFF);
 }
 
-
+// int compare (size_t pos, size_t len, const string& str, size_t subpos, size_t sublen) const;
 void Request::_is_str(std::string const &str)
 {
-    if(str.compare(0, str.length(), _raw_request, _head, _head + str.length()))
+    std::cout << "is_str" << std::endl;
+    if(str.compare(0, str.length(), _raw_request, _head, str.length()))
         throw std::invalid_argument(str + " was expected");
     _head += str.length();
 }
@@ -463,7 +574,23 @@ void Request::_is_char(char c)
 {
     std::cout << "_is_char " << '\''<< c << '\''<< std::endl;
     if (_raw_request[_head] != c)
-        throw std::invalid_argument("char '" + std::string(&c, 1) + "' was expected");
+    {
+        switch (c)
+        {
+        case '\r':
+            throw std::invalid_argument("char '\\r' was expected");
+            break;
+        case '\n':
+            throw std::invalid_argument("char '\\n' was expected");
+            break;
+        case '\t':
+            throw std::invalid_argument("char '\\t' was expected");
+            break;
+        default:
+            throw std::invalid_argument("char '" + std::string(&c, 1) + "' was expected");
+            break;
+        }        
+    }
     _head++;
     std::cout << "is char ok" << std::endl;
 }
@@ -565,7 +692,7 @@ void Request::authority()
 // userinfo = *( unreserved / pct_encoded / sub_delims / ":" )
 void Request::userinfo()
 {
-    n_star_m_or(STAR_NO_MAX, STAR_NO_MIN, "nnnc", &Request::unreserved, &Request::pct_encoded, &Request::sub_delims, ':');
+    n_star_m_or(STAR_NO_MIN, STAR_NO_MAX, "nnnc", &Request::unreserved, &Request::pct_encoded, &Request::sub_delims, ':');
 }
 
 void Request::host()
@@ -706,6 +833,7 @@ void Request::authority_form()
 
 void Request::header_field()
 {
+    std::cout << "Request::header_field" << std::endl;
     size_t old_head = _head;
     try
     {
@@ -717,26 +845,38 @@ void Request::header_field()
         throw std::invalid_argument("header_field/" + std::string(e.what()));
         // std::cerr << e.what() << '\n';
     }
+    // std::cout << "end Request::header_field" << std::endl;
     
-    std::string str("connection");
-    if (!str.compare(0, str.length(), &Request::_raw_request[old_head], old_head, old_head + str.length()))
+    std::string str("Connection");
+    if (!str.compare(0, str.length(), _raw_request, old_head, str.length()))
     {
         _head = old_head;
+        std::cout << "Connection 1 _head = " << _head << std::endl;
         field_name();
+        std::cout << "Connection 2_head = " << _head << std::endl;
         _is_char(':');
+        std::cout << "Connection 3_head = " << _head << std::endl;
         OWS();
+        std::cout << "Connection 4_head = " << _head << std::endl;
         old_head = _head;
         field_value();
+        std::cout << "Connection 5_head = " << _head << std::endl;
         _connection = std::string(_raw_request.begin() + old_head, _raw_request.begin() + _head);
         OWS();
+        std::cout << "Connection 6_head = " << _head << std::endl;
     }
+    // std::cout << "Connection _head = " << _head << std::endl;
+    std::cout << "end Request::header_field head = " << _head << std::endl;
+    
 
 
 }
 
 void Request::field_name()
 {
+    std::cout << "field_name" << std::endl;
     token();
+    std::cout << "end field_name" << std::endl;
 }
 
 // OWS = *( SP / HTAB )
@@ -750,14 +890,18 @@ void Request::OWS()
 
 void Request::field_value()
 {
+    std::cout << "field_value" << std::endl;
     n_star_m_or(STAR_NO_MIN, STAR_NO_MAX, "nn", &Request::field_content, &Request::obs_fold);
+    std::cout << "end field_value" << std::endl;
 }
 
 // field_content = field_vchar [ 1*( SP / HTAB ) field_vchar ]
 
 void Request::field_content()
 {
+    std::cout << "field_content _head = " << _head << std::endl;
     _and("nS", &Request::field_vchar, AND, STAR_NO_MIN, 1, "Sn", OR, 1, STAR_NO_MAX, "nn", &Request::SP, &Request::HTAB, &Request::field_vchar);
+    std::cout << "field_content _head = " << _head << std::endl;
 }
 
 // field_vchar = VCHAR / obs_text
@@ -769,11 +913,13 @@ void Request::field_vchar()
 
 void Request::VCHAR()
 {
+    std::cout << "VCHAR" << std::endl;
     _range(0x21, 0x7e);
 }
 
 void Request::obs_text()
 {
+    std::cout << "obs_text" << std::endl;
     _range(0x80, 0xFF);
 }
 
@@ -781,7 +927,21 @@ void Request::obs_text()
 
 void Request::obs_fold()
 {
-    _and("nS", &Request::CRLF, AND, 1, STAR_NO_MAX, "nn", &Request::SP, &Request::HTAB);
+    std::cout << "obs_fold head= "<< _head << std::endl;
+    try
+    {
+        _and("nS", &Request::CRLF, AND, 1, STAR_NO_MAX, "nn", &Request::SP, &Request::HTAB);
+        /* code */
+    }
+    catch(const std::exception& e)
+    {
+        if (std::string(e.what()) == "char ' ' was expected" || std::string(e.what()) == "char '\\t' was expected")
+            _head -= 2;
+        throw std::invalid_argument("obs_fold");
+    }
+    
+
+    std::cout << "2 obs_fold head= "<< _head << std::endl;
 }
 
 void Request::token()
@@ -791,5 +951,6 @@ void Request::token()
 
 void Request::message_body()
 {
+    throw std::invalid_argument("message_body");
     n_star_m(STAR_NO_MIN, STAR_NO_MAX, &Request::OCTET);
 }

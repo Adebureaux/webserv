@@ -10,8 +10,8 @@
 #define DELETE 2
 #define NO_METHOD -1
 
-#define OR  0
-#define AND 1
+#define OR  1
+#define AND 0
 
 #define STAR_NO_MIN     0
 #define STAR_NO_MAX     -1
@@ -54,6 +54,7 @@ class Request
 
     va_list *ret_copy(va_list src);                                                             // ✓
     void expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *arg);                   // ✓
+    void finish_expand(std::string::const_iterator start, std::string::const_iterator end, va_list *arg);
     void _range(char start, char end);                                                          // ✓
     void _is_char(char c);                                                                      // ✓
     void _is_charset(std::string const &charset);                                               // ✓
