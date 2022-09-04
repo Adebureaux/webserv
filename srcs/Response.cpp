@@ -24,6 +24,10 @@ void Response::get(const Request &request) {
 	_response.append(buffer);
 }
 
+void Response::clear(void) {
+	_response.clear();
+}
+
 const std::string& Response::send(void) {
 	return (_response);
 }

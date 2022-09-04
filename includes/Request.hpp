@@ -15,6 +15,8 @@ class Request {
 		std::string getPath(void) const;
 		std::string getHttp(void) const;
 
+		void clear(void);
+
 		void debug(void);
 
 	private:

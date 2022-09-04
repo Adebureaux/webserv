@@ -26,6 +26,12 @@ std::string Request::getHttp(void) const {
 	return (_http);
 }
 
+void Request::clear(void) {
+	_method.clear();
+	_path.clear();
+	_http.clear();
+}
+
 void Request::debug(void) {
 	if (_method == "GET")
 		std::cerr << "\033[1;34mRequest : GET Method\033[0m" << std::endl;
