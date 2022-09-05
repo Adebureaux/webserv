@@ -6,5 +6,7 @@ int main(int ac, char **argv, char **envp)
 	(void)argv;
 	(void)envp;
 	Server server;
+
+	server.launch();
 	return (0);
 }

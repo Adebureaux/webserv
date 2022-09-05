@@ -8,8 +8,7 @@ class Server
 		Server();
 		~Server();
 
-	private:
-		Socket _socket;
+		void launch(void);
 };
 
 #endif
