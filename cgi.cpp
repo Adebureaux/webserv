@@ -77,7 +77,7 @@ int main(int ac, char *const * av) {
 	close(out[0]);
 	while (read(error[0], buffer_error, sizeof(buffer_error)) != 0) {}
 	close(error[0]);
-	std::cout<< GREEN <<"CGI OUT:\n" << buffer_out << CLEAR;
-	std::cout<<std::endl << RED <<"CGI ERROR:" << status <<"\n" << buffer_error << CLEAR;
+	std::cout<< GREEN << "CGI OUT:\n" << buffer_out << CLEAR;
+	std::cout<<std::endl << RED << "CGI ERROR:" << status << "\n" << buffer_error << CLEAR;
 	return 0;
 }
