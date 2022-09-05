@@ -21,6 +21,32 @@
 #define WHITE   "\033[37m"      /* White */
 #define CLEAR "\033[0m"
 
+void set_cgi_env(void)
+{
+	setenv("SERVER_SOFTWARE", "webserv/1.0", 1); // Le nom et la version du serveur HTTP répondant à la requête. (Format : nom/version)
+	setenv("SERVER_NAME", "webserv", 1); // Le nom d'hôte, alias DNS ou adresse IP du serveur.
+	setenv("GATEWAY_INTERFACE", "PHP/7.4.3", 1); // La révision de la spécification CGI que le serveur utilise. (Format : CGI/révision)
+	setenv("SERVER_PROTOCOL", "HTTP/1.1", 1); // Le nom et la révision du protocole dans lequel la requête a été faite (Format : protocole/révision)
+	setenv("SERVER_PORT", "8080", 1); // Le numéro de port sur lequel la requête a été envoyée.
+	setenv("REQUEST_METHOD", "GET", 1); // La méthode utilisée pour faire la requête. Pour HTTP, elle contient généralement « GET » ou « POST ».
+	// setenv("PATH_INFO", "/", 1); // Le chemin supplémentaire du script tel que donné par le client. Par exemple, si le serveur héberge le script « /cgi-bin/monscript.cgi » et que le client demande l'url « http://serveur.org/cgi-bin/monscript.cgi/marecherche », alors PATH_INFO contiendra « marecherche ».
+	setenv("PATH_TRANSLATED", "index.php", 1); // Contient le chemin demandé par le client après que les conversions virtuel → physique ont été faites par le serveur.
+	// setenv("SCRIPT_NAME", "index.php", 1); // Le chemin virtuel vers le script étant exécuté. Exemple : « /cgi-bin/script.cgi »
+	setenv("QUERY_STRING", "name=Romain", 1); // Contient tout ce qui suit le « ? » dans l'URL envoyée par le client. Toutes les variables provenant d'un formulaire envoyé avec la méthode « GET » seront contenues dans le QUERY_STRING sous la forme « var1=val1&var2=val2&... ».
+	// setenv("REMOTE_HOST", "", 1);  // Le nom d'hôte du client. Si le serveur ne possède pas cette information (par exemple, lorsque la résolution DNS inverse est désactivée), REMOTE_HOST sera vide.
+	setenv("REMOTE_ADDR", "127.0.0.1", 1); // L'adresse IP du client.
+	// setenv("AUTH_TYPE", "", 1); // Le type d'identification utilisé pour protéger le script (s’il est protégé et si le serveur supporte l'identification).
+	// setenv("REMOTE_USER", "", 1); // Le nom d'utilisateur du client, si le script est protégé et si le serveur supporte l'identification.
+	// setenv("REMOTE_IDENT", "", 1); // Nom d'utilisateur (distant) du client faisant la requête. Le serveur doit supporter l'identification RFC 931. Cette variable devrait être utilisée à des fins de journaux seulement.
+	// setenv("CONTENT_TYPE", "", 1); // Le type de contenu attaché à la requête, si des données sont attachées (comme lorsqu'un formulaire est envoyé avec la méthode « POST »)
+	// setenv("CONTENT_LENGTH", "", 1); // La longueur du contenu envoyé par le client.
+	setenv("HTTP_ACCEPT", "text/html", 1); // Les types de données MIME que le client accepte de recevoir. Exemple : text/*, image/jpeg, image/png, image/*, */*
+	setenv("HTTP_ACCEPT_LANGUAGE", "en-US,en;q=0.9", 1); // Les langues dans lequel le client accepte de recevoir la réponse. Exemple : fr_CA, fr
+	setenv("HTTP_USER_AGENT", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36", 1); // Le navigateur utilisé par le client. Exemple : Mozilla/5.0 (compatible; Konqueror/3; Linux)
+	// setenv("HTTP_COOKIE", "", 1); // Les éventuels cookies. Une liste de paires clef=valeur contenant les cookies positionnés par le site, séparés par des points-virgules.
+	// setenv("HTTP_REFERER", "/", 1); // Une adresse absolue ou partielle de la page web à partir de laquelle la requête vers la page courante a été émise.
+	setenv("REDIRECT_STATUS", "200", 1); // Une adresse absolue ou partielle de la page web à partir de laquelle la requête vers la page courante a été émise.
+}
 int main(int ac, char *const * av) {
 	int out[2], error[2], pid;
 	(void)ac;
@@ -31,12 +57,14 @@ int main(int ac, char *const * av) {
 		std::cout << "error: pipe() || fork()\n";
 	if (pid == 0)
 	{
+
 		close(out[0]);
 		close(error[0]);
 		dup2(out[1], 1);
-		dup2(error[1], 2);  // send stderr to the pipe
+		dup2(error[1], 2);
 		close(out[1]);
 		close(error[1]);
+		set_cgi_env();
 		execl("/usr/bin/php-cgi", "/usr/bin/php-cgi", *av, 0);
 		exit(1);
 	}
