@@ -6,7 +6,7 @@
 #include <unistd.h>
 # include <sstream>
 # include <iostream>
-
+#include <cstring>
 
 
 // #define RESET   "\033[0m"
@@ -46,17 +46,30 @@ void set_cgi_env(void)
 	// setenv("HTTP_COOKIE", "", 1); // Les éventuels cookies. Une liste de paires clef=valeur contenant les cookies positionnés par le site, séparés par des points-virgules.
 	// setenv("HTTP_REFERER", "/", 1); // Une adresse absolue ou partielle de la page web à partir de laquelle la requête vers la page courante a été émise.
 }
-int main(int ac, char *const * av) {
-	int out[2], error[2], pid;
-	(void)ac;
-	av++;
+
+std::string readToString(int fd)
+{
+	static char buffer[2048];
+	std::stringstream res;
+	int ret = 0;
+	while ((ret = read(fd, buffer, sizeof(buffer))) != 0)
+	{
+		res << buffer;
+		std::memset(buffer, 0, ret);
+	}
+	close(fd);
+	return res.str();
+}
+
+void cgi(const char *script_path) {
+	int out[2], error[2], pid, status;
+
 	pipe(out);
 	pipe(error);
 	if ((pid = fork()) == -1)
 		std::cout << "error: fork()\n";
 	if (pid == 0)
 	{
-
 		close(out[0]);
 		close(error[0]);
 		dup2(out[1], 1);
@@ -64,20 +77,20 @@ int main(int ac, char *const * av) {
 		close(out[1]);
 		close(error[1]);
 		set_cgi_env();
-		execl("/usr/bin/php-cgi", "/usr/bin/php-cgi", *av, 0);
+		execl("/usr/bin/php-cgi", "/usr/bin/php-cgi", script_path, 0);
 		exit(1);
 	}
-	int status = 0;
 	waitpid(pid, &status, 0);
-	static char buffer_out[2048];
-	static char buffer_error[2048];
 	close(out[1]);
 	close(error[1]);
-	while (read(out[0], buffer_out, sizeof(buffer_out)) != 0) {}
-	close(out[0]);
-	while (read(error[0], buffer_error, sizeof(buffer_error)) != 0) {}
-	close(error[0]);
-	std::cout<< GREEN << "CGI OUT:\n" << buffer_out << CLEAR;
-	std::cout<<std::endl << RED << "CGI ERROR:" << status << "\n" << buffer_error << CLEAR;
+	std::cout<< GREEN << "CGI OUT:\n" << readToString(out[0]) << CLEAR;
+	std::cout<<std::endl << RED << "CGI ERROR:" << status << "\n" << readToString(error[0]) << CLEAR;
+}
+
+int main(int ac, char *const * av) {
+	int out[2], error[2], pid;
+	(void)ac;
+	av++;
+	cgi(*av);
 	return 0;
 }
