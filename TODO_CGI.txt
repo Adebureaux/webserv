@@ -17,3 +17,4 @@ si METHOD CGI lancer fonction qui parse la requete pour ensuite preparer le pass
 cgi function should not wait and redirect output to a fd/socket (not directly the response socket) which must then be watched by the select/epoll loop
 -> then on write end event check wether or not the cgi exec wrote a correct response or if an error occured, act and send the correct error page/message/header
 (which php doesnt always do correctly)
+https://habr.com/en/users/simonzolin/posts/
