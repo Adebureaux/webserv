@@ -3,15 +3,30 @@
 std::set<int> gclient;
 
 Socket::Socket() {
-	int opt = true;
+	// int opt = true;
 
-	// Socket domain and type
-	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		_perrorExit("cannot create socket");
+	// // Socket domain and type
+	// if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+	// 	_perrorExit("cannot create socket");
 
-	// Socket option to reuse our address
-	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
-		_perrorExit("cannot set socket option 'SO_REUSEADDR'");
+	// // Socket option to reuse our address
+	// if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
+	// 	_perrorExit("cannot set socket option 'SO_REUSEADDR'");
+}
+
+void Socket::init_state(struct tcp_state *state)
+{
+	const size_t client_slot_num = sizeof(state->clients) / sizeof(*state->clients);
+	const uint16_t client_map_num = sizeof(state->client_map) / sizeof(*state->client_map);
+
+	for (size_t i = 0; i < client_slot_num; i++) {
+		state->clients[i].is_used = false;
+		state->clients[i].client_fd = -1;
+	}
+
+	for (uint16_t i = 0; i < client_map_num; i++) {
+		state->client_map[i] = EPOLL_MAP_TO_NOP;
+	}
 }
 
 Socket::~Socket(void) {

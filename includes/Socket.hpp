@@ -11,6 +11,8 @@
 # include <csignal>
 # include <unistd.h>
 # include <fcntl.h>
+# include <sys/epoll.h>
+# include <netinet/tcp.h>
 # include <arpa/inet.h>
 # include <sys/ioctl.h>
 # include "Request.hpp"
@@ -21,6 +23,8 @@ class Socket
 	public:
 		Socket();
 		~Socket();
+
+		void init_state(struct tcp_state *state);
 	
 		void initialize(void);
 		void waitRequest(void);
