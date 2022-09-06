@@ -4,6 +4,7 @@
 #include <exception>
 #include <stdexcept>
 #include <iostream>
+#include <map>
 
 #define GET 0
 #define POST 1
@@ -22,11 +23,20 @@ class Request
     public:
     Request(const std::string& raw_request);
     ~Request();
-    std::string get_path();
-    std::string get_host();
+    // std::string get_path();
+    // std::string get_host();
     int         get_method();
     void        set_raw_request(const std::string& raw_request);
-    
+    std::string const get_raw_request();
+    std::string const get_connection();
+    std::string const get_authority();
+    std::string const get_host();
+    std::string const get_request_target();
+    std::string const get_message_body();
+    std::pair<bool, std::string> get_var_by_name(const std::string &name);
+
+
+
     private:
     
     typedef void (Request::*pf)(void);
@@ -34,11 +44,13 @@ class Request
     // _raw_request(raw_request), _head(0), _method(-1), _connection("keep alive"), _authority(""), _host(""), _request_target("")
     std::string _raw_request;
     size_t      _head;
-    int         _method;
-    std::string _connection;
-    std::string _authority;
-    std::string _host;
-    std::string _request_target;
+    int         _method;            // ✓
+    // std::string _connection;        // ✓
+    // std::string _authority;         // ✓
+    // std::string _host;              // ✓
+    // std::string _request_target;    // ✓
+    size_t      _head_msg_body;     // ✓
+    std::map<std::string, std::string> _var_map;
 
     /*
     fct_pointer_tag
@@ -94,6 +106,7 @@ class Request
     void tchar();
     void scheme();
     
+    void catch_var_header_field(size_t old_head);
 
     void http_message();
         void start_line();
