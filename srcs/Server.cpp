@@ -7,7 +7,6 @@ Server::~Server() {}
 void Server::launch(void) {
 	Socket socket;
 
-	socket.init_state();
 	socket.init_epoll();
 	socket.init_socket();
 	socket.event_loop();
