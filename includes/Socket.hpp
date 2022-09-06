@@ -1,6 +1,5 @@
 #ifndef SIMPLE_SOCKET_HPP
 # define SIMPLE_SOCKET_HPP
-# define BUFFER_SIZE 4096
 # include <string>
 # include <iostream>
 # include <set>
@@ -18,11 +17,12 @@
 # include "Request.hpp"
 # include "Response.hpp"
 
-#define PRERF "(errno=%d) %s\n"
-#define PREAR(NUM) NUM, strerror(NUM)
-#define EPOLL_MAP_TO_NOP (0u)
-#define EPOLL_MAP_SHIFT  (1u) /* Shift to cover reserved value MAP_TO_NOP */
-
+# define BUFFER_SIZE 4096
+# define PRERF "(errno=%d) %s\n"
+# define PREAR(NUM) NUM, strerror(NUM)
+# define EPOLL_MAP_TO_NOP (0u)
+# define EPOLL_MAP_SHIFT  (1u) /* Shift to cover reserved value MAP_TO_NOP */
+ 
 struct client_slot {
 	bool				is_used;
 	int				 	client_fd;

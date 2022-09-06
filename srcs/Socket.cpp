@@ -37,8 +37,8 @@ void Socket::init_epoll(void)
 
 int Socket::init_socket(void)
 {
+	int opt = 1;
 	run = true;
-	bool opt = true;
 	int ret;
 	int err;
 	int tcp_fd = -1;
@@ -336,7 +336,7 @@ int Socket::_my_epoll_add(int epoll_fd, int fd, uint32_t events)
 	struct epoll_event event;
 
 	/* Shut the valgrind up! */
-	memset(&event, 0, sizeof(struct epoll_event));
+	memset(&event, 0, sizeof(event));
 
 	event.events  = events;
 	event.data.fd = fd;
