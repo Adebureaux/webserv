@@ -2,6 +2,7 @@
 # define SIMPLE_SOCKET_HPP
 # include <string>
 # include <iostream>
+# include <map>
 # include <set>
 # include <cstdlib>
 # include <cstdio>
@@ -61,7 +62,8 @@ class Socket
 		*
 		* You must adjust this in production.
 		*/
-		uint32_t			_client_map[10000];
+		// uint32_t			_client_map[10000];
+		std::map<uint32_t, uint32_t>	_client;
 
 };
 

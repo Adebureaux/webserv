@@ -16,27 +16,32 @@ Socket::~Socket() {}
 void Socket::init_state(void)
 {
 	const size_t client_slot_num = sizeof(_clients) / sizeof(*_clients);
-	const uint16_t client_map_num = sizeof(_client_map) / sizeof(*_client_map);
+	// const uint16_t client_map_num = sizeof(_client_map) / sizeof(*_client_map);
+
+	std::cout << client_slot_num << std::endl;
+	// std::cout << client_map_num << std::endl;
+	
 
 	for (size_t i = 0; i < client_slot_num; i++) {
 		_clients[i].is_used = false;
 		_clients[i].client_fd = -1;
 	}
 
-	for (uint16_t i = 0; i < client_map_num; i++) {
-		_client_map[i] = EPOLL_MAP_TO_NOP;
-	}
+	// for (uint16_t i = 0; i < client_map_num; i++) {
+	// 	_client_map[i] = EPOLL_MAP_TO_NOP;
+	// }
 }
 
 void Socket::init_epoll(void)
 {
-	printf("Initializing epoll_fd...\n");
+	std::cerr << "\033[1;35mInitializing epoll...\033[0m" << std::endl;
 	if ((_epoll_fd = epoll_create(true)) < 0)
 		_exit_error("epoll_create");
 }
 
 int Socket::init_socket(void)
 {
+	std::cerr << "\033[1;35mInitializing socket...\033[0m" << std::endl;
 	int opt = 1;
 	run = true;
 	int ret;
@@ -45,9 +50,9 @@ int Socket::init_socket(void)
 	struct sockaddr_in addr;
 	socklen_t addr_len = sizeof(addr);
 	const char *bind_addr = "0.0.0.0";
-	uint16_t bind_port = 1234;
+	uint16_t bind_port = 8080;
 
-	printf("Creating TCP socket...\n");
+	std::cerr << "\033[1;35mCreating TCP socket...\033[0m" << std::endl;
 	tcp_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
 	if (tcp_fd < 0) {
 		err = errno;
@@ -92,7 +97,8 @@ int Socket::init_socket(void)
 		goto out;
 	}
 
-	printf("Listening on %s:%u...\n", bind_addr, bind_port);
+
+	std::cerr << "\033[1;35mListening " << bind_addr << ":" << bind_port << "\033[0m" << std::endl;
 	_server_fd = tcp_fd;
 	return 0;
 out:
@@ -178,7 +184,13 @@ void Socket::_handle_client_event(int client_fd, uint32_t revents)
 	/*
 	 * Read the mapped value to get client index.
 	 */
-	uint32_t index = _client_map[client_fd] - EPOLL_MAP_SHIFT;
+	// std::cout << "INDEX = " << _client_map[client_fd] - EPOLL_MAP_SHIFT << std::endl;
+	std::cout << "INDEX = " << _client[client_fd] - EPOLL_MAP_SHIFT << std::endl;
+
+
+	//uint32_t index = _client_map[client_fd] - EPOLL_MAP_SHIFT;
+	uint32_t index = _client[client_fd] - EPOLL_MAP_SHIFT;
+
 	struct client_slot *client = &_clients[index];
 
 	if (revents & err_mask)
@@ -282,7 +294,10 @@ int Socket::_accept_new_client(int tcp_fd)
 			 * We map the client_fd to client array index that we accept
 			 * here.
 			 */
-			_client_map[client_fd] = client->my_index + EPOLL_MAP_SHIFT;
+			// _client_map[client_fd] = client->my_index + EPOLL_MAP_SHIFT;
+
+			_client.insert(std::make_pair(client_fd, client->my_index + EPOLL_MAP_SHIFT));
+			// std::cout << client_fd << " --> " << _client_map[client_fd] << std::endl;
 
 			/*
 			 * Let's tell to `epoll` to monitor this client file descriptor.
