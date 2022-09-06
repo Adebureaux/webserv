@@ -17,7 +17,6 @@ Socket::~Socket() {
 
 void Socket::init_epoll(void)
 {
-	//std::cerr << "\033[1;35mInitializing epoll...\033[0m" << std::endl;
 	if ((_epoll_fd = epoll_create(true)) < 0)
 		_exit_error("epoll_create failed");
 }
@@ -30,30 +29,24 @@ int Socket::init_socket(void)
 	socklen_t addr_len = sizeof(addr);
 
 	std::cerr << "\033[1;35mCreating TCP socket...\033[0m" << std::endl;
-	_server_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
-	if (_server_fd < 0)
+	if ((_server_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP)) < 0)
 		_exit_error("socket failed");
 
 	// Socket option to reuse our address
-	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
+	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0)
 		_exit_error("cannot set socket option 'SO_REUSEADDR'");
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(8080);
-	addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+	// addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (bind(_server_fd, (sockaddr*)&addr, addr_len) < 0)
 		_exit_error("bind failed");
 
 	if (listen(_server_fd, SOMAXCONN) < 0)
 		_exit_error("listen failed");
-	/*
-	 * Add `_server_fd` to epoll monitoring.
-	 *
-	 * If epoll returned _server_fd in `events` then a client is
-	 * trying to connect to us.
-	 */
 	_epoll_add(_server_fd, EPOLLIN | EPOLLPRI);
 
 	std::cerr << "\033[1;35mServer " << _server_fd << " listening " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
@@ -107,10 +100,11 @@ int Socket::event_loop(void)
 
 void Socket::_handle_client_event(int client_fd, uint32_t revents)
 {
-	int err;
 	ssize_t recv_ret;
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	const uint32_t err_mask = EPOLLERR | EPOLLHUP;
+	Request request;
+	Response response;
 
 	if (revents & err_mask) {
 		_close_connection(client_fd);
@@ -124,12 +118,9 @@ void Socket::_handle_client_event(int client_fd, uint32_t revents)
 	}
 
 	if (recv_ret < 0) {
-		err = errno;
-		if (err == EAGAIN)
+		if (errno == EAGAIN)
 			return;
-
 		/* Error */
-		printf("recv(): " PRERF, PREAR(err));
 		_close_connection(client_fd);
 		return;
 	}
@@ -140,17 +131,12 @@ void Socket::_handle_client_event(int client_fd, uint32_t revents)
 	 * Safe printing
 	 */
 	buffer[recv_ret] = '\0';
-	if (buffer[recv_ret - 1] == '\n') {
+	if (buffer[recv_ret - 1] == '\n')
 		buffer[recv_ret - 1] = '\0';
-	}
 
-	std::cout << "> " << buffer << std::endl;
-
-	// send(client_fd, buffer, sizeof(buffer), 0);
-
-	// printf("Client %s:%u sends: \"%s\"\n", client->src_ip, client->src_port,
-	// 	   buffer);
-
+	request.fill(buffer);
+	response.respond(request);
+	send(client_fd, response.send().c_str(), response.send().size(), 0);
 
 }
 
@@ -176,6 +162,7 @@ void Socket::_accept_new_client(void)
 	}
 	_client_slot.insert(std::make_pair(client_fd, addr));
 	_epoll_add(client_fd, EPOLLIN | EPOLLPRI);
+	std::cerr << "\033[1;35mCreate client " << client_fd << " " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
 }
 
 void Socket::_epoll_add(int fd, uint32_t events)
@@ -192,5 +179,5 @@ void Socket::_epoll_add(int fd, uint32_t events)
 void Socket::_exit_error(const std::string& err) const {
 	std::cerr << err << " : " << strerror(errno) << std::endl;
 	this->~Socket();
-	exit(errno);
+	std::exit(errno);
 }
