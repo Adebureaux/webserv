@@ -5,11 +5,10 @@
 class Server
 {
 	public:
-		Server(const std::string& address, unsigned int port);
+		Server();
 		~Server();
 
-	private:
-		Socket _socket;
+		void launch(void);
 };
 
 #endif

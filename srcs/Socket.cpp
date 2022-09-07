@@ -1,94 +1,183 @@
 #include "Socket.hpp"
 
-map	gclient;
+bool run = true;
 
-Socket::Socket() {
-	int opt = true;
-
-	// Socket domain and type
-	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		_perrorExit("cannot create socket");
-
-	// Socket option to reuse our address
-	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
-		_perrorExit("cannot set socket option 'SO_REUSEADDR'");
+void signal_handler(int sig) {
+	if (sig == SIGINT)
+		run = false;
 }
 
-Socket::~Socket(void) {
+Socket::Socket() {
+	std::signal(SIGINT, signal_handler);
+}
+
+Socket::~Socket() {
 	close(_server_fd);
 }
 
-void signalHandler(int signal) {
-	exit(signal);
+void Socket::init_epoll(void)
+{
+	if ((_epoll_fd = epoll_create(true)) < 0)
+		_exit_error("epoll_create failed");
 }
 
-void Socket::initialize(const std::string& address, unsigned int port) {
-	signal(SIGINT, signalHandler);
-	_server_addr.sin_family = AF_INET;
-	_server_addr.sin_port = htons(port);
-	inet_aton(address.c_str(), &_server_addr.sin_addr);
-	// _server_addr.sin_addr.s_addr = htonl(INADDR_ANY); // This one for any addresses 
-	if (bind(_server_fd, (struct sockaddr*)&_server_addr, sizeof(_server_addr)) == -1) 
-		_perrorExit("bind failed"); 
-	if (listen(_server_fd, SOMAXCONN) == -1) // Maximum number of client listned
-		_perrorExit("listen failed");
+int Socket::init_socket(void)
+{
+	int opt = 1;
+	run = true;
+	sockaddr_in addr;
+	socklen_t addr_len = sizeof(addr);
+
+	std::cerr << "\033[1;35mCreating TCP socket...\033[0m" << std::endl;
+	if ((_server_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP)) < 0)
+		_exit_error("socket failed");
+
+	// Socket option to reuse our address
+	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0)
+		_exit_error("cannot set socket option 'SO_REUSEADDR'");
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(8080);
+	// addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	if (bind(_server_fd, (sockaddr*)&addr, addr_len) < 0)
+		_exit_error("bind failed");
+
+	if (listen(_server_fd, SOMAXCONN) < 0)
+		_exit_error("listen failed");
+	_epoll_add(_server_fd, EPOLLIN | EPOLLPRI);
+
+	std::cerr << "\033[1;35mServer " << _server_fd << " listening " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
+	return 0;
+
 }
 
-void Socket::waitRequest(void) {
-	FD_ZERO(&_readfds);
-	FD_ZERO(&_writefds);
-	FD_SET(_server_fd, &_readfds);
-	for (map::iterator it = gclient.begin(); it != gclient.end(); it++) {
-		FD_SET(it->first, &_readfds);
+int Socket::event_loop(void)
+{
+	int timeout = 3000; /* in milliseconds */
+	int epoll_ret;
+	epoll_event events[MAX_EVENTS];
+
+	while (run) {
+		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, timeout);
+		if (epoll_ret == 0) {
+			std::cerr << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
+		}
+
+
+		if (epoll_ret == -1) {
+			if (errno == EINTR) {
+				std::cerr << std::endl << "\033[1;35mClosing websev...\033[0m" << std::endl;
+				continue;
+			}
+
+			/* Error */
+			_exit_error("epoll_wait failed");
+			break;
+		}
+
+
+		for (int i = 0; i < epoll_ret; i++) {
+			int fd = events[i].data.fd;
+
+			if (fd == _server_fd) {
+				/*
+				 * A new client is connecting to us...
+				 */
+				_accept_new_client();
+				continue;
+			}
+			/*
+			 * We have event(s) from client, let's call `recv()` to read it.
+			 */
+			_handle_client_event(fd, events[i].events);
+		}
 	}
-	std::cerr << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
-	if (select(_server_fd + gclient.size() + 1, &_readfds, &_writefds, NULL, NULL) == -1)
-		_perrorExit("select failed");
-	FD_SET(_server_fd, &_writefds); // Not correct
+	return (0);
 }
 
-void Socket::acceptClient(void) {
-	int fd;
-	struct sockaddr_in addr;
-	unsigned int addrlen = sizeof(sockaddr_in);
-
-	if (FD_ISSET(_server_fd, &_readfds)) {
-		if ((fd = accept(_server_fd, (struct sockaddr*)&addr, (socklen_t*)&addrlen)) == -1)
-			_perrorExit("accept failed");
-		gclient.insert(std::make_pair(fd, addr));
-		std::cerr << "\033[1;35mCreate client " << fd << " " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
-	}
-}
-
-void Socket::communicate(void) {
-	int rd;
+void Socket::_handle_client_event(int client_fd, uint32_t revents)
+{
+	ssize_t recv_ret;
 	char buffer[BUFFER_SIZE];
+	const uint32_t err_mask = EPOLLERR | EPOLLHUP;
 	Request request;
 	Response response;
 
-	for (map::iterator it = gclient.begin(); it != gclient.end(); it++) {
-		if (FD_ISSET(it->first, &_readfds)) {
-			if (!(rd = recv(it->first, buffer, BUFFER_SIZE, MSG_DONTWAIT))) {
-				std::cerr << "\033[1;35mRemove client " << it->first << " " << inet_ntoa(it->second.sin_addr) << ":" <<  ntohs(it->second.sin_port) << "\033[0m" << std::endl;
-				// FD_CLR(it->first, &_writefds);
-				// FD_CLR(it->first, &_readfds);
-				close(it->first);
-				gclient.erase(it->first);
-				it = gclient.begin();
-			}
-			else if (FD_ISSET(_server_fd, &_writefds)) { // Not correct
-				buffer[rd] = '\0';
-				request.fill(buffer);
-				response.respond(request);
-				send(it->first, response.send().c_str(), response.send().size(), MSG_DONTWAIT);
-				std::cerr << "\033[1;35mServing client " << it->first << " " << inet_ntoa(it->second.sin_addr) << ":" <<  ntohs(it->second.sin_port) << "\033[0m" << std::endl;
-			}
-		}
+	if (revents & err_mask) {
+		_close_connection(client_fd);
+		return;
 	}
+
+	recv_ret = recv(client_fd, buffer, sizeof(buffer), 0);
+	if (recv_ret == 0) {
+		_close_connection(client_fd);
+		return;
+	}
+
+	if (recv_ret < 0) {
+		if (errno == EAGAIN)
+			return;
+		/* Error */
+		_close_connection(client_fd);
+		return;
+	}
+
+
+
+	/*
+	 * Safe printing
+	 */
+	buffer[recv_ret] = '\0';
+	if (buffer[recv_ret - 1] == '\n')
+		buffer[recv_ret - 1] = '\0';
+
+	request.fill(buffer);
+	response.respond(request);
+	send(client_fd, response.send().c_str(), response.send().size(), 0);
+
 }
 
-void Socket::_perrorExit(const std::string& err) const {
+void Socket::_close_connection(int fd) {
+	std::cerr << "\033[1;35mRemove client " << fd << "\033[0m" << std::endl;
+	if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0)
+		_exit_error("epoll_ctl failed");
+	close(fd);
+	_client_slot.erase(fd);
+}
+
+void Socket::_accept_new_client(void)
+{
+	int client_fd;
+	sockaddr_in addr;
+	socklen_t addr_len = sizeof(addr);
+
+	memset(&addr, 0, sizeof(addr));
+	if ((client_fd = accept(_server_fd, (sockaddr*)&addr, &addr_len)) < 0) {
+		if (errno == EAGAIN)
+			return;
+		_exit_error("accept failed");
+	}
+	_client_slot.insert(std::make_pair(client_fd, addr));
+	_epoll_add(client_fd, EPOLLIN | EPOLLPRI);
+	std::cerr << "\033[1;35mCreate client " << client_fd << " " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
+}
+
+void Socket::_epoll_add(int fd, uint32_t events)
+{
+	epoll_event event;
+
+	memset(&event, 0, sizeof(event));
+	event.events  = events;
+	event.data.fd = fd;
+	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
+		_exit_error("epoll_ctl failed");
+}
+
+void Socket::_exit_error(const std::string& err) const {
 	std::cerr << err << " : " << strerror(errno) << std::endl;
 	this->~Socket();
-	exit(errno);
+	std::exit(errno);
 }
