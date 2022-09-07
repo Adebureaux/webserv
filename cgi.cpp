@@ -23,7 +23,7 @@
 void set_cgi_env(void)
 {
 	setenv("SERVER_SOFTWARE", "webserv/1.0", 1); // Le nom et la version du serveur HTTP répondant à la requête. (Format : nom/version)
-	setenv("SERVER_NAME", "webserv", 1); // Le nom d'hôte, alias DNS ou adresse IP du serveur.
+	setenv("SERVER_NAME", "localhost", 1); // Le nom d'hôte, alias DNS ou adresse IP du serveur.
 	setenv("GATEWAY_INTERFACE", "PHP/7.4.3", 1); // La révision de la spécification CGI que le serveur utilise. (Format : CGI/révision)
 	setenv("SERVER_PROTOCOL", "HTTP/1.1", 1); // Le nom et la révision du protocole dans lequel la requête a été faite (Format : protocole/révision)
 	setenv("SERVER_PORT", "8080", 1); // Le numéro de port sur lequel la requête a été envoyée.
@@ -78,7 +78,7 @@ void cgi(const char *script_path) {
 		close(error[1]);
 		set_cgi_env();
 		execl("/usr/bin/php-cgi", "/usr/bin/php-cgi", script_path, 0);
-		exit(1);
+		// exit(1);
 	}
 	waitpid(pid, &status, 0);
 	close(out[1]);
