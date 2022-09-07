@@ -5,10 +5,8 @@ Request::Request() {}
 Request::~Request() {}
 
 void Request::fill(const std::string& header) {
-	/* DEBUG */
-	std::cout << header << std::endl;
-	/* DEBUG */
 	std::istringstream _header(header);
+
 	std::getline(_header, _method, ' ');
 	std::getline(_header, _path, ' ');
 	_path.erase(0, 1);
@@ -26,6 +24,12 @@ std::string Request::getPath(void) const {
 
 std::string Request::getHttp(void) const {
 	return (_http);
+}
+
+void Request::clear(void) {
+	_method.clear();
+	_path.clear();
+	_http.clear();
 }
 
 void Request::debug(void) {

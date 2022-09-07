@@ -1,5 +1,4 @@
 #include "Response.hpp"
-# include <fstream>
 
 Response::Response() {}
 
@@ -23,6 +22,10 @@ void Response::get(const Request &request) {
 	_response.append(SSTR("" << buffer.size()));
 	_response.append("\n\n");
 	_response.append(buffer);
+}
+
+void Response::clear(void) {
+	_response.clear();
 }
 
 const std::string& Response::send(void) {

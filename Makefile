@@ -1,25 +1,31 @@
 NAME		= webserv
-SRCS		= srcs/main.cpp srcs/Server.cpp srcs/SimpleSocket.cpp srcs/Request.cpp srcs/Response.cpp
+SRCS		= srcs/main.cpp srcs/Server.cpp srcs/Socket.cpp srcs/Request.cpp srcs/Response.cpp
 INCS		= -I includes
-OBJS		= ${SRCS:.cpp=.o}
+OBJS		:= $(SRCS:.cpp=.o)
+DEPS 		:= $(OBJS:.o=.d)
 RM			= rm -f
-CFLAGS		= -Wall -Wextra -Werror -std=c++98 -g
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g
 COMPILER	= c++
 
-${NAME}: ${OBJS}
-	${COMPILER} ${CFLAGS} ${OBJS} -o ${NAME}
+$(NAME): $(OBJS)
+	$(COMPILER) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
 %.o: %.cpp
-	$(COMPILER) $(CFLAGS) $(INCS) -c $< -o $@
+	$(COMPILER) $(CXXFLAGS) -MMD -MP $(INCS) -c $< -o $@
 
-all: ${NAME}
+all: $(NAME)
 
 clean:
-	${RM} ${OBJS}
+	$(RM) $(OBJS) $(DEPS)
 
 fclean: clean
-	${RM} ${NAME}
+	$(RM) $(NAME)
 
 re: fclean all
 
-.PHONY: all clean fclean re
+test: $(NAME)
+		./$(NAME)
+
+-include $(DEPS)
+
+.PHONY: all clean fclean re -include test

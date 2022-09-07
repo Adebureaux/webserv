@@ -1,0 +1,4 @@
+webserv
+*.o
+*.d
+*.gch
