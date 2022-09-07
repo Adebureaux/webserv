@@ -43,29 +43,28 @@ void Request::n_star_m_or(int n, int m, ...)
 
     va_start(arg, m);
     n_star_m_or(n, m, &arg);
+    va_end(arg);
 }
 
 void Request::n_star_m_or(int n, int m, va_list *arg)
 {
     std::string fct_ptr_tag = va_arg(*arg, char *);
     int i;
-    va_list *ap;
+    va_list ap;
 
     try
     {
         for (i = 0; i != m; i++)
         {
-            ap = ret_copy(*arg);
-            _or(fct_ptr_tag, ap);
-            va_end(*ap);
-            free(ap);
+            va_copy(ap, *arg);
+            _or(fct_ptr_tag, &ap);
+            va_end(ap);
         }
         finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
     }
     catch(const std::exception& e)
     {
-        va_end(*ap);
-        free(ap);
+        va_end(ap);
         finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
         if(i < n || (m != -1 && i > m))
             throw std::invalid_argument(e.what());
@@ -81,28 +80,27 @@ void Request::n_star_m_and(int n, int m, ...)
 
     va_start(arg, m);
     n_star_m_and(n, m, &arg);
+    va_end(arg);
 }
 
 void Request::n_star_m_and(int n, int m, va_list *arg)
 {
     std::string fct_ptr_tag = va_arg(*arg, char *);
-    va_list *ap;
+    va_list ap;
     int i = 0;
     try
     {
         for (i = 0; i != m; i++)
         {
-            ap = ret_copy(*arg);
-            _and(fct_ptr_tag, ret_copy(*ap));
-            va_end(*ap);
-            free(ap);
+            va_copy(ap, *arg);
+            _and(fct_ptr_tag, &ap);
+            va_end(ap);
         }
         finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
     }
     catch(const std::exception& e)
     {
-        va_end(*ap);
-        free(ap);
+        va_end(ap);
         finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
         if (i == n)
             return;
@@ -118,14 +116,16 @@ void Request::_or(const std::string &fct_ptr_tag, ...)
     va_list arg;
 
     va_start(arg, fct_ptr_tag);
-    _or(fct_ptr_tag, &arg);        
+    _or(fct_ptr_tag, &arg);
+    va_end(arg);        
 }
 
 void Request::_and(const std::string &fct_ptr_tag, ...)
 {
     va_list arg;
     va_start(arg, fct_ptr_tag);
-    _and(fct_ptr_tag, &arg);        
+    _and(fct_ptr_tag, &arg);
+    va_end(arg);        
 }
 
 void Request::finish_expand(std::string::const_iterator start, std::string::const_iterator end, va_list *arg)
@@ -793,7 +793,7 @@ void Request::obs_fold()
     }
     catch(const std::exception& e)
     {
-        throw std::invalid_argument(std::string(__FUNCTION__"/") + std::string(e.what()));
+        throw std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()));
     }
 }
 
@@ -856,7 +856,8 @@ std::pair<bool, std::string> Request::get_var_by_name(const std::string &name)
 {
     try
     {
-        return (std::pair<bool, std::string>(true, _var_map.find(name)->second));
+        std::string str = _var_map.at(name);
+        return (std::pair<bool, std::string>(true, str));
     }
     catch(const std::exception& e)
     {
