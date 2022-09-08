@@ -2,7 +2,7 @@
 # define SIMPLE_SOCKET_HPP
 # include <string>
 # include <iostream>
-# include <map>
+# include <set>
 # include <cstdlib>
 # include <cerrno>
 # include <cstring>
@@ -37,7 +37,7 @@ class Socket
 	private:
 		int							_server_fd;
 		int							_epoll_fd;
-		std::map<int, sockaddr_in>	_client_slot;
+		std::set<int>				_client_slot;
 
 };
 

@@ -13,6 +13,7 @@ Socket::Socket() {
 
 Socket::~Socket() {
 	close(_server_fd);
+	close(_epoll_fd);
 }
 
 void Socket::init_epoll(void)
@@ -60,11 +61,12 @@ int Socket::event_loop(void)
 	int epoll_ret;
 	epoll_event events[MAX_EVENTS];
 
+
+
 	while (run) {
 		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, timeout);
-		if (epoll_ret == 0) {
+		if (epoll_ret == 0)
 			std::cerr << "\033[1;35mWaiting for new connexion ...\033[0m" << std::endl;
-		}
 
 
 		if (epoll_ret == -1) {
@@ -78,9 +80,9 @@ int Socket::event_loop(void)
 			break;
 		}
 
-
 		for (int i = 0; i < epoll_ret; i++) {
 			int fd = events[i].data.fd;
+			std::cout << "Events.events = "<< events[i].events << std::endl;
 
 			if (fd == _server_fd) {
 				/*
@@ -118,8 +120,10 @@ void Socket::_handle_client_event(int client_fd, uint32_t revents)
 	}
 
 	if (recv_ret < 0) {
-		if (errno == EAGAIN)
+		if (errno == EAGAIN){
+			std::cout << "EAGAIN read triggered" << std::endl;
 			return;
+		}
 		/* Error */
 		_close_connection(client_fd);
 		return;
@@ -137,7 +141,6 @@ void Socket::_handle_client_event(int client_fd, uint32_t revents)
 	request.fill(buffer);
 	response.respond(request);
 	send(client_fd, response.send().c_str(), response.send().size(), 0);
-
 }
 
 void Socket::_close_connection(int fd) {
@@ -160,8 +163,8 @@ void Socket::_accept_new_client(void)
 			return;
 		_exit_error("accept failed");
 	}
-	_client_slot.insert(std::make_pair(client_fd, addr));
-	_epoll_add(client_fd, EPOLLIN | EPOLLPRI);
+	_client_slot.insert(client_fd);
+	_epoll_add(client_fd, EPOLLIN | EPOLLRDHUP | EPOLLERR);
 	std::cerr << "\033[1;35mCreate client " << client_fd << " " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
 }
 
@@ -169,8 +172,8 @@ void Socket::_epoll_add(int fd, uint32_t events)
 {
 	epoll_event event;
 
-	memset(&event, 0, sizeof(event));
-	event.events  = events;
+	std::memset(&event, 0, sizeof(event));
+	event.events = events;
 	event.data.fd = fd;
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
 		_exit_error("epoll_ctl failed");
