@@ -37,7 +37,7 @@ int Socket::init_socket(void)
 	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0)
 		_exit_error("cannot set socket option 'SO_REUSEADDR'");
 
-	memset(&addr, 0, sizeof(addr));
+	std::memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(8080);
 	// addr.sin_addr.s_addr = inet_addr("0.0.0.0");
@@ -157,7 +157,7 @@ void Socket::_accept_new_client(void)
 	sockaddr_in addr;
 	socklen_t addr_len = sizeof(addr);
 
-	memset(&addr, 0, sizeof(addr));
+	std::memset(&addr, 0, sizeof(addr));
 	if ((client_fd = accept(_server_fd, (sockaddr*)&addr, &addr_len)) < 0) {
 		if (errno == EAGAIN)
 			return;
