@@ -20,10 +20,10 @@ void Response::get(const Request &request) {
 	ssbuffer << file.rdbuf();
 	file.close();
 	_response = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-	body = ssbuffer.str();
-	_response.append(SSTR("" << body.size()));
+	buffer = ssbuffer.str();
+	_response.append(SSTR("" << buffer.size()));
 	_response.append("\n\n");
-	_response.append(body);
+	_response.append(buffer);
 }
 
 void Response::clear(void) {
