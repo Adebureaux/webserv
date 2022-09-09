@@ -2,3 +2,5 @@ webserv
 *.o
 *.d
 *.gch
+.vscode
+*.out
