@@ -47,7 +47,7 @@ static void set_cgi_env(const char* path)
 {
 	setenv("SERVER_SOFTWARE", "webserv/1.0", 1); // Le nom et la version du serveur HTTP répondant à la requête. (Format : nom/version)
 	setenv("SERVER_NAME", "localhost", 1); // Le nom d'hôte, alias DNS ou adresse IP du serveur.
-	setenv("GATEWAY_INTERFACE", "PHP/7.4.3", 1); // La révision de la spécification CGI que le serveur utilise. (Format : CGI/révision)
+	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1); // La révision de la spécification CGI que le serveur utilise. (Format : CGI/révision)
 	setenv("SERVER_PROTOCOL", "HTTP/1.1", 1); // Le nom et la révision du protocole dans lequel la requête a été faite (Format : protocole/révision)
 	setenv("SERVER_PORT", "8080", 1); // Le numéro de port sur lequel la requête a été envoyée.
 	setenv("REQUEST_METHOD", "GET", 1); // La méthode utilisée pour faire la requête. Pour HTTP, elle contient généralement « GET » ou « POST ».
@@ -58,7 +58,7 @@ static void set_cgi_env(const char* path)
 	setenv("HTTP_ACCEPT_LANGUAGE", "en-US,en;q=0.9", 1); // Les langues dans lequel le client accepte de recevoir la réponse. Exemple : fr_CA, fr
 	setenv("HTTP_USER_AGENT", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36", 1); // Le navigateur utilisé par le client. Exemple : Mozilla/5.0 (compatible; Konqueror/3; Linux)
 	setenv("REDIRECT_STATUS", "200", 1); // truc de securite pour php
-	// setenv("PATH_INFO", "/", 1); // Le chemin supplémentaire du script tel que donné par le client. Par exemple, si le serveur héberge le script « /cgi-bin/monscript.cgi » et que le client demande l'url « http://serveur.org/cgi-bin/monscript.cgi/marecherche », alors PATH_INFO contiendra « marecherche ».
+	setenv("PATH_INFO", "/", 1); // Le chemin supplémentaire du script tel que donné par le client. Par exemple, si le serveur héberge le script « /cgi-bin/monscript.cgi » et que le client demande l'url « http://serveur.org/cgi-bin/monscript.cgi/marecherche », alors PATH_INFO contiendra « marecherche ».
 	// setenv("SCRIPT_NAME", "index.php", 1); // Le chemin virtuel vers le script étant exécuté. Exemple : « /cgi-bin/script.cgi »
 	// setenv("REMOTE_HOST", "", 1);  // Le nom d'hôte du client. Si le serveur ne possède pas cette information (par exemple, lorsque la résolution DNS inverse est désactivée), REMOTE_HOST sera vide.
 	// setenv("AUTH_TYPE", "", 1); // Le type d'identification utilisé pour protéger le script (s’il est protégé et si le serveur supporte l'identification).
@@ -102,14 +102,15 @@ static const std::string cgi(const std::string &script_path) {
 		close(out[1]);
 		close(error[1]);
 		set_cgi_env(script_path.c_str());
-		execl("/usr/bin/php-cgi", "/usr/bin/php-cgi", script_path.c_str(), 0);
+		execl("/usr/bin/php-cgi", "/usr/bin/php-cgi", script_path.c_str() , 0);
 		exit(1);
 	}
 	waitpid(pid, &status, 0);
 	close(out[1]);
 	close(error[1]);
 	const std::string result = readToString(out[0]);
-	// std::cout<< GREEN << "CGI OUT:\n" << readToString(out[0]) << CLEAR;
+	const std::string err = readToString(error[0]);
+	std::cout<< "CGI ERR:\n" << err << std::endl;
 	// std::cout<<std::endl << RED << "CGI ERROR:" << status << "\n" << readToString(error[0]) << CLEAR;
 	return result;
 }
@@ -123,9 +124,12 @@ void Response::get(const Request &request) {
 	if (request.getPath() == "index.php")
 	{
 		// std::cout << "requested:" << request.getPath() << std::endl;
-		_response = "HTTP/1.1 200 OK\n";
+		// _response = "HTTP/1.1 200 OK\nOK\nContent-Type: text/html\nContent-Length: ";
+
 		const std::string result(cgi(request.getPath()));
-		_response.append(cgi(request.getPath()));
+		// _response.append(SSTR("" << result.size()));
+		// _response.append(";");
+		_response.append(result);
 	}
 	else
 	{

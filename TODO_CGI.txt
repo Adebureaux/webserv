@@ -93,3 +93,28 @@ https://habr.com/en/users/simonzolin/posts/
 // 	std::cout<<std::endl << RED << "CGI ERROR:" << status << "\n" << readToString(error[0]) << CLEAR;
 // 	return 0;
 // }
+
+on connection
+
+client:
+	fd
+	sockaddr_in
+	request:
+		request_state ERROR | READY | INCOMPLETE | SENT
+		raw_data
+		header
+		body
+		info (struct from parser)
+		client_ptr
+		response_ptr
+	response:
+		response_state ERROR | READY | INCOMPLETE | SENT
+		raw_data
+		header
+		body
+		info (struct from parser)
+		client_ptr
+		request_ptr
+
+on epoll event
+if
