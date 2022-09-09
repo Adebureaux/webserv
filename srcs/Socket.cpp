@@ -31,22 +31,16 @@ void Socket::init_socket(const std::string& address, int port)
 	int fd;
 	sockaddr_in addr;
 	socklen_t addr_len = sizeof(addr);
-	
-	run = true;
 
+	run = true;
 	if ((fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP)) < 0)
 		_exit_error("socket failed");
-
-	// Socket option to reuse our address
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0)
 		_exit_error("cannot set socket option 'SO_REUSEADDR'");
-
 	std::memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
-	// addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_addr.s_addr = inet_addr(address.c_str());
-
 	if (bind(fd, (sockaddr*)&addr, addr_len) < 0)
 		_exit_error("bind failed");
 
@@ -55,12 +49,11 @@ void Socket::init_socket(const std::string& address, int port)
 	_epoll_add(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
 	_servers.insert(fd);
 	std::cerr << "\033[1;35mServer " << fd << " listening " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
-
 }
 
 void Socket::event_loop(void)
 {
-	int timeout = 30000; /* in milliseconds */
+	int timeout = 30000;
 	int epoll_ret;
 	epoll_event events[MAX_EVENTS];
 
@@ -76,7 +69,6 @@ void Socket::event_loop(void)
 			_exit_error("epoll_wait failed");
 			break;
 		}
-
 		for (int i = 0; i < epoll_ret; i++) {
 			std::set<int>::iterator it = _servers.find(events[i].data.fd);
 			if (it != _servers.end()) {
@@ -118,7 +110,6 @@ void Socket::_handle_client_event(int fd, uint32_t revents)
 			buffer[recv_ret - 1] = '\0';
 		request.fill(buffer);
 	}
-
 	if (revents & EPOLLOUT && recv_ret) {
 		std::cerr << "\033[1;35mServing client " << fd << "\033[0m" << std::endl;
 		response.respond(request);
@@ -146,7 +137,7 @@ void Socket::_accept_new_client(int server)
 	if ((client_fd = accept(server, (sockaddr*)&addr, &addr_len)) < 0) {
 		if (errno == EAGAIN)
 			return;
-		std::cerr << "accept failed" << std::endl;
+		_exit_error("accept failed");
 	}
 	_clients.insert(client_fd);
 	_epoll_add(client_fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
