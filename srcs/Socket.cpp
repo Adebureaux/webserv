@@ -2,6 +2,8 @@
 
 bool run = true;
 
+// https://stackoverflow.com/questions/13568858/epoll-wait-always-sets-epollout-bit
+
 void signal_handler(int sig) {
 	if (sig == SIGINT)
 		run = false;
