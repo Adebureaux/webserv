@@ -2,7 +2,6 @@
 # define SIMPLE_SOCKET_HPP
 # include <string>
 # include <iostream>
-# include <map>
 # include <set>
 # include <cstdlib>
 # include <cerrno>
@@ -29,15 +28,15 @@ class Socket
 
 	private:
 		void _handle_client_event(int fd, uint32_t revents);
-		void _accept_new_client(void);
+		void _accept_new_client(int server);
 		void _epoll_add(int fd, uint32_t revents);
 		void _close_connection(int fd);
 		void _exit_error(const std::string& err) const;
 
 	private:
-		int								_epoll_fd;
-		int								_server_fd;
-		std::set<int>					_client_slot;
+		int				_epoll_fd;
+		std::set<int>	_servers;
+		std::set<int>	_clients;
 
 };
 
