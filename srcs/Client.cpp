@@ -1,5 +1,5 @@
 typedef enum e_state {
-	ERROR, INCOMPLETE, READY, DONE
+	ERROR = -1 , INCOMPLETE, READY, DONE
 } t_state;
 
 class Message
@@ -11,7 +11,7 @@ public:
 	std::string		body;
 	Client			*client;
 	Message			*ptr; // response || request
-	Info			info;
+	Request			info;
 
 	Message(Client c) :
 		client(c),
@@ -38,6 +38,6 @@ public:
 	Client(int file_descriptor, sockaddr_in addr) : fd(fd), address(addr) {};
 	virtual ~Client();
 	int receive(void) {
-		
+
 	}
 };
