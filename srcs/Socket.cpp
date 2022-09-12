@@ -82,7 +82,7 @@ void Socket::event_loop(void)
 
 void Socket::_handle_client_event(int fd, uint32_t revents)
 {
-	char buffer[BUFFER_SIZE];
+	char buffer[12];
 	ssize_t recv_ret = 0;
 	Request request;
 	Response response;
