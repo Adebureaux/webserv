@@ -5,9 +5,10 @@ Server::Server() {}
 Server::~Server() {}
 
 void Server::launch(void) {
-	Socket socket;
+	Socket cluster;
 
-	socket.init_epoll();
-	socket.init_socket();
-	socket.event_loop();
+	cluster.init_epoll();
+	cluster.init_socket("0.0.0.0", 8080);
+	cluster.init_socket("0.0.0.0", 9090);
+	cluster.event_loop();
 }
