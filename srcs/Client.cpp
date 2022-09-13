@@ -3,9 +3,9 @@
 Message::Message(Client *c) :
 	client(c),
 	state(INCOMPLETE),
-	raw_data("NULL"),
-	header("NULL"),
-	body("NULL"),
+	raw_data(""), // ! PLACEHOLDER
+	header(""),
+	body(""),
 	ptr(NULL)
 	// info(NULL)
 {};
@@ -112,7 +112,9 @@ int Client::respond()
 {
 	// should instead be non blocking
 	// must take as last param a flag which state if more data neeeds to be sent
-	return send(fd, response.data(), response.size(), 0);
+	response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";
+	std::cout << "send_status: " << send(fd, response.data(), response.size(), 0) << std::endl;
+	return 0;
 	// if request specified to close the connection then try and close it
 
 };
