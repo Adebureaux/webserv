@@ -15,6 +15,7 @@
 
 # define BUFFER_SIZE 4096
 # define MAX_EVENTS 128
+# define TIMEOUT_VALUE 30000
  
 class Socket
 {
@@ -34,6 +35,7 @@ class Socket
 		void _exit_error(const std::string& err) const;
 
 	private:
+		std::string		_client_header; // To move in client
 		int				_epoll_fd;
 		std::set<int>	_servers;
 		std::set<int>	_clients;

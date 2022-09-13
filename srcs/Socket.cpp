@@ -53,12 +53,11 @@ void Socket::init_socket(const std::string& address, int port)
 
 void Socket::event_loop(void)
 {
-	int timeout = 30000;
 	int epoll_ret;
 	epoll_event events[MAX_EVENTS];
 
 	while (run) {
-		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, timeout);
+		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, TIMEOUT_VALUE);
 		if (epoll_ret == 0)
 			std::cerr << "\033[1;35mWaiting for new connection ...\033[0m" << std::endl;
 		else if (epoll_ret == -1) {
@@ -106,20 +105,22 @@ void Socket::_handle_client_event(int fd, uint32_t revents)
 			return;
 		}
 		buffer[recv_ret] = '\0';
-		if (buffer[recv_ret - 1] == '\n')
-			buffer[recv_ret - 1] = '\0';
-		request.fill(buffer);
+		_client_header.append(buffer); // GOTA MOVE IN CLIENT TO HANDLE MULTIPLEXING
+		// https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4
+		// Request (section 5) and Response (section 6) messages use the generic message format of RFC 822 [9] for transferring entities (the payload of the message). Both types of message consist of a start-line, zero or more header fields (also known as "headers"), an empty line (i.e., a line with nothing preceding the CRLF) indicating the end of the header fields, and possibly a message-body.
+		if (_client_header.find("\r\n\r\n") != std::string::npos) {
+			request.fill(_client_header);
+			if (revents & EPOLLOUT) {
+				std::cerr << "\033[1;35mServing client " << fd << "\033[0m" << std::endl;
+				response.respond(request);
+				send(fd, response.send().c_str(), response.send().size(), 0);
+				_client_header.erase();
+			}
+		}
 	}
-	if (revents & EPOLLOUT && recv_ret) {
-		std::cerr << "\033[1;35mServing client " << fd << "\033[0m" << std::endl;
-		response.respond(request);
-		send(fd, response.send().c_str(), response.send().size(), 0);
-	}
-
 }
 
 void Socket::_close_connection(int fd) {
-
 	std::cerr << "\033[1;35mRemove client " << fd << "\033[0m" << std::endl;
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		_exit_error("epoll_ctl failed");
