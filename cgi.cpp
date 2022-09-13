@@ -70,8 +70,9 @@ void cgi(const char *script_path) {
 		std::cout << "error: fork()\n";
 	if (pid == 0)
 	{
-		close(out[0]);
+		// close(out[0]);
 		close(error[0]);
+		dup2(out[0], 0);
 		dup2(out[1], 1);
 		dup2(error[1], 2);
 		close(out[1]);

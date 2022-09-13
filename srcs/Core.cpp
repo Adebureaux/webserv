@@ -70,19 +70,22 @@ void Socket::event_loop(void)
 			break;
 		}
 		for (int i = 0; i < epoll_ret; i++) {
-			std::set<int>::iterator it = _servers.find(events[i].data.fd);
-			if (it != _servers.end()) {
-				_accept_new_client(*it);
+			std::set<int>::iterator server_fds = _servers.find(events[i].data.fd);
+			if (server_fds != _servers.end())
+			{
+				// _accept_new_client(*it);
+				Client client(_epoll_fd, *server_fds, _clients);
 				continue;
 			}
-			_handle_client_event(events[i].data.fd, events[i].events);
+			// _handle_client_event(events[i].data.fd, events[i].events);
+			(static_cast<Client*>(events[i].data.ptr))->handleEvent(events[i].events);
 		}
 	}
 }
 
 void Socket::_handle_client_event(int fd, uint32_t revents)
 {
-	char buffer[12];
+	char buffer[4096];
 	ssize_t recv_ret = 0;
 	Request request;
 	Response response;
@@ -139,6 +142,7 @@ void Socket::_accept_new_client(int server)
 			return;
 		_exit_error("accept failed");
 	}
+	Client client()
 	_clients.insert(client_fd);
 	_epoll_add(client_fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
 	std::cerr << "\033[1;35mCreate client " << client_fd << " " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
