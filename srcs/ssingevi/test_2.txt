@@ -1,0 +1,1 @@
+GET /index.php?tru=mhin&foo=br&jen-mihel=frnis HTTP/1.1User-Agent: ustom-lientHost: eebservAept-Lnguge: en-USConnetion: Keep-AliveContent-type: text/htmlContent-length: 16

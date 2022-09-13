@@ -58,8 +58,6 @@ LWSP = *(WSP / CRLF WSP)
 # VCHAR = 0x21-7E
                     # ; visible (printing) characters
 
-//// parser
-
 # OWS = *( SP / HTAB )
 
 
