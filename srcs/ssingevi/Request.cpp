@@ -987,7 +987,7 @@ void Request::catch_var_header_field(size_t old_head)
 	field_name();
 	var_name = std::string(_raw_request.begin() + old_head, _raw_request.begin() + _head);
 	OWS();
-	old_head = _head;
+	old_head = _head + 2;
 	field_value();
 	CATCH_HEADER_VAR(var_name);
 	OWS();
@@ -1263,7 +1263,7 @@ void Request::status_code_phrase()
 			"502 Bad Gateway",
 			"503 Service Unavailable",
 			"504 Gateway Time-out",
-			"505 HTTP Versionnot supported");
+			"505 HTTP Version not supported");
 	}
 	catch(const std::exception& e)
 	{
