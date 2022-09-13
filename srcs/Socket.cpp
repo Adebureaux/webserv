@@ -105,10 +105,10 @@ void Socket::_handle_client_event(int fd, uint32_t revents)
 			return;
 		}
 		buffer[recv_ret] = '\0';
-		_client_header.append(buffer); // GOTA MOVE IN CLIENT TO HANDLE MULTI IO CRLF
+		_client_header.append(buffer); // GOTA MOVE IN CLIENT TO HANDLE MULTI IO
 		// https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4
 		// Request (section 5) and Response (section 6) messages use the generic message format of RFC 822 [9] for transferring entities (the payload of the message). Both types of message consist of a start-line, zero or more header fields (also known as "headers"), an empty line (i.e., a line with nothing preceding the CRLF) indicating the end of the header fields, and possibly a message-body.
-		if (_client_header.find("\r\n\r\n") != std::string::npos) {
+		if (_client_header.find(CRLF) != std::string::npos) {
 			request.fill(_client_header);
 			if (revents & EPOLLOUT) {
 				std::cerr << "\033[1;35mServing client " << fd << "\033[0m" << std::endl;

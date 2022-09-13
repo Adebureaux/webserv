@@ -16,6 +16,7 @@
 # define BUFFER_SIZE 4096
 # define MAX_EVENTS 128
 # define TIMEOUT_VALUE 30000
+# define CRLF "\r\n\r\n"
  
 class Socket
 {
