@@ -14,8 +14,8 @@ Socket::Socket() {
 Socket::~Socket() {
 	for (std::set<int>::iterator it = _servers.begin(); it != _servers.end(); it++)
 		close(*it);
-	// for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
-	// 	*it->disconnect();
+	for (std::set<int>::iterator it = _clients.begin(); it != _clients.end(); it++)
+		close(*it);
 	close(_epoll_fd);
 }
 
@@ -53,11 +53,12 @@ void Socket::init_socket(const std::string& address, int port)
 
 void Socket::event_loop(void)
 {
+	int timeout = 30000;
 	int epoll_ret;
 	epoll_event events[MAX_EVENTS];
 
 	while (run) {
-		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, TIMEOUT_VALUE);
+		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, timeout);
 		if (epoll_ret == 0)
 			std::cerr << "\033[1;35mWaiting for new connection ...\033[0m" << std::endl;
 		else if (epoll_ret == -1) {
@@ -68,14 +69,79 @@ void Socket::event_loop(void)
 			_exit_error("epoll_wait failed");
 			break;
 		}
-		for (int i = 0; i < epoll_ret; i++)
-		{
-			if (_servers.count(events[i].data.fd)) // if event from server (aka should be a new client trying to connect)
-				_clients.insert(new Client(_epoll_fd, events[i].data.fd, &_clients));
-			else
-				((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
+		for (int i = 0; i < epoll_ret; i++) {
+			std::set<int>::iterator it = _servers.find(events[i].data.fd);
+			if (it != _servers.end()) {
+				_accept_new_client(*it);
+				continue;
+			}
+			_handle_client_event(events[i].data.fd, events[i].events);
 		}
 	}
+}
+
+void Socket::_handle_client_event(int fd, uint32_t revents)
+{
+	char buffer[12];
+	ssize_t recv_ret = 0;
+	Request request;
+	Response response;
+
+	if (revents & (EPOLLERR | EPOLLHUP)) {
+		_close_connection(fd);
+		return;
+	}
+	if (revents & EPOLLIN) {
+		recv_ret = recv(fd, buffer, sizeof(buffer), 0);
+		if (recv_ret == 0) {
+			_close_connection(fd);
+			return;
+		}
+		if (recv_ret < 0) {
+			if (errno == EAGAIN) {
+				std::cerr << "EAGAIN read triggered" << std::endl;
+				return;
+			}
+			_close_connection(fd);
+			return;
+		}
+		buffer[recv_ret] = '\0';
+		if (buffer[recv_ret - 1] == '\n')
+			buffer[recv_ret - 1] = '\0';
+		request.fill(buffer);
+	}
+	if (revents & EPOLLOUT && recv_ret) {
+		std::cerr << "\033[1;35mServing client " << fd << "\033[0m" << std::endl;
+		response.respond(request);
+		send(fd, response.send().c_str(), response.send().size(), 0);
+	}
+
+}
+
+void Socket::_close_connection(int fd) {
+
+	std::cerr << "\033[1;35mRemove client " << fd << "\033[0m" << std::endl;
+	if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0)
+		_exit_error("epoll_ctl failed");
+	close(fd);
+	_clients.erase(fd);
+}
+
+void Socket::_accept_new_client(int server)
+{
+	int client_fd;
+	sockaddr_in addr;
+	socklen_t addr_len = sizeof(addr);
+
+	std::memset(&addr, 0, sizeof(addr));
+	if ((client_fd = accept(server, (sockaddr*)&addr, &addr_len)) < 0) {
+		if (errno == EAGAIN)
+			return;
+		_exit_error("accept failed");
+	}
+	_clients.insert(client_fd);
+	_epoll_add(client_fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
+	std::cerr << "\033[1;35mCreate client " << client_fd << " " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << "\033[0m" << std::endl;
 }
 
 void Socket::_epoll_add(int fd, uint32_t revents)
@@ -83,6 +149,7 @@ void Socket::_epoll_add(int fd, uint32_t revents)
 	epoll_event event;
 
 	std::memset(&event, 0, sizeof(event));
+	// Client client(_epoll_fd, )
 	event.data.fd = fd;
 	event.events = revents;
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)

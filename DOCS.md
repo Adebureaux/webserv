@@ -13,6 +13,8 @@
 - https://www.rfc-editor.org/info/rfc7233
 - https://www.rfc-editor.org/info/rfc7234
 - https://www.rfc-editor.org/info/rfc7235
+- https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4
+- Request (section 5) and Response (section 6) messages use the generic message format of RFC 822 [9] for transferring entities (the payload of the message). Both types of message consist of a start-line, zero or more header fields (also known as "headers"), an empty line (i.e., a line with nothing preceding the CRLF) indicating the end of the header fields, and possibly a message-body.
 
 ## HTTP status codes
 - https://en.wikipedia.org/wiki/List_of_HTTP_status_codes

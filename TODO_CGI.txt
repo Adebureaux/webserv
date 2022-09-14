@@ -1,0 +1,120 @@
+http://www.wijata.com/cgi/cgispec.html#4.0
+
+env variables to pass to cgi program: (a passer en dernier parametre de execve)
+	now see cgi.cpp
+
+	MUST : (Servers MUST provide the following meta-variables to scripts. See the individual descriptions for exceptions and semantics.)
+		CONTENT_LENGTH	CONTENT_TYPE	GATEWAY_INTERFACE	PATH_INFO	QUERY_STRING	REQUEST_METHOD	REMOTE_ADDR	SCRIPT_NAME	SERVER_NAME	SERVER_PORT	SERVER_PROTOCOL	SERVER_SOFTWARE
+	SHOULD : (Servers SHOULD define the following meta-variables for scripts. See the individual descriptions for exceptions and semantics.
+				In addition, servers SHOULD provide meta-variables for all fields present in the HTTP request header, with the exception of those involved with access control. Servers MAY at their discretion provide meta-variables for access control fields.)
+		AUTH_TYPE	REMOTE_HOST
+	MAY: (Servers MAY define the following meta-variables. See the individual descriptions for exceptions and semantics.)
+		PATH_TRANSLATED		REMOTE_IDENT	REMOTE_USER
+
+dans response::response::get
+si METHOD CGI lancer fonction qui parse la requete pour ensuite preparer le passtrought a l'exec du binaire cgi
+
+cgi function should not wait and redirect output to a fd/socket (not directly the response socket) which must then be watched by the select/epoll loop
+-> then on write end event check wether or not the cgi exec wrote a correct response or if an error occured, act and send the correct error page/message/header
+(which php doesnt always do correctly)
+https://habr.com/en/users/simonzolin/posts/
+
+
+// void set_cgi_env2(
+// 	const char *server_software,
+// 	const char *hostname,
+// 	const char *protocol,
+// 	const char *server_port,
+// 	const char *request_method,
+// 	const char *query,
+// 	const char *script_path,
+// 	const char *path_translated,
+// 	const char *remote_addr,
+// 	const char *http_accept,
+// 	const char *cgi_revision,
+// 	const char *http_accept_language,
+// 	const char *http_user_agent
+// )
+// {
+// 	setenv("SERVER_SOFTWARE",server_software, 1); // Le nom et la version du serveur HTTP répondant à la requête. (Format : nom/version)
+// 	setenv("SERVER_NAME", hostname, 1); // Le nom d'hôte, alias DNS ou adresse IP du serveur.
+// 	setenv("SERVER_PROTOCOL", protocol, 1); // Le nom et la révision du protocole dans lequel la requête a été faite (Format : protocole/révision)
+// 	setenv("SERVER_PORT", server_port, 1); // Le numéro de port sur lequel la requête a été envoyée.
+// 	setenv("REQUEST_METHOD", request_method, 1); // La méthode utilisée pour faire la requête. Pour HTTP, elle contient généralement « GET » ou « POST ».
+// 	setenv("QUERY_STRING", query, 1); // Contient tout ce qui suit le « ? » (non inclus) dans l'URL envoyée par le client. Toutes les variables provenant d'un formulaire envoyé avec la méthode « GET » seront contenues dans le QUERY_STRING sous la forme « var1=val1&var2=val2&... ».
+// 	setenv("PATH_TRANSLATED", path_translated, 1); // Query string stripped, Contient le chemin demandé par le client après que les conversions virtuel → physique ont été faites par le serveur.
+// 	setenv("REMOTE_ADDR", remote_addr, 1); // L'adresse IP du client.
+// 	setenv("HTTP_ACCEPT", http_accept, 1); // Les types de données MIME que le client accepte de recevoir. Exemple : text/*, image/jpeg, image/png, image/*, */*
+// 	setenv("GATEWAY_INTERFACE", cgi_revision, 1); // La révision de la spécification CGI que le serveur utilise. (Format : CGI/révision)
+// 	setenv("HTTP_ACCEPT_LANGUAGE", http_accept_language, 1); // Les langues dans lequel le client accepte de recevoir la réponse. Exemple : fr_CA, fr
+// 	setenv("HTTP_USER_AGENT", http_user_agent, 1); // Le navigateur utilisé par le client. Exemple : Mozilla/5.0 (compatible; Konqueror/3; Linux)
+// 	setenv("REDIRECT_STATUS", "200", 1); // truc de securite pour php
+// }
+//
+// std::string readToString(int fd)
+// {
+// 	static char buffer[2048];
+// 	std::stringstream res;
+// 	int ret = 0;
+// 	while ((ret = read(fd, buffer, sizeof(buffer))) != 0)
+// 	{
+// 		res << buffer;
+// 		std::memset(buffer, 0, ret);
+// 	}
+// 	close(fd);
+// 	return res.str();
+// }
+//
+// const char* cgi(const char *script_path) {
+// 	int out[2], error[2], pid, status;
+// 	static char buffer_out[2048];
+// 	static char buffer_error[2048];
+//
+// 	pipe(out);
+// 	pipe(error);
+// 	if ((pid = fork()) == -1)
+// 		std::cout << "error: fork()\n";
+// 	if (pid == 0)
+// 	{
+// 		close(out[0]);
+// 		close(error[0]);
+// 		dup2(out[1], 1);
+// 		dup2(error[1], 2);
+// 		close(out[1]);
+// 		close(error[1]);
+// 		set_cgi_env();
+// 		execl("/usr/bin/php-cgi", "/usr/bin/php-cgi", script_path, 0);
+// 		exit(1);
+// 	}
+// 	waitpid(pid, &status, 0);
+// 	close(out[1]);
+// 	close(error[1]);
+// 	std::cout<< GREEN << "CGI OUT:\n" << readToString(out[0]) << CLEAR;
+// 	std::cout<<std::endl << RED << "CGI ERROR:" << status << "\n" << readToString(error[0]) << CLEAR;
+// 	return 0;
+// }
+
+on connection
+
+client:
+	fd
+	sockaddr_in
+	request:
+		request_state ERROR | READY | INCOMPLETE | SENT
+		raw_data
+		header
+		body
+		info (struct from parser)
+		client_ptr
+		response_ptr
+	response:
+		response_state ERROR | READY | INCOMPLETE | SENT
+		raw_data
+		header
+		body
+		info (struct from parser)
+		client_ptr
+		request_ptr
+
+on epoll event
+if
