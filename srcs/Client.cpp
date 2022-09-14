@@ -7,8 +7,8 @@ Message::Message(Client *c) :
 	raw_data(""), // ! PLACEHOLDER
 	header(""),
 	body(""),
-	ptr(NULL)
-	// info(NULL)
+	ptr(NULL),
+	info("DEFAULT")
 {};
 Message::~Message(){};
 const char *Message::data(void) const
@@ -41,6 +41,7 @@ Client::~Client()
 	_clients->erase(this);
 	//remove all messages
 };
+
 int Client::_receive(void)
 {
 	static char buffer[4096];
@@ -54,10 +55,12 @@ int Client::_receive(void)
 	else if (ret <= 0)
 		disconnect();
 	request.raw_data.append(res.str());
+	std::cout << "received request:\n" << request.raw_data << std::endl;
 	if (ret < 0)
 		return ret;
 	return res.str().size();
 }
+
 void Client::_addEventListener(uint32_t revents)
 {
 	epoll_event event;
@@ -70,14 +73,6 @@ void Client::_addEventListener(uint32_t revents)
 	std::cout << "\tadded to epoll loop"<< std::endl;
 
 }
-
-
-// void delete()
-// {
-// 	(void)disconnect();
-// 	_clients->erase(this);
-// 	//remove all messages
-// };
 
 int Client::disconnect(void)
 {
@@ -103,12 +98,18 @@ void Client::handleEvent(uint32_t revents)
 			disconnect(); // must close collection and destroy client
 			return;
 		}
-		// handle_request(); // must parse request then try to generate its response
+		handle_request(); // must parse request then try to generate its response
 	}
 	if (revents & EPOLLOUT && recv_ret)
 	{
 		respond();
 	}
+};
+
+void Client::handle_request()
+{
+	request.info = Request(request.raw_data);
+	std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
 };
 
 int Client::respond()

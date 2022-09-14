@@ -28,7 +28,7 @@ public:
 	std::string		header;
 	std::string		body;
 	Message			*ptr; // response || request
-	// Request			info;
+	Request			info;
 
 	Message(Client *c);
 	virtual ~Message();
@@ -54,5 +54,6 @@ public:
 	virtual ~Client();
 	int disconnect(void);
 	void handleEvent(uint32_t revents);
+	void handle_request(void);
 	int respond();
 };
