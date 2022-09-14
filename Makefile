@@ -5,7 +5,7 @@ SRCS		=	srcs/main.cpp\
 				srcs/Socket.cpp\
 				srcs/Client.cpp\
 				srcs/Request.cpp\
-				srcs/Response.cpp
+				# srcs/Response.cpp
 
 INCS		= -I includes
 OBJS		:= $(SRCS:.cpp=.o)

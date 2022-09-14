@@ -1,26 +1,44 @@
 # include "Request.hpp"
 
 Request::Request(const std::string& raw_request) :
-_raw_request(raw_request), _head(0), _method(NO_METHOD), _head_msg_body(0), _var_map()
+_raw_request(raw_request), _head(0), _method(NO_METHOD), _head_msg_body(0), _header_var_map(), _var_map(), _error_msg(), _is_valid(false)
 {
 	try
 	{
 
 		http_message();
-		std::cout << "http_message OK" << std::endl;
+		_is_valid = true;
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "error req/" << e.what() << '\n';
-		std::cout << "http_message KO" << std::endl;
-		std::cout << std::endl << "'"<< &_raw_request[_head] << "'" << std::endl;
+		_error_msg = e.what();
 	}
 }
 
-Request::~Request()
+Request::Request(const Request &cpy)
 {
+	*this = cpy;
 }
 
+Request Request::operator=(const Request &src)
+{
+	_raw_request = src._raw_request;
+	_head = src._head;
+	_method = src._method;
+	_head_msg_body = src._head_msg_body;
+	_header_var_map = src._header_var_map;
+	_var_map = src._var_map;
+	_error_msg = src._error_msg;
+	_is_valid = src._is_valid;
+	return (*this);
+}
+
+Request::~Request(){}
+
+bool Request::is_valid()
+{
+	return(_is_valid);
+}
 
 void Request::ft_va_copy(va_list *dest, va_list *src)
 {
@@ -106,7 +124,7 @@ void Request::n_star_m_and(int n, int m, va_list *arg)
 
 }
 
-void Request::_or(const std::string &fct_ptr_tag, ...)
+void Request::_or(const std::string fct_ptr_tag, ...)
 {
 	va_list arg;
 
@@ -115,7 +133,7 @@ void Request::_or(const std::string &fct_ptr_tag, ...)
 	va_end(arg);
 }
 
-void Request::_and(const std::string &fct_ptr_tag, ...)
+void Request::_and(const std::string fct_ptr_tag, ...)
 {
 	va_list arg;
 	va_start(arg, fct_ptr_tag);
@@ -296,7 +314,6 @@ void Request::_or(const std::string &fct_ptr_tag, va_list *arg)
 
 void Request::CR()
 {
-	// std::cout << _raw_request[_head] << std::endl;
 	_is_char('\r');
 }
 
@@ -318,7 +335,7 @@ void Request::http_message()
 {
 	try
 	{
-		_and("nSns", &Request::start_line, AND, STAR_NO_MIN, STAR_NO_MAX, "nn", &Request::header_field, &Request::CRLF, &Request::CRLF, STAR_NO_MIN, STAR_NO_MAX, &Request::message_body);
+		_and("nSns", &Request::start_line, AND, STAR_NO_MIN, STAR_NO_MAX, "nn", &Request::header_field, &Request::CRLF, &Request::CRLF, STAR_NO_MIN, 1, &Request::message_body);
 	}
 	catch(const std::exception& e)
 	{
@@ -394,7 +411,7 @@ void Request::request_target()
 	{
 		throw EXECP;
 	}
-CATCH_VAR("REQUEST_TARGET");
+	CATCH_VAR("REQUEST_TARGET");
 }
 
 void Request::origin_form()
@@ -511,6 +528,8 @@ void Request::_range(char start, char end)
 {
 	if (_raw_request[_head] < start || _raw_request[_head] > end)
 		throw std::invalid_argument("char between '" + std::string(&start, 1) + "' and '" + std::string(&end, 1) + "' was expected");
+	else if (_head >= _raw_request.size())
+		throw std::out_of_range(" out of range ");
 	_head++;
 }
 
@@ -522,6 +541,8 @@ void Request::_is_charset(std::string const &charset)
 	{
 		if (*it == _raw_request[_head])
 		{
+			if (_head >= _raw_request.size())
+				throw std::out_of_range(" out of range ");
 			_head++;
 			return;
 		}
@@ -550,6 +571,8 @@ void Request::_is_char(char c)
 			break;
 		}
 	}
+	if (_head >= _raw_request.size())
+				throw std::out_of_range(" out of range ");
 	_head++;
 }
 
@@ -636,8 +659,8 @@ void Request::asterisk_form()
 {
 	try
 	{
+		throw std::invalid_argument("asterisk form only used for OPTION method");
 		_is_char('*');
-		/* code */
 	}
 	catch(const std::exception& e)
 	{
@@ -723,7 +746,6 @@ void Request::host()
 	{
 		throw EXECP;
 	}
-
 }
 
 void Request::IP_literal()
@@ -928,10 +950,13 @@ void Request::http_name()
 	}
 }
 
+
+// only for CONNECT method
 void Request::authority_form()
 {
 	try
 	{
+		throw std::invalid_argument("authority form only used for CONNECT method");
 		authority();
 	}
 	catch(const std::exception& e)
@@ -957,13 +982,14 @@ void Request::header_field()
 void Request::catch_var_header_field(size_t old_head)
 {
 	std::string var_name;
+
 	_head = old_head;
 	field_name();
 	var_name = std::string(_raw_request.begin() + old_head, _raw_request.begin() + _head);
 	OWS();
-	old_head = _head;
+	old_head = _head + 2;
 	field_value();
-	CATCH_VAR(var_name);
+	CATCH_HEADER_VAR(var_name);
 	OWS();
 }
 
@@ -1078,8 +1104,16 @@ void Request::token()
 void Request::message_body()
 {
 	_head_msg_body = _head;
-	throw std::invalid_argument("message_body");
-	n_star_m(STAR_NO_MIN, STAR_NO_MAX, &Request::OCTET);
+	// throw std::invalid_argument("message_body");
+	try
+	{
+		n_star_m(STAR_NO_MIN, STAR_NO_MAX, &Request::OCTET);
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+
 }
 
 void		Request::set_raw_request(const std::string& raw_request)
@@ -1088,6 +1122,22 @@ void		Request::set_raw_request(const std::string& raw_request)
 	_head = 0;
 	_method = NO_METHOD;
 	_var_map.clear();
+	_error_msg = "";
+	_is_valid = false;
+	try
+	{
+
+		http_message();
+		_is_valid = true;
+		std::cout << "http_message OK" << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << "error req/" << e.what() << '\n';
+		_error_msg = e.what();
+		std::cout << "http_message KO" << std::endl;
+		std::cout << std::endl << "'"<< &_raw_request[_head] << "'" << std::endl;
+	}
 }
 
 int Request::get_method()
@@ -1102,22 +1152,30 @@ std::string const Request::get_raw_request()
 
 std::string const Request::get_connection()
 {
-	return (get_var_by_name("Connection").second);
+	std::pair<bool, std::string> ret = get_var_by_name("Connection");
+
+	return  ((ret.first) ? ret.second : "");
 }
 
 std::string const Request::get_authority()
 {
-	return (get_var_by_name("Authority").second);
+	std::pair<bool, std::string> ret = get_var_by_name("Authority");
+
+	return  ((ret.first) ? ret.second : "");
 }
 
 std::string const Request::get_host()
 {
-	return (get_var_by_name("Host").second);
+	std::pair<bool, std::string> ret = get_var_by_name("Host");
+
+	return  ((ret.first) ? ret.second : "");
 }
 
 std::string const Request::get_request_target()
 {
-	return (get_var_by_name("Request_target").second);
+	std::pair<bool, std::string> ret = get_var_by_name("Request_target");
+
+	return  ((ret.first) ? ret.second : "");
 }
 
 std::string const Request::get_message_body()
@@ -1138,9 +1196,14 @@ std::pair<bool, std::string> Request::get_var_by_name(const std::string &name)
 	}
 }
 
-std::map<std::string, std::string> Request::get_map() const
+std::map<std::string, std::string> Request::get_var_map() const
 {
 	return (_var_map);
+}
+
+std::map<std::string, std::string> Request::get_header_var_map() const
+{
+	return (_header_var_map);
 }
 
 void Request::status_line()
@@ -1200,12 +1263,11 @@ void Request::status_code_phrase()
 			"502 Bad Gateway",
 			"503 Service Unavailable",
 			"504 Gateway Time-out",
-			"505 HTTP Versionnot supported");
+			"505 HTTP Version not supported");
 	}
 	catch(const std::exception& e)
 	{
 		throw EXECP;
 	}
 	CATCH_VAR("STATUS_CODE");
-
 }
