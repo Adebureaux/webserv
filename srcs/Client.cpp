@@ -54,9 +54,8 @@ int Client::_receive(void)
 	}
 	else if (ret <= 0)
 		disconnect();
-	// SI CRLF --> request.state = READY | INCOMPLETE
 	request.raw_data.append(res.str());
-	if (request.raw_data.find(CRLF) != std::string::npos)
+	if (request.raw_data.find("\r\n\r\n") != std::string::npos)
 	{
 		request.state = READY;
 	}
@@ -65,16 +64,6 @@ int Client::_receive(void)
 		return ret;
 	return res.str().size();
 }
-
-		// if (_client_header.find(CRLF) != std::string::npos) {
-		// 	request.fill(_client_header);
-		// 	if (revents & EPOLLOUT) {
-		// 		std::cerr << "\033[1;35mServing client " << fd << "\033[0m" << std::endl;
-		// 		response.respond(request);
-		// 		send(fd, response.send().c_str(), response.send().size(), 0);
-		// 		_client_header.erase();
-		// 	}
-		// }
 
 void Client::_addEventListener(uint32_t revents)
 {
@@ -150,7 +139,7 @@ int Client::respond()
 	// response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";
 	std::cout << response.data() << std::endl;
 	std::cout << "send_status: " << write(fd, response.data(), response.size()) << std::endl;
-	return 0;
+	return (0);
 	// if request specified to close the connection then try and close it
 
 };

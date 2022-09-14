@@ -1,5 +1,52 @@
 #pragma once
 
+#include <set>
+#include <map>
+#include <string>
+#include <string>
+#include <cerrno>
+#include <cstring>
+#include <cstdarg>
+#include <cstring>
+#include <cstdlib>
+#include <csignal>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <unistd.h>
+#include <exception>
+#include <stdexcept>
+#include <sys/epoll.h>
+#include <arpa/inet.h>
+
+// Aymeric
+#define GET						 0
+#define POST					 1
+#define DELETE					 2
+#define NO_METHOD				-1
+
+#define OR						 1
+#define AND						 0
+
+#define STAR_NO_MIN				 0
+#define STAR_NO_MAX				-1
+#define EXECP					std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
+#define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_request.begin()+ old_head,_raw_request.begin() + _head)
+#define CATCH_VAR(X)			_var_map[X] = std::string(_raw_request.begin()+ old_head,_raw_request.begin() + _head)
+// End Aymeric
+
+// Augustin
+typedef struct s_config {
+	std::string	address;
+	std::string	server_name;
+	int			port;
+} t_config;
+
+#define BUFFER_SIZE 4096
+#define MAX_EVENTS 128
+#define TIMEOUT_VALUE 30000
+// End Augustin
+
 /*
 ** color letters
 */

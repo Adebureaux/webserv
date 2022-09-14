@@ -1,18 +1,6 @@
 #pragma once
+#include "Request.hpp"
 
-# include "Socket.hpp"
-# include <string>
-# include <sstream>
-# include <iostream>
-# include <set>
-# include <cstdlib>
-# include <cerrno>
-# include <cstring>
-# include <csignal>
-# include <unistd.h>
-# include <sys/epoll.h>
-# include <arpa/inet.h>
-# include "Request.hpp"
 typedef enum e_state {
 	ERROR = -1 , WAITING, INCOMPLETE, READY, DONE
 } t_state;
