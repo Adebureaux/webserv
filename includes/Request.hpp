@@ -38,6 +38,7 @@ class Request
 	std::string const					get_request_target();
 	std::string const					get_message_body();
 	std::pair<bool, std::string>		get_var_by_name(const std::string &name);
+	std::pair<bool, std::string> 		get_header_var_by_name(const std::string &name);
 	std::map<std::string, std::string>	get_var_map() const;
 	std::map<std::string, std::string>	get_header_var_map() const;
 	bool								is_valid();

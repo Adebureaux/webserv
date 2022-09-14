@@ -1153,30 +1153,30 @@ std::string const Request::get_raw_request()
 
 std::string const Request::get_connection()
 {
-	std::pair<bool, std::string> ret = get_var_by_name("Connection");
+	std::pair<bool, std::string> ret = get_header_var_by_name("Connection");
 
-	return  ((ret.first) ? ret.second : "qwerty");
+	return  ((ret.first) ? ret.second : "");
 }
 
 std::string const Request::get_authority()
 {
-	std::pair<bool, std::string> ret = get_var_by_name("Authority");
+	std::pair<bool, std::string> ret = get_header_var_by_name("Authority");
 
 	return  ((ret.first) ? ret.second : "");
 }
 
 std::string const Request::get_host()
 {
-	std::pair<bool, std::string> ret = get_var_by_name("Host");
+	std::pair<bool, std::string> ret = get_header_var_by_name("Host");
 
 	return  ((ret.first) ? ret.second : "");
 }
 
 std::string const Request::get_request_target()
 {
-	std::pair<bool, std::string> ret = get_var_by_name("Request_target");
+	std::pair<bool, std::string> ret = get_header_var_by_name("Request_target");
 
-	return  ((ret.first) ? ret.second : "azerty");
+	return  ((ret.first) ? ret.second : "");
 }
 
 std::string const Request::get_message_body()
@@ -1189,6 +1189,19 @@ std::pair<bool, std::string> Request::get_var_by_name(const std::string &name)
 	try
 	{
 		std::string str = _var_map.at(name);
+		return (std::pair<bool, std::string>(true, str));
+	}
+	catch(const std::exception& e)
+	{
+		return (std::pair<bool, std::string>(false, ""));
+	}
+}
+
+std::pair<bool, std::string> Request::get_header_var_by_name(const std::string &name)
+{
+	try
+	{
+		std::string str = _header_var_map.at(name);
 		return (std::pair<bool, std::string>(true, str));
 	}
 	catch(const std::exception& e)

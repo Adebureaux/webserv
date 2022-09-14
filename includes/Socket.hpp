@@ -40,7 +40,7 @@ class Socket
 	private:
 		int						_epoll_fd;
 		std::set<int>			_servers;
-		std::set<ServerBlock*>	_servers_tmp;
+		// std::set<ServerBlock*>	_servers_tmp;
 		std::set<Client*>		_clients;
 
 };
