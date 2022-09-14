@@ -5,12 +5,12 @@
 class Server
 {
 	public:
-	Server(t_config config);
+	Server(t_server_block config);
 	~Server();
 
-	int get_server_fd(void);
 	int init_socket(void);
 
-	private:
-		t_config	_config;
+	public:
+	int				server_fd;
+	t_server_block	config;
 };

@@ -10,28 +10,31 @@ Message::Message(Client *c) :
 	ptr(NULL),
 	info("DEFAULT")
 {};
+
 Message::~Message(){};
+
 const char *Message::data(void) const
 {
 	return raw_data.c_str();// PLACEHOLDER !!
 }; // should return complete response buffer; wether it's an error or correct page
+
 size_t Message::size(void) const
 {
 	return raw_data.size();// PLACEHOLDER !!
 }; // should return response buffer size
 
-Client::Client(int epoll, int server_fd, std::set<Client *> *clients) : epoll_fd(epoll), server(server_fd), _clients(clients), request(this), response(this)
+Client::Client(int epoll, Server& server, std::set<Client *> *clients) : epoll_fd(epoll), _server(server), _clients(clients), request(this), response(this)
 {
 	socklen_t addr_len = sizeof(address);
 
 	std::memset(&address, 0, addr_len);
-	if ((fd = accept(server, (sockaddr*)&address, &addr_len)) < 0)
+	if ((fd = accept(_server.server_fd, (sockaddr*)&address, &addr_len)) < 0)
 	{
 		if (errno == EAGAIN)
 			return; // should thow an exception to force auto deletion because of new construction
 		exit(-1);  // should thow an exception to force auto deletion because of new construction
 	}
-	std::cout << "new client with fd: " << fd << " accepted on server:" << server << std::endl;
+	std::cout << "new client with fd: " << fd << " accepted on server:" << _server.server_fd << std::endl;
 	_addEventListener(EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
 };
 
@@ -59,9 +62,9 @@ int Client::_receive(void)
 	{
 		request.state = READY;
 	}
-	std::cout << "received request:\n" << request.raw_data << std::endl;
 	if (ret < 0)
 		return ret;
+	// std::cout << "received request:\n" << request.raw_data << std::endl;
 	return res.str().size();
 }
 
@@ -102,10 +105,10 @@ void Client::handleEvent(uint32_t revents)
 			disconnect(); // must close collection and destroy client
 			return;
 		}
-		handle_request(); // must parse request then try to generate its response
 	}
 	if (revents & EPOLLOUT && request.state == READY)
 	{
+		handle_request();
 		respond();
 		request.raw_data.erase();
 		request.state = INCOMPLETE;
@@ -115,8 +118,8 @@ void Client::handleEvent(uint32_t revents)
 void Client::handle_request()
 {
 	std::cout << request.raw_data;
-	// request.info = Request(request.raw_data);
-	// std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
+	request.info = Request(request.raw_data);
+	std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
 };
 
 int Client::respond()

@@ -10,7 +10,7 @@ INCS		= -I includes
 OBJS		:= $(SRCS:.cpp=.o)
 DEPS 		:= $(OBJS:.o=.d)
 RM			= rm -f
-CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g3 -fsanitize=address
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98
 COMPILER	= c++
 
 $(NAME): $(OBJS)

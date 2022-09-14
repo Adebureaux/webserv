@@ -1,5 +1,6 @@
 #pragma once
 #include "Request.hpp"
+#include "Server.hpp"
 
 typedef enum e_state {
 	ERROR = -1 , WAITING, INCOMPLETE, READY, DONE
@@ -32,13 +33,13 @@ private:
 public:
 	int					fd;
 	int					epoll_fd;
-	int					server; // should take instead a pointer to a server
+	Server&				_server; // should take instead a pointer to a server
 	std::set<Client*>	*_clients;
 	sockaddr_in			address;
 	Message				request;
 	Message				response;
 
-	Client(int epoll, int server_fd, std::set<Client *> *clients);
+	Client(int epoll, Server& server, std::set<Client *> *clients);
 	virtual ~Client();
 	int disconnect(void);
 	void handleEvent(uint32_t revents);

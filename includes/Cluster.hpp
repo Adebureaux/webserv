@@ -13,7 +13,7 @@ class Cluster
 	void event_loop(void);
 
 	private:
-	void _epoll_add(int fd, uint32_t revents);
+	void _add_server(int fd, uint32_t revents);
 
 	private:
 	int						_epoll_fd;
