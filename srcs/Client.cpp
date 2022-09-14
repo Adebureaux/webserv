@@ -125,8 +125,9 @@ void Client::handleEvent(uint32_t revents)
 
 void Client::handle_request()
 {
-	request.info = Request(request.raw_data);
-	std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
+	std::cout << request.raw_data;
+	// request.info = Request(request.raw_data);
+	// std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
 };
 
 int Client::respond()

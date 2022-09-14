@@ -38,9 +38,10 @@ class Socket
 		void _exit_error(const std::string& err) const;
 
 	private:
-		int					_epoll_fd;
-		std::set<int>		_servers;
-		std::set<Client*>	_clients;
+		int						_epoll_fd;
+		std::set<int>			_servers;
+		std::set<ServerBlock*>	_servers_tmp;
+		std::set<Client*>		_clients;
 
 };
 
