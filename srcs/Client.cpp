@@ -45,15 +45,17 @@ int Client::_receive(void)
 	static char buffer[4096];
 	std::stringstream res;
 	int ret = 0;
-	while ((ret = recv(fd, buffer, sizeof(buffer), 0)) > 0)
+	if ((ret = recv(fd, buffer, sizeof(buffer), 0)) > 0)
 	{
 		res << buffer;
 		std::memset(buffer, 0, ret);
 	}
-	request.raw_data = res.str();
+	else if (ret <= 0)
+		disconnect();
+	request.raw_data.append(res.str());
 	if (ret < 0)
 		return ret;
-	return request.raw_data.size();
+	return res.str().size();
 }
 void Client::_addEventListener(uint32_t revents)
 {
@@ -110,10 +112,22 @@ void Client::handleEvent(uint32_t revents)
 
 int Client::respond()
 {
-	// should instead be non blocking
+	// should instead be sending data by chunks if necessary
 	// must take as last param a flag which state if more data neeeds to be sent
-	response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";
-	std::cout << "send_status: " << send(fd, response.data(), response.size(), 0) << std::endl;
+	std::ifstream file("test.html");
+	std::stringstream ssbuffer;
+	std::string buffer;
+
+	ssbuffer << file.rdbuf();
+	file.close();
+	response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+	buffer = ssbuffer.str();
+	response.raw_data.append(SSTR("" << buffer.size()));
+	response.raw_data.append("\n\n");
+	response.raw_data.append(buffer);
+	// response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";
+	std::cout << response.data() << std::endl;
+	std::cout << "send_status: " << write(fd, response.data(), response.size()) << std::endl;
 	return 0;
 	// if request specified to close the connection then try and close it
 

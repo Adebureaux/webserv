@@ -72,9 +72,11 @@ void Socket::event_loop(void)
 		for (int i = 0; i < epoll_ret; i++)
 		{
 			if (_servers.count(events[i].data.fd)) // if event from server (aka should be a new client trying to connect)
+			{
 				_clients.insert(new Client(_epoll_fd, events[i].data.fd, &_clients));
-			else // event of existing client
-				((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
+				continue;
+			}
+			((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
 		}
 	}
 }
