@@ -1,4 +1,5 @@
 #include "Client.hpp"
+# define SSTR(x) static_cast<std::ostringstream&>((std::ostringstream() << std::dec << x)).str()
 
 Message::Message(Client *c) :
 	client(c),
@@ -116,13 +117,15 @@ int Client::respond()
 	// must take as last param a flag which state if more data neeeds to be sent
 	std::ifstream file("test.html");
 	std::stringstream ssbuffer;
+	std::stringstream content_size_stream;
 	std::string buffer;
 
 	ssbuffer << file.rdbuf();
 	file.close();
 	response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
 	buffer = ssbuffer.str();
-	response.raw_data.append(SSTR("" << buffer.size()));
+	content_size_stream << buffer.size();
+	response.raw_data.append(content_size_stream.str());
 	response.raw_data.append("\n\n");
 	response.raw_data.append(buffer);
 	// response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";

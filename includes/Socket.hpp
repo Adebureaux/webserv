@@ -1,5 +1,5 @@
-#ifndef SIMPLE_SOCKET_HPP
-# define SIMPLE_SOCKET_HPP
+#ifndef SOCKET_HPP
+# define SOCKET_HPP
 # include <string>
 # include <iostream>
 # include <set>
@@ -11,12 +11,12 @@
 # include <sys/epoll.h>
 # include <arpa/inet.h>
 # include "Request.hpp"
-# include "Response.hpp"
 # include "Client.hpp"
+# include <fstream>
 
 # define BUFFER_SIZE 4096
 # define MAX_EVENTS 128
-
+class Client;
 class Socket
 {
 	public:
