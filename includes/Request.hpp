@@ -26,7 +26,7 @@ class Request
 	public:
 	Request(const std::string& raw_request);
 	Request(const Request &cpy);
-	Request operator=(const Request &src);
+	Request &operator=(const Request &src);
 	~Request();
 
 	int							 		get_method();

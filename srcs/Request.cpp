@@ -20,7 +20,7 @@ Request::Request(const Request &cpy)
 	*this = cpy;
 }
 
-Request Request::operator=(const Request &src)
+Request &Request::operator=(const Request &src)
 {
 	_raw_request = src._raw_request;
 	_head = src._head;
@@ -30,6 +30,7 @@ Request Request::operator=(const Request &src)
 	_var_map = src._var_map;
 	_error_msg = src._error_msg;
 	_is_valid = src._is_valid;
+
 	return (*this);
 }
 
@@ -986,8 +987,8 @@ void Request::catch_var_header_field(size_t old_head)
 	_head = old_head;
 	field_name();
 	var_name = std::string(_raw_request.begin() + old_head, _raw_request.begin() + _head);
-	OWS();
-	old_head = _head + 2;
+	_head += 2;
+	old_head = _head;
 	field_value();
 	CATCH_HEADER_VAR(var_name);
 	OWS();
@@ -1154,7 +1155,7 @@ std::string const Request::get_connection()
 {
 	std::pair<bool, std::string> ret = get_var_by_name("Connection");
 
-	return  ((ret.first) ? ret.second : "");
+	return  ((ret.first) ? ret.second : "qwerty");
 }
 
 std::string const Request::get_authority()
@@ -1175,7 +1176,7 @@ std::string const Request::get_request_target()
 {
 	std::pair<bool, std::string> ret = get_var_by_name("Request_target");
 
-	return  ((ret.first) ? ret.second : "");
+	return  ((ret.first) ? ret.second : "azerty");
 }
 
 std::string const Request::get_message_body()
