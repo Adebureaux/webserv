@@ -1,25 +1,5 @@
 #pragma once
-#include <string>
-#include <cstdarg>
-#include <exception>
-#include <stdexcept>
-#include <iostream>
-#include <map>
-#include <cstring>
-
-#define GET						 0
-#define POST					 1
-#define DELETE					 2
-#define NO_METHOD				-1
-
-#define OR						 1
-#define AND						 0
-
-#define STAR_NO_MIN				 0
-#define STAR_NO_MAX				-1
-#define EXECP					std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
-#define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_request.begin()+ old_head,_raw_request.begin() + _head)
-#define CATCH_VAR(X)			_var_map[X] = std::string(_raw_request.begin()+ old_head,_raw_request.begin() + _head)
+#include "Header.hpp"
 
 class Request
 {

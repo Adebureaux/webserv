@@ -1,5 +1,69 @@
 #pragma once
 
+#include <set>
+#include <map>
+#include <vector>
+#include <string>
+#include <string>
+#include <cerrno>
+#include <cstring>
+#include <cstdarg>
+#include <cstring>
+#include <cstdlib>
+#include <csignal>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <unistd.h>
+#include <exception>
+#include <stdexcept>
+#include <sys/epoll.h>
+#include <arpa/inet.h>
+
+// Augustin
+typedef struct s_location {
+	bool			get_method;
+	bool			post_method;
+	bool			delete_method;
+	std::string		redirect;
+	std::string		root;
+	bool			autoindex;
+	std::string		default_file;
+	std::string		CGI;
+	bool			upload;
+} t_location;
+
+typedef struct s_server_block {
+	int										port;			// Mandatory
+	std::string								address;		// Mandatory
+	std::string								server_names;	// Optional
+	bool									main; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
+	std::map<int, std::string>				error_pages;	// Optional
+	size_t									body_size;		// Optional ? (setup default value)
+	std::vector<t_location>					locations;		// Optional
+} t_server_block;
+
+#define BUFFER_SIZE 4096
+#define MAX_EVENTS 128
+#define TIMEOUT_VALUE 30000
+// End Augustin
+
+// Aymeric
+#define GET						 0
+#define POST					 1
+#define DELETE					 2
+#define NO_METHOD				-1
+
+#define OR						 1
+#define AND						 0
+
+#define STAR_NO_MIN				 0
+#define STAR_NO_MAX				-1
+#define EXECP					std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
+#define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_request.begin()+ old_head,_raw_request.begin() + _head)
+#define CATCH_VAR(X)			_var_map[X] = std::string(_raw_request.begin()+ old_head,_raw_request.begin() + _head)
+// End Aymeric
+
 /*
 ** color letters
 */

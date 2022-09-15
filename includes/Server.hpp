@@ -1,16 +1,16 @@
-#ifndef SERVER_HPP
-# define SERVER_HPP
-# include "Socket.hpp"
+#pragma once
+
+#include "Header.hpp"
 
 class Server
 {
 	public:
-		Server();
-		~Server();
+	Server(t_server_block config);
+	~Server();
 
-		void launch(void);
+	int init_socket(void);
 
-
+	public:
+	int				server_fd;
+	t_server_block	config;
 };
-
-#endif

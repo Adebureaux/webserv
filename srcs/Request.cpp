@@ -1,4 +1,4 @@
-# include "Request.hpp"
+#include "Request.hpp"
 
 Request::Request(const std::string& raw_request) :
 _raw_request(raw_request), _head(0), _method(NO_METHOD), _head_msg_body(0), _header_var_map(), _var_map(), _error_msg(), _is_valid(false)
