@@ -39,6 +39,7 @@ typedef struct s_server_block {
 	std::string								server_names;	// Optional
 	bool									main; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
 	std::map<int, std::string>				error_pages;	// Optional
+	// std::map<int, std::string>				*default_error_pages;	// Optional
 	size_t									body_size;		// Optional ? (setup default value)
 	std::vector<t_location>					locations;		// Optional
 } t_server_block;
