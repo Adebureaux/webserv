@@ -1,5 +1,7 @@
 #include "Client.hpp"
 # define SSTR(x) static_cast<std::ostringstream&>((std::ostringstream() << std::dec << x)).str()
+// PLACEHOLDER: should instead
+# define KEEP_ALIVE false
 
 Message::Message(Client *c) :
 	client(c),
@@ -81,12 +83,11 @@ void Client::_addEventListener(uint32_t revents)
 
 }
 
-int Client::disconnect(void)
+void Client::disconnect(void)
 {
-	int status = epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);
-	//remove all messages
-	return status;
+	_clients->erase(this);
 };
 
 void Client::handleEvent(uint32_t revents)
@@ -96,6 +97,7 @@ void Client::handleEvent(uint32_t revents)
 	if (revents & (EPOLLERR | EPOLLHUP))
 	{
 		disconnect();// must close collection and destroy client as well as its ref in the clients collection
+		throw std::exception();
 		return;
 	}
 	if (revents & EPOLLIN)
@@ -103,6 +105,7 @@ void Client::handleEvent(uint32_t revents)
 		recv_ret = _receive();
 		if (recv_ret <= 0) {
 			disconnect(); // must close collection and destroy client
+			throw std::exception();
 			return;
 		}
 	}
@@ -142,6 +145,13 @@ int Client::respond()
 	// response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";
 	std::cout << response.data() << std::endl;
 	std::cout << "send_status: " << write(fd, response.data(), response.size()) << std::endl;
+	response.state = INCOMPLETE;
+	response.raw_data.erase();
+	if (!KEEP_ALIVE)
+	{
+		disconnect();
+		throw std::exception();
+	}
 	return (0);
 	// if request specified to close the connection then try and close it
 

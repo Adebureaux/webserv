@@ -13,7 +13,12 @@ Cluster::Cluster() {
 	std::signal(SIGINT, signal_handler);
 }
 
-Cluster::~Cluster() {}
+Cluster::~Cluster()
+{
+	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.begin(); it++)
+		delete *it;
+	_clients.clear();
+}
 
 void Cluster::parse(const std::string& file)
 {
@@ -78,9 +83,24 @@ void Cluster::event_loop(void)
 		{
 			std::map<int, Server>::iterator it = _servers.find(events[i].data.fd);
 			if (it != _servers.end()) // if event from server (aka should be a new client trying to connect)
-				_clients.insert(new Client(_epoll_fd, it->second, &_clients));
+			{
+				Client *client = new Client(_epoll_fd, it->second, &_clients);
+				_clients.insert(client);
+			}
 			else
-				((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
+			{
+				try
+				{
+					((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
+				}
+				catch (const std::exception& e)
+				{
+					// (void)e;
+					std::cout << std::endl << e.what() << std::endl;
+					_clients.erase((Client*)(events[i].data.ptr));
+					delete (Client*)(events[i].data.ptr);
+				}
+			}
 		}
 	}
 }

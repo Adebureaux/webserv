@@ -41,7 +41,7 @@ public:
 
 	Client(int epoll, Server& server, std::set<Client *> *clients);
 	virtual ~Client();
-	int disconnect(void);
+	void disconnect(void);
 	void handleEvent(uint32_t revents);
 	void handle_request(void);
 	int respond();
