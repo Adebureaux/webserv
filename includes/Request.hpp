@@ -1,7 +1,24 @@
 #pragma once
+#include "Parser.hpp"
 #include "Header.hpp"
+#include <set>
+#include <map>
+#include <vector>
+#include <string>
+#include <iostream>
+#include <exception>
+#include <stdexcept>
 
-class Request
+
+// #define GET						 0
+// #define POST					 1
+// #define DELETE					 2
+// #define NO_METHOD				-1
+
+// #define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
+// #define CATCH_VAR(X)			_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
+
+class Request : public Parser
 {
 	public:
 	Request(const std::string& raw_request);
@@ -26,8 +43,6 @@ class Request
 	private:
 
 	typedef void (Request::*pf)(void);
-	std::string							_raw_request;
-	size_t								_head;
 	int		 							_method;
 	size_t								_head_msg_body;
 	std::map<std::string, std::string>	_header_var_map;
@@ -48,47 +63,9 @@ class Request
 	*/
 
 	void catch_var_header_field(size_t old_head);
-	void ft_va_copy(va_list *dest, va_list *src);																		// ✓
 	void expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *arg);											// ✓
 	void finish_expand(std::string::const_iterator start, std::string::const_iterator end, va_list *arg);				// ✓
-	void _range(char start, char end);																					// ✓
-	void _is_char(char c);																								// ✓
-	void _is_charset(std::string const &charset);																		// ✓
-	void _is_str(std::string const &str);																				// ✓
 	void n_star_m(int n, int m,void (Request::*fct)(void));		// s													// ✓
-	void n_star_m_or(int n, int m, ...);																				// ✓
-	void n_star_m_or(int n, int m, va_list *arg);				// S													// ✓
-	void n_star_m_and(int n, int m, ...);																				// ✓
-	void n_star_m_and(int n, int m, va_list *arg);				// S													// ✓
-	void _or(const std::string param, ... );					// o													// ✓
-	void _or(const std::string &param, va_list *arg);																	// ✓
-	void _and(const std::string param, ... );					// a													// ✓
-	void _and(const std::string &param, va_list *arg);																	// ✓
-
-	void DIGIT();				// ✓
-	void BIT();					// ✓
-	void UPALPHA();				// ✓
-	void LOALPHA();				// ✓
-	void ALPHA();				// ✓
-	void CHAR();				// ✓
-	void OCTET();				// ✓
-	void CR();					// ✓
-	void LF();					// ✓
-	void CRLF();				// ✓
-	void SP();					// ✓
-	void HTAB();				// ✓
-	void WSP();					// ✓
-	void CTL();					// ✓
-	void OWS();					// ✓
-	void DQUOTE();				// ✓
-	void token();				// ✓
-	void HEXDIG();				// ✓
-	void tchar();				// ✓
-	void scheme();				// ✓
-	void PCHAR();				// ✓
-		void unreserved();		// ✓
-		void pct_encoded();		// ✓
-		void sub_delims();		// ✓
 
 	void http_message();
 		void start_line();

@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
-Request::Request(const std::string& raw_request) :
-_raw_request(raw_request), _head(0), _method(NO_METHOD), _head_msg_body(0), _header_var_map(), _var_map(), _error_msg(), _is_valid(false)
+Request::Request(const std::string& raw_request)
+: Parser(raw_request), _method(NO_METHOD), _head_msg_body(0), _header_var_map(), _var_map(), _error_msg(), _is_valid(false)
 {
 	try
 	{
@@ -16,13 +16,14 @@ _raw_request(raw_request), _head(0), _method(NO_METHOD), _head_msg_body(0), _hea
 }
 
 Request::Request(const Request &cpy)
+: Parser::Parser()
 {
 	*this = cpy;
 }
 
 Request &Request::operator=(const Request &src)
 {
-	_raw_request = src._raw_request;
+	_raw_str = src._raw_str;
 	_head = src._head;
 	_method = src._method;
 	_head_msg_body = src._head_msg_body;
@@ -41,105 +42,9 @@ bool Request::is_valid()
 	return(_is_valid);
 }
 
-void Request::ft_va_copy(va_list *dest, va_list *src)
-{
-	memcpy(dest, src, sizeof(va_list));
-}
-
 void Request::n_star_m(int n, int m, void(Request::*fct)(void))
 {
 	n_star_m_or(n, m, "n", fct);
-}
-
-void Request::n_star_m_or(int n, int m, ...)
-{
-	va_list arg;
-
-	va_start(arg, m);
-	n_star_m_or(n, m, &arg);
-	va_end(arg);
-}
-
-void Request::n_star_m_or(int n, int m, va_list *arg)
-{
-	std::string fct_ptr_tag = va_arg(*arg, char *);
-	int i;
-	va_list ap;
-
-	try
-	{
-		for (i = 0; i != m; i++)
-		{
-			ft_va_copy(&ap, arg);
-			_or(fct_ptr_tag, &ap);
-			va_end(ap);
-		}
-		finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
-	}
-	catch(const std::exception& e)
-	{
-		va_end(ap);
-		finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
-		if(i < n || (m != -1 && i > m))
-			throw std::invalid_argument(e.what());
-		else
-			return;
-	}
-
-}
-
-void Request::n_star_m_and(int n, int m, ...)
-{
-	va_list arg;
-
-	va_start(arg, m);
-	n_star_m_and(n, m, &arg);
-	va_end(arg);
-}
-
-void Request::n_star_m_and(int n, int m, va_list *arg)
-{
-	std::string fct_ptr_tag = va_arg(*arg, char *);
-	va_list ap;
-	int i = 0;
-	try
-	{
-		for (i = 0; i != m; i++)
-		{
-			ft_va_copy(&ap, arg);
-			_and(fct_ptr_tag, &ap);
-			va_end(ap);
-		}
-		finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
-	}
-	catch(const std::exception& e)
-	{
-		va_end(ap);
-		finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
-		if (i == n)
-			return;
-		else if(i < n || (m != -1 && i > m))
-			throw std::invalid_argument(e.what());
-		return;
-	}
-
-}
-
-void Request::_or(const std::string fct_ptr_tag, ...)
-{
-	va_list arg;
-
-	va_start(arg, fct_ptr_tag);
-	_or(fct_ptr_tag, &arg);
-	va_end(arg);
-}
-
-void Request::_and(const std::string fct_ptr_tag, ...)
-{
-	va_list arg;
-	va_start(arg, fct_ptr_tag);
-	_and(fct_ptr_tag, &arg);
-	va_end(arg);
 }
 
 void Request::finish_expand(std::string::const_iterator start, std::string::const_iterator end, va_list *arg)
@@ -255,81 +160,6 @@ void Request::expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *ar
 			throw std::invalid_argument("error _and wrong arg");
 			break;
 	}
-}
-
-void Request::_and(const std::string &fct_ptr_tag, va_list *arg)
-{
-	std::string::const_iterator start = fct_ptr_tag.begin();
-	std::string::const_iterator end = fct_ptr_tag.end();
-	static int i = -1;
-	size_t old_head = _head;
-	i++;
-	try
-	{
-
-		while (start != end)
-		{
-			expand_va_arg(start, arg);
-			start++;
-		}
-	}
-	catch(const std::exception& e)
-	{
-		_head = old_head;
-		start++;
-		if (start != end)
-			finish_expand(start, end, arg);
-
-		throw std::invalid_argument(e.what());
-	}
-}
-
-void Request::_or(const std::string &fct_ptr_tag, va_list *arg)
-{
-	std::string::const_iterator start = fct_ptr_tag.begin();
-	std::string::const_iterator end = fct_ptr_tag.end();
-	static int i = -1;
-	i++;
-	size_t old_head = _head;
-	while (start != end)
-	{
-		try
-		{
-			expand_va_arg(start, arg);
-			start++;
-			if (start != end)
-				finish_expand(start, end, arg);
-			return;
-		}
-		catch(const std::exception& e)
-		{
-			if(start +1 >= end)
-			{
-				_head = old_head;
-				throw std::invalid_argument("error _or" + std::string(e.what()));
-			}
-		}
-		start++;
-	}
-}
-
-void Request::CR()
-{
-	_is_char('\r');
-}
-
-void Request::CRLF()
-{
-	try
-	{
-		_and("nn", &Request::CR, &Request::LF);
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-
-
 }
 
 void Request::http_message()
@@ -468,181 +298,6 @@ void Request::query()
 	CATCH_VAR("QUERY_STRING");
 }
 
-void Request::LF()
-{
-	_is_char('\n');
-}
-
-void Request::HTAB()
-{
-	_is_char('\t');
-}
-
-void Request::SP()
-{
-	_is_char(' ');
-}
-
-void Request::DIGIT()
-{
-	_range('0', '9');
-}
-
-void Request::HEXDIG()
-{
-	_or("nr", &Request::DIGIT, 'A', 'F');
-}
-
-void Request::BIT()
-{
-	_range('0', '1');
-}
-
-void Request::UPALPHA()
-{
-	_range('A', 'Z');
-}
-
-void Request::LOALPHA()
-{
-	_range('a', 'z');
-}
-
-void Request::ALPHA()
-{
-	_or("nn", &Request::UPALPHA, &Request::LOALPHA);
-}
-
-void Request::OCTET()
-{
-	_range(0x00, 0xFF);
-}
-
-void Request::_is_str(std::string const &str)
-{
-	if(str.compare(0, str.length(), _raw_request, _head, str.length()))
-		throw std::invalid_argument(str + " was expected");
-	_head += str.length();
-}
-
-void Request::_range(char start, char end)
-{
-	if (_raw_request[_head] < start || _raw_request[_head] > end)
-		throw std::invalid_argument("char between '" + std::string(&start, 1) + "' and '" + std::string(&end, 1) + "' was expected");
-	else if (_head >= _raw_request.size())
-		throw std::out_of_range(" out of range ");
-	_head++;
-}
-
-void Request::_is_charset(std::string const &charset)
-{
-	std::string::const_iterator it = charset.begin();
-
-	for (; it != charset.end(); ++it)
-	{
-		if (*it == _raw_request[_head])
-		{
-			if (_head >= _raw_request.size())
-				throw std::out_of_range(" out of range ");
-			_head++;
-			return;
-		}
-	}
-	throw std::invalid_argument(charset + " was expected");
-}
-
-void Request::_is_char(char c)
-{
-	// std::cout << "_is_char " << '\''<< c << '\''<< std::endl;
-	if (_raw_request[_head] != c)
-	{
-		switch (c)
-		{
-		case '\r':
-			throw std::invalid_argument("char '\\r' was expected");
-			break;
-		case '\n':
-			throw std::invalid_argument("char '\\n' was expected");
-			break;
-		case '\t':
-			throw std::invalid_argument("char '\\t' was expected");
-			break;
-		default:
-			throw std::invalid_argument("char '" + std::string(&c, 1) + "' was expected");
-			break;
-		}
-	}
-	if (_head >= _raw_request.size())
-				throw std::out_of_range(" out of range ");
-	_head++;
-}
-
-void Request::tchar()
-{
-	try
-	{
-		_or("nnC", &Request::DIGIT, &Request::ALPHA, "!#$%&\'*+-.^_\\`|~");
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-
-}
-
-void Request::PCHAR()
-{
-	try
-	{
-		_or("nnncc", &Request::unreserved, &Request::pct_encoded, &Request::sub_delims, ':', '@');
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-
-}
-
-void Request::unreserved()
-{
-	try
-	{
-		_or("Cnn", "-._~", &Request::DIGIT, &Request::ALPHA);
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-
-}
-
-void Request::pct_encoded()
-{
-	try
-	{
-		_and("cnn", '%', &Request::HEXDIG, &Request::HEXDIG);
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-
-}
-
-void Request::sub_delims()
-{
-	// std::cout << "sub_delims" << std::endl;
-	try
-	{
-		_is_charset("!$&'()*+,;=");
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-
-}
-
 void Request::absolute_form()
 {
 	try
@@ -675,19 +330,6 @@ void Request::absolute_URI()
 	try
 	{
 		_and("ncnS", &Request::scheme, ':', &Request::hier_part,  AND, STAR_NO_MIN, 1, "cn", '?', &Request::query);
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-
-}
-
-void Request::scheme()
-{
-	try
-	{
-		_and("nS", &Request::ALPHA, OR, STAR_NO_MIN, STAR_NO_MAX, "nnC", &Request::ALPHA, &Request::DIGIT, "+-.");
 	}
 	catch(const std::exception& e)
 	{
@@ -844,7 +486,6 @@ void Request::dec_octet()
 	{
 		throw EXECP;
 	}
-
 }
 
 void Request::reg_name()
@@ -951,8 +592,6 @@ void Request::http_name()
 	}
 }
 
-
-// only for CONNECT method
 void Request::authority_form()
 {
 	try
@@ -986,7 +625,7 @@ void Request::catch_var_header_field(size_t old_head)
 
 	_head = old_head;
 	field_name();
-	var_name = std::string(_raw_request.begin() + old_head, _raw_request.begin() + _head);
+	var_name = std::string(_raw_str.begin() + old_head, _raw_str.begin() + _head);
 	_head += 2;
 	old_head = _head;
 	field_value();
@@ -999,18 +638,6 @@ void Request::field_name()
 	try
 	{
 		token();
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-}
-
-void Request::OWS()
-{
-	try
-	{
-		n_star_m_or(STAR_NO_MIN, STAR_NO_MAX, "nn", &Request::SP, &Request::HTAB);
 	}
 	catch(const std::exception& e)
 	{
@@ -1090,36 +717,23 @@ void Request::obs_fold()
 	}
 }
 
-void Request::token()
-{
-	try
-	{
-		n_star_m(1, STAR_NO_MAX, &Request::tchar);
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-}
-
 void Request::message_body()
 {
 	_head_msg_body = _head;
 	// throw std::invalid_argument("message_body");
-	try
-	{
-		n_star_m(STAR_NO_MIN, STAR_NO_MAX, &Request::OCTET);
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
-
+	// try
+	// {
+	// 	n_star_m(STAR_NO_MIN, STAR_NO_MAX, &Request::OCTET);
+	// }
+	// catch(const std::exception& e)
+	// {
+	// 	throw EXECP;
+	// }
 }
 
 void		Request::set_raw_request(const std::string& raw_request)
 {
-	_raw_request = raw_request;
+	_raw_str = raw_request;
 	_head = 0;
 	_method = NO_METHOD;
 	_var_map.clear();
@@ -1137,7 +751,7 @@ void		Request::set_raw_request(const std::string& raw_request)
 		std::cout << "error req/" << e.what() << '\n';
 		_error_msg = e.what();
 		std::cout << "http_message KO" << std::endl;
-		std::cout << std::endl << "'"<< &_raw_request[_head] << "'" << std::endl;
+		std::cout << std::endl << "'"<< &_raw_str[_head] << "'" << std::endl;
 	}
 }
 
@@ -1148,7 +762,7 @@ int Request::get_method()
 
 std::string const Request::get_raw_request()
 {
-	return (_raw_request);
+	return (_raw_str);
 }
 
 std::string const Request::get_connection()
@@ -1181,7 +795,7 @@ std::string const Request::get_request_target()
 
 std::string const Request::get_message_body()
 {
-	return (std::string(_raw_request.begin() + _head_msg_body, _raw_request.end()));
+	return (std::string(_raw_str.begin() + _head_msg_body, _raw_str.end()));
 }
 
 std::pair<bool, std::string> Request::get_var_by_name(const std::string &name)

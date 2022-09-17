@@ -4,6 +4,7 @@ SRCS		=	srcs/Cluster.cpp\
 				srcs/Server.cpp\
 				srcs/Client.cpp\
 				srcs/Request.cpp\
+				srcs/Parser.cpp\
 				# srcs/Response.cpp
 
 INCS		= -I includes
