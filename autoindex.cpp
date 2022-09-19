@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/sysmacros.h>
 
 
@@ -48,34 +49,40 @@
 
 typedef enum e_file_type {FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN} file_type;
 
-struct Infos
+class Infos
 {
+public:
 	bool				valid;
 	std::string 		name;
-	std::string 		time_stamp;
+	std::string 		time_stamp_str;
+	long 				time_stamp_raw;
 	file_type			type;
 	unsigned long long	size;
-	Infos(const char *target) { name = std::string(target);};
+	unsigned long long	IO_read_block;
+	Infos(std::string target) { name = target;};
 };
 
 void printInfos(const Infos &info)
 {
 	std::cout << info.name << " is valid: "<< info.valid << "\t";
-	std::cout << "last modification: "<< info.time_stamp << "\t";
+	std::cout << "last modification: "<< info.time_stamp_str << "\t";
+	std::cout << " - "<< info.time_stamp_raw << "\t";
 	std::cout << "type: "<< (info.type == DIRECTORY ? "DIR \t" : "File\t");
-	std::cout << "size: "<< info.size / 1024 << "\n";
+	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n";
 };
 
-Infos get_file_infos(const char* target)
+Infos get_file_infos(std::string target, int folder)
 {
 	struct stat infos;
 	Infos target_infos(target);
 
-	if(stat(target, &infos) == 0)
+	if(fstatat(folder, target.c_str(), &infos, 0) == 0)
 	{
 		target_infos.valid = true;
-		target_infos.time_stamp = ctime(&infos.st_mtime);
+		target_infos.time_stamp_str = ctime(&infos.st_mtime);
+		target_infos.time_stamp_raw = infos.st_mtime;
 		target_infos.size = infos.st_size;
+		target_infos.IO_read_block = infos.st_blksize;
 		if(infos.st_mode & S_IFDIR) //it's a directory
 			target_infos.type = DIRECTORY;
 		else if(infos.st_mode & S_IFREG) //it's a file
@@ -90,23 +97,24 @@ Infos get_file_infos(const char* target)
 	return target_infos;
 };
 
-
-int main(int ac, char const *av[]) {
-	struct dirent **namelist;
-	const int n = scandir(av[1], &namelist, 0, alphasort);
+std::vector<Infos> ls(char const *target)
+{
+	DIR *folder;
+	struct dirent *entry;
 	std::vector<Infos> filelist;
-	if (n < 0)
-		return n;
-	filelist.reserve(n);
-	for (size_t i = 0; i < n; i++)
-	{
-		filelist[i] = get_file_infos(namelist[n]->d_name);
-		free(namelist[n]);
-	}
-	free(namelist);
+	if (!(folder = opendir(target)))
+		return filelist;
+	while ((entry = readdir(folder)))
+		filelist.push_back(get_file_infos(std::string(entry->d_name), dirfd(folder)));
+	closedir(folder);
+	return filelist;
+};
+
+int main(int argc, char const *argv[]) {
+	(void)argc;
+	std::vector<Infos> filelist = ls(argv[1]);
 	for (std::vector<Infos>::iterator it = filelist.begin(); it != filelist.end(); it++) {
 		printInfos(*it);
 	}
-	return n;
-};
-number >> 1;
+	return 0;
+}
