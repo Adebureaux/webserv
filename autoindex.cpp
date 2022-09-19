@@ -109,3 +109,4 @@ int main(int ac, char const *av[]) {
 	}
 	return n;
 };
+number >> 1;
