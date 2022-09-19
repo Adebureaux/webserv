@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <dirent.h>
 #include <sys/types.h>
 #include <vector>
@@ -49,32 +50,74 @@
 
 typedef enum e_file_type {FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN} file_type;
 
-class Infos
+class File
 {
 public:
 	bool				valid;
 	std::string 		name;
+	std::string 		path;
+	std::string 		URI;
 	std::string 		time_stamp_str;
 	long 				time_stamp_raw;
 	file_type			type;
 	unsigned long long	size;
 	unsigned long long	IO_read_block;
-	Infos(std::string target) { name = target;};
+	File(std::string target, std::string folder) : name(target), path(folder)
+	{
+		std::stringstream target_uri;
+		target_uri << folder << "/" << name;
+		URI = target_uri.str();
+	};
 };
 
-void printInfos(const Infos &info)
+class Autoindex
 {
-	std::cout << info.name << " is valid: "<< info.valid << "\t";
+private:
+	 const char *_html_start = "<!doctype html><html><header><style></style></header><body>";
+	 const char *_html_end = "</body></html>";
+	 // const char *_html_title_start = "<h3>";
+	 // const char *_html_title_end = "</h3>";
+	 const char *_html_a_start = "<div><a type=\"text/html\" href=\"";
+	 const char *_html_a_end = "</a></div>";
+
+	std::string _create_link(File file)
+	{
+		std::stringstream output;
+		output << _html_a_start << "/" << file.URI << "\">" << file.name << _html_a_end;
+		return output.str();
+	};
+public:
+	std::vector<File> files;
+
+	Autoindex(std::vector<File> f) : files(f)
+	{
+
+	};
+	std::string out()
+	{
+		std::stringstream output;
+		output << _html_start;
+		for (std::vector<File>::iterator it = files.begin(); it != files.end(); it++) {
+			output << _create_link(*it);
+		}
+		output << _html_end;
+		return output.str();
+	};
+};
+
+void printInfos(const File &info)
+{
+	std::cout << info.URI << " is valid: "<< info.valid << "\t";
 	std::cout << "last modification: "<< info.time_stamp_str << "\t";
 	std::cout << " - "<< info.time_stamp_raw << "\t";
 	std::cout << "type: "<< (info.type == DIRECTORY ? "DIR \t" : "File\t");
 	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n";
 };
 
-Infos get_file_infos(std::string target, int folder)
+File get_file_infos(std::string target, int folder, std::string path)
 {
 	struct stat infos;
-	Infos target_infos(target);
+	File target_infos(target, path);
 
 	if(fstatat(folder, target.c_str(), &infos, 0) == 0)
 	{
@@ -82,6 +125,7 @@ Infos get_file_infos(std::string target, int folder)
 		target_infos.time_stamp_str = ctime(&infos.st_mtime);
 		target_infos.time_stamp_raw = infos.st_mtime;
 		target_infos.size = infos.st_size;
+		target_infos.IO_read_block = infos.st_blksize;
 		target_infos.IO_read_block = infos.st_blksize;
 		if(infos.st_mode & S_IFDIR) //it's a directory
 			target_infos.type = DIRECTORY;
@@ -97,24 +141,26 @@ Infos get_file_infos(std::string target, int folder)
 	return target_infos;
 };
 
-std::vector<Infos> ls(char const *target)
+std::vector<File> ls(char const *target)
 {
 	DIR *folder;
 	struct dirent *entry;
-	std::vector<Infos> filelist;
+	std::vector<File> filelist;
 	if (!(folder = opendir(target)))
 		return filelist;
 	while ((entry = readdir(folder)))
-		filelist.push_back(get_file_infos(entry->d_name, dirfd(folder)));
+		filelist.push_back(get_file_infos(entry->d_name, dirfd(folder), target));
 	closedir(folder);
 	return filelist;
 };
 
+
 int main(int argc, char const *argv[]) {
 	(void)argc;
-	std::vector<Infos> filelist = ls(argv[1]);
-	for (std::vector<Infos>::iterator it = filelist.begin(); it != filelist.end(); it++) {
-		printInfos(*it);
-	}
+	std::vector<File> filelist = ls(argv[1]);
+	// for (std::vector<File>::iterator it = filelist.begin(); it != filelist.end(); it++) {
+		// printInfos(*it);
+	// }
+	std::cout << Autoindex(filelist).out() << std::endl;
 	return 0;
 }
