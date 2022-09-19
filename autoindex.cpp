@@ -105,7 +105,7 @@ std::vector<Infos> ls(char const *target)
 	if (!(folder = opendir(target)))
 		return filelist;
 	while ((entry = readdir(folder)))
-		filelist.push_back(get_file_infos(std::string(entry->d_name), dirfd(folder)));
+		filelist.push_back(get_file_infos(entry->d_name, dirfd(folder)));
 	closedir(folder);
 	return filelist;
 };
