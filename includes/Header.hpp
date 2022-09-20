@@ -61,8 +61,8 @@ typedef struct s_server_block {
 #define STAR_NO_MIN				 0
 #define STAR_NO_MAX				-1
 #define EXECP					std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
-#define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_request.begin()+ old_head,_raw_request.begin() + _head)
-#define CATCH_VAR(X)			_var_map[X] = std::string(_raw_request.begin()+ old_head,_raw_request.begin() + _head)
+#define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
+#define CATCH_VAR(X)			_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
 // End Aymeric
 
 /*
