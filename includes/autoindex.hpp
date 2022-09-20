@@ -97,7 +97,7 @@ public:
 	~Autoindex(void);
 
 	void ls(char const *target);
-	std::pair<std::string, size_t> out(void);
+	std::pair<std::string, size_t> to_html(void);
 };
 
 std::vector<File> ls(char const *target);

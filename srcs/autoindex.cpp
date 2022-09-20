@@ -92,7 +92,7 @@ void Autoindex::ls(char const *target)
 	files = filelist;
 };
 
-std::pair<std::string, size_t> Autoindex::out(void)
+std::pair<std::string, size_t> Autoindex::to_html(void)
 {
 	std::stringstream output;
 	std::string html;
@@ -131,6 +131,6 @@ std::vector<File> ls(char const *target)
 
 // int main(int argc, char const *argv[]) {
 // 	(void)argc;
-// 	std::cout << Autoindex(argv[1]).out().first << std::endl;
+// 	std::cout << Autoindex(argv[1]).to_html().first << std::endl;
 // 	return 0;
 // }
