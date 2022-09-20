@@ -38,11 +38,11 @@
 
 # sub_delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
 
-# location_var = *(OWS ( method | autoindex | index | upload | cgi) end_of_line)
+# location_var = *(OWS ( method | Autoindex | index | upload | cgi) end_of_line)
 
 # method = 'method' ':' OWS ('GET' | 'POST' | 'DELETE') *2 ( OWS ',' OWS ('GET' | 'POST' | 'DELETE')) end_of_line
 
-# autoindex = 'autoindex' ':' OWS ('on' | 'off') end_of_line
+# Autoindex = 'Autoindex' ':' OWS ('on' | 'off') end_of_line
 
 # index = 'index' ':' OWS path end_of_line
 

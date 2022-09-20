@@ -1,4 +1,4 @@
-#include <autoindex.hpp>
+#include <Autoindex.hpp>
 
 File::File(std::string target, std::string folder) : name(target), path(folder)
 {

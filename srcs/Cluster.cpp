@@ -41,7 +41,7 @@ void Cluster::parse(const std::string& file)
 	loc.post_method = true;
 	loc.delete_method = true;
 	loc.root = "/html";
-	loc.autoindex = true;
+	loc.Autoindex = true;
 	loc.default_file = "index.html";
 	loc.upload = true;
 	conf[0].locations.push_back(loc);

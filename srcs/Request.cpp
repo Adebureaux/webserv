@@ -37,7 +37,7 @@ Request &Request::operator=(const Request &src)
 
 Request::~Request(){}
 
-bool Request::is_valid()
+bool Request::is_valid() const
 {
 	return(_is_valid);
 }
@@ -755,45 +755,45 @@ void		Request::set_raw_request(const std::string& raw_request)
 	}
 }
 
-int Request::get_method()
+int Request::get_method() const
 {
 	return (_method);
 }
 
-std::string const Request::get_raw_request()
+std::string const Request::get_raw_request() const
 {
 	return (_raw_str);
 }
 
-std::string const Request::get_connection()
+std::string const Request::get_connection() const
 {
 	std::pair<bool, std::string> ret = get_header_var_by_name("Connection");
 
 	return  ((ret.first) ? ret.second : "");
 }
 
-std::string const Request::get_authority()
+std::string const Request::get_authority() const
 {
 	std::pair<bool, std::string> ret = get_header_var_by_name("Authority");
 
 	return  ((ret.first) ? ret.second : "");
 }
 
-std::string const Request::get_host()
+std::string const Request::get_host() const
 {
 	std::pair<bool, std::string> ret = get_header_var_by_name("Host");
 
 	return  ((ret.first) ? ret.second : "");
 }
 
-std::string const Request::get_request_target()
+std::string const Request::get_request_target() const
 {
 	std::pair<bool, std::string> ret = get_header_var_by_name("Request_target");
 
 	return  ((ret.first) ? ret.second : "");
 }
 
-std::string const Request::get_message_body()
+std::string const Request::get_message_body() const
 {
 	return (std::string(_raw_str.begin() + _head_msg_body, _raw_str.end()));
 }
@@ -811,7 +811,7 @@ std::pair<bool, std::string> Request::get_var_by_name(const std::string &name)
 	}
 }
 
-std::pair<bool, std::string> Request::get_header_var_by_name(const std::string &name)
+std::pair<bool, std::string> Request::get_header_var_by_name(const std::string &name) const
 {
 	try
 	{

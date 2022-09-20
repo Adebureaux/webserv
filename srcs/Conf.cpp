@@ -246,13 +246,13 @@ void Conf::path_location(void)
 	
 }
 
-// location_var = *(OWS ( method | autoindex | index | upload | cgi) end_of_line)
+// location_var = *(OWS ( method | Autoindex | index | upload | cgi) end_of_line)
 
 void Conf::location_var(void)
 {
 	try
 	{
-		n_star_m_and(STAR_NO_MIN, STAR_NO_MAX, "non", &Conf::OWS, "nnnnn", &Conf::method, &Conf::autoindex, &Conf::index, &Conf::upload, &Conf::cgi, &Conf::end_of_line);
+		n_star_m_and(STAR_NO_MIN, STAR_NO_MAX, "non", &Conf::OWS, "nnnnn", &Conf::method, &Conf::Autoindex, &Conf::index, &Conf::upload, &Conf::cgi, &Conf::end_of_line);
 	}
 	catch(const std::exception& e)
 	{
@@ -274,13 +274,13 @@ void Conf::method(void)
 	}	
 }
 
-// autoindex = 'autoindex' ':' OWS ('on' | 'off') end_of_line
+// Autoindex = 'Autoindex' ':' OWS ('on' | 'off') end_of_line
 
-void Conf::autoindex(void)
+void Conf::Autoindex(void)
 {
 	try
 	{
-		_and("Rcnon", "autoindex", ':', &Conf::OWS, "CC", "on", "off", &Conf::end_of_line);
+		_and("Rcnon", "Autoindex", ':', &Conf::OWS, "CC", "on", "off", &Conf::end_of_line);
 	}
 	catch(const std::exception& e)
 	{

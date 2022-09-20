@@ -64,7 +64,7 @@ public:
 	unsigned long long	size;
 	unsigned long long	IO_read_block;
 	File(std::string target, std::string folder);
-	~File(void);
+	~File();
 };
 
 File get_file_infos(std::string target, int folder, std::string path);

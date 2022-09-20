@@ -26,19 +26,19 @@ class Request : public Parser
 	Request &operator=(const Request &src);
 	~Request();
 
-	int							 		get_method();
+	int							 		get_method() const;
 	void								set_raw_request(const std::string& raw_request);
-	std::string const					get_raw_request();
-	std::string const					get_connection();
-	std::string const					get_authority();
-	std::string const					get_host();
-	std::string const					get_request_target();
-	std::string const					get_message_body();
+	std::string const					get_raw_request() const;
+	std::string const					get_connection() const;
+	std::string const					get_authority() const;
+	std::string const					get_host() const;
+	std::string const					get_request_target() const;
+	std::string const					get_message_body() const;
 	std::pair<bool, std::string>		get_var_by_name(const std::string &name);
-	std::pair<bool, std::string> 		get_header_var_by_name(const std::string &name);
+	std::pair<bool, std::string> 		get_header_var_by_name(const std::string &name) const;
 	std::map<std::string, std::string>	get_var_map() const;
 	std::map<std::string, std::string>	get_header_var_map() const;
-	bool								is_valid();
+	bool								is_valid() const;
 
 	private:
 

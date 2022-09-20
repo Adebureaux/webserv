@@ -1,7 +1,7 @@
 #pragma once
-#include "Server.hpp"
+#include "Header.hpp"
 #include "Request.hpp"
-#include "Response.hpp"
+
 
 typedef enum e_state {
 	ERROR = -1 , WAITING, INCOMPLETE, READY, DONE
@@ -26,24 +26,23 @@ public:
 	size_t size(void) const; // should return response buffer size
 };
 
-class Client {
+typedef enum e_file_type {FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN} file_type;
 
-private:
-	int _receive(void);
-	void _addEventListener(uint32_t revents);
+class File
+{
 public:
-	int					fd;
-	int					epoll_fd;
-	Server&				_server;
-	std::set<Client*>	*_clients;
-	sockaddr_in			address;
-	Message				request;
-	Response			response;
-
-	Client(int epoll, Server& server, std::set<Client *> *clients);
-	virtual ~Client();
-	void disconnect(void);
-	void handleEvent(uint32_t revents);
-	void handle_request(void);
-	int respond();
+	bool				valid;
+	std::string 		name;
+	std::string 		path;
+	std::string 		URI;
+	std::string 		time_stamp_str;
+	long 				time_stamp_raw;
+	file_type			type;
+	unsigned long long	size;
+	unsigned long long	IO_read_block;
+	File(std::string target, std::string folder);
+	~File();
 };
+
+File get_file_infos(std::string target, int folder, std::string path);
+void printFileInfos(const File &info);

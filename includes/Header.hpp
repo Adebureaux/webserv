@@ -27,7 +27,7 @@ typedef struct s_location {
 	bool			delete_method;
 	std::string		redirect;
 	std::string		root;
-	bool			autoindex;
+	bool			Autoindex;
 	std::string		default_file;
 	std::string		CGI;
 	bool			upload;
@@ -47,6 +47,14 @@ typedef struct s_server_block {
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
+
+	// Temporary
+#define SSTR(x) static_cast<std::ostringstream&>((std::ostringstream() << std::dec << x)).str()
+
+	//Response
+#define CONTINUE	"100 Continue"
+#define OK 			"200 OK"
+
 // End Augustin
 
 // Aymeric

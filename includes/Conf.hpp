@@ -25,7 +25,7 @@ typedef struct s_location {
 	bool			delete_method = false;
 	std::string		redirect = "";
 	std::string		root = "";
-	bool			autoindex = false;
+	bool			Autoindex = false;
 	std::string		default_file = "";
 	std::string		CGI = "";
 	std::pair<bool, std::string>	upload = std::pair<bool, std::string>(false, "");
@@ -98,7 +98,7 @@ class Conf : public Parser
 	void path(void);
 	void location_var(void);
 	void method(void);
-	void autoindex(void);
+	void Autoindex(void);
 	void index(void);
 	void upload(void);
 	void cgi(void);

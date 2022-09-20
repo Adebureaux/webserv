@@ -1,7 +1,5 @@
 #include "Client.hpp"
-# define SSTR(x) static_cast<std::ostringstream&>((std::ostringstream() << std::dec << x)).str()
 // PLACEHOLDER: should instead
-# define KEEP_ALIVE false
 
 Message::Message(Client *c) :
 	client(c),
@@ -25,7 +23,7 @@ size_t Message::size(void) const
 	return raw_data.size();// PLACEHOLDER !!
 }; // should return response buffer size
 
-Client::Client(int epoll, Server& server, std::set<Client *> *clients) : epoll_fd(epoll), _server(server), _clients(clients), request(this), response(this)
+Client::Client(int epoll, Server& server, std::set<Client *> *clients) : epoll_fd(epoll), _server(server), _clients(clients), request(this)
 {
 	socklen_t addr_len = sizeof(address);
 
@@ -122,37 +120,40 @@ void Client::handle_request()
 {
 	std::cout << request.raw_data;
 	request.info = Request(request.raw_data);
-	std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
+	//std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
 };
 
 int Client::respond()
 {
-	// should instead be sending data by chunks if necessary
-	// must take as last param a flag which state if more data neeeds to be sent
-	std::ifstream file("test.html");
-	std::stringstream ssbuffer;
-	std::stringstream content_size_stream;
-	std::string buffer;
-
-	ssbuffer << file.rdbuf();
-	file.close();
-	response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-	buffer = ssbuffer.str();
-	content_size_stream << buffer.size();
-	response.raw_data.append(content_size_stream.str());
-	response.raw_data.append("\n\n");
-	response.raw_data.append(buffer);
-	// response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";
-	std::cout << response.data() << std::endl;
-	std::cout << "send_status: " << write(fd, response.data(), response.size()) << std::endl;
-	response.state = INCOMPLETE;
-	response.raw_data.erase();
-	if (!KEEP_ALIVE)
+	response.create(request.info, "/"); // Gota change this by the root of the .conf !!
+	send(fd, response.send(), response.get_size(), 0);
+	response.erase();
+	if (request.info.get_connection() != "keep-alive") // Leak with keep-alive
 	{
 		disconnect();
 		throw std::exception();
 	}
 	return (0);
-	// if request specified to close the connection then try and close it
+	// should instead be sending data by chunks if necessary
+	// must take as last param a flag which state if more data neeeds to be sent
+	// std::ifstream file("test.html");
+	// std::stringstream ssbuffer;
+	// std::stringstream content_size_stream;
+	// std::string buffer;
 
+	// ssbuffer << file.rdbuf();
+	// file.close();
+	// response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+	// buffer = ssbuffer.str();
+	// content_size_stream << buffer.size();
+	// response.raw_data.append(content_size_stream.str());
+	// response.raw_data.append("\r\n\r\n");
+	// response.raw_data.append(buffer);
+	// // response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";
+	// std::cout << response.data() << std::endl;
+	// std::cout << "send_status: " << write(fd, response.data(), response.size()) << std::endl;
+	// response.state = INCOMPLETE;
+	// response.raw_data.erase();
+	// return (0);
+	// if request specified to close the connection then try and close it
 };

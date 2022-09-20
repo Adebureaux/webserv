@@ -4,8 +4,9 @@ SRCS		=	srcs/Cluster.cpp\
 				srcs/Server.cpp\
 				srcs/Client.cpp\
 				srcs/Request.cpp\
+				srcs/Response.cpp\
 				srcs/Parser.cpp\
-				srcs/autoindex.cpp
+				srcs/Autoindex.cpp
 
 INCS		= -I includes
 OBJS		:= $(SRCS:.cpp=.o)
