@@ -3,15 +3,12 @@
 
 class Client;
 
-
 class Message
 {
 public:
 	Client			*client;
 	t_state			state;
 	std::string		raw_data;
-	// std::string		header;
-	// std::string		body;
 	Message			*ptr; // response || request
 	Request			info;
 

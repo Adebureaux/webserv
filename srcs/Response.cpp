@@ -44,9 +44,22 @@ void Response::_init_status_code(void) const
 
 void Response::_create_get(const Request& request)
 {
-	(void)request;
-	File file(request.get_request_target(), _root);
-}
+	(void)request; // where is the var "path" in request instance ?
+	std::ifstream file("index.html"); // Integrate a root where to start finding
+	std::stringstream ssbuffer;
+	std::stringstream content_size_stream;
+	std::string buffer;
+
+	ssbuffer << file.rdbuf();
+	file.close();
+	buffer = ssbuffer.str();
+	content_size_stream << buffer.size();
+	_header.append("Content-Type: text/html\n"); // SETUP CONTENT-TYPE HERE
+	_header.append("Content-Length: ");
+	_header.append(content_size_stream.str());
+	_content.append(buffer);
+	std::cout << C_G_GREEN << _content << C_RES << std::endl;
+}	
 
 void Response::_generate_response(void)
 {

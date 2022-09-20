@@ -1,14 +1,6 @@
 #pragma once
 #include "Parser.hpp"
 
-// #define GET						 0
-// #define POST					 1
-// #define DELETE					 2
-// #define NO_METHOD				-1
-
-// #define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
-// #define CATCH_VAR(X)			_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
-
 class Request : public Parser
 {
 	public:

@@ -105,32 +105,10 @@ int Client::respond()
 	response.create(request.info, "/"); // Gota change this by the root of the .conf !!
 	send(fd, response.send(), response.get_size(), 0);
 	response.erase();
-	if (request.info.get_connection() != "keep-alive") // Leak with keep-alive
+	if (request.info.get_connection() != "keep-alive") // Leak with keep-alive !
 	{
 		disconnect();
 		throw std::exception();
 	}
 	return (0);
-	// should instead be sending data by chunks if necessary
-	// must take as last param a flag which state if more data neeeds to be sent
-	// std::ifstream file("test.html");
-	// std::stringstream ssbuffer;
-	// std::stringstream content_size_stream;
-	// std::string buffer;
-
-	// ssbuffer << file.rdbuf();
-	// file.close();
-	// response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-	// buffer = ssbuffer.str();
-	// content_size_stream << buffer.size();
-	// response.raw_data.append(content_size_stream.str());
-	// response.raw_data.append("\r\n\r\n");
-	// response.raw_data.append(buffer);
-	// // response.raw_data = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 0\n\n";
-	// std::cout << response.data() << std::endl;
-	// std::cout << "send_status: " << write(fd, response.data(), response.size()) << std::endl;
-	// response.state = INCOMPLETE;
-	// response.raw_data.erase();
-	// return (0);
-	// if request specified to close the connection then try and close it
 };

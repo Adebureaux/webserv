@@ -6,13 +6,11 @@ Message::Message(Client *c) :
 	client(c),
 	state(INCOMPLETE),
 	raw_data(""), // ! PLACEHOLDER
-	// header(""),
-	// body(""),
 	ptr(NULL),
 	info("DEFAULT")
 {};
 
-Message::~Message(){};
+Message::~Message() {};
 
 const char *Message::data(void) const
 {
@@ -31,7 +29,7 @@ File::File(std::string target, std::string folder) : name(target), path(folder)
 	URI = target_uri.str();
 };
 
-File::~File(void){};
+File::~File() {};
 
 File get_file_infos(std::string target, int folder, std::string path)
 {

@@ -51,9 +51,6 @@ typedef struct s_server_block {
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
 
-	// Temporary
-#define SSTR(x) static_cast<std::ostringstream&>((std::ostringstream() << std::dec << x)).str()
-
 	//Response
 #define CONTINUE	"100 Continue"
 #define OK 			"200 OK"
@@ -78,7 +75,7 @@ typedef struct s_server_block {
 
 // Romain
 typedef enum e_state { ERROR = -1 , WAITING, INCOMPLETE, READY, DONE } t_state;
-typedef enum e_file_type {FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN} file_type;
+typedef enum e_file_type { FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN } file_type;
 // End Romain
 
 /*
