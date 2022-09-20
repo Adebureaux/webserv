@@ -22,8 +22,6 @@
 #include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <sys/sysmacros.h>
-#include <exception>
-#include <stdexcept>
 
 // Augustin
 typedef struct s_location {
