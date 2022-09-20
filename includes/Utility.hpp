@@ -1,13 +1,8 @@
 #pragma once
-#include "Header.hpp"
 #include "Request.hpp"
 
-
-typedef enum e_state {
-	ERROR = -1 , WAITING, INCOMPLETE, READY, DONE
-} t_state;
-
 class Client;
+
 
 class Message
 {
@@ -26,7 +21,6 @@ public:
 	size_t size(void) const; // should return response buffer size
 };
 
-typedef enum e_file_type {FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN} file_type;
 
 class File
 {

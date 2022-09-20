@@ -1,27 +1,4 @@
 #include "Client.hpp"
-// PLACEHOLDER: should instead
-
-Message::Message(Client *c) :
-	client(c),
-	state(INCOMPLETE),
-	raw_data(""), // ! PLACEHOLDER
-	// header(""),
-	// body(""),
-	ptr(NULL),
-	info("DEFAULT")
-{};
-
-Message::~Message(){};
-
-const char *Message::data(void) const
-{
-	return raw_data.c_str();// PLACEHOLDER !!
-}; // should return complete response buffer; wether it's an error or correct page
-
-size_t Message::size(void) const
-{
-	return raw_data.size();// PLACEHOLDER !!
-}; // should return response buffer size
 
 Client::Client(int epoll, Server& server, std::set<Client *> *clients) : epoll_fd(epoll), _server(server), _clients(clients), request(this)
 {

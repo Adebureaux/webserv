@@ -1,13 +1,4 @@
-#include <iostream>
-#include <sstream>
-#include <dirent.h>
-#include <sys/types.h>
-#include <vector>
-#include <sys/stat.h>
-#include <time.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/sysmacros.h>
+#include "Utility.hpp"
 
 
 
@@ -49,26 +40,6 @@
 		// autoindex_localtime off;
 		// Context:	http, server, location
 
-typedef enum e_file_type {FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN} file_type;
-
-class File
-{
-public:
-	bool				valid;
-	std::string 		name;
-	std::string 		path;
-	std::string 		URI;
-	std::string 		time_stamp_str;
-	long 				time_stamp_raw;
-	file_type			type;
-	unsigned long long	size;
-	unsigned long long	IO_read_block;
-	File(std::string target, std::string folder);
-	~File();
-};
-
-File get_file_infos(std::string target, int folder, std::string path);
-void printFileInfos(const File &info);
 
 
 class Autoindex

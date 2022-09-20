@@ -1,14 +1,5 @@
 #pragma once
 #include "Parser.hpp"
-#include "Header.hpp"
-#include <set>
-#include <map>
-#include <vector>
-#include <string>
-#include <iostream>
-#include <exception>
-#include <stdexcept>
-
 
 // #define GET						 0
 // #define POST					 1

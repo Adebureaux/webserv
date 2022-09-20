@@ -1,9 +1,5 @@
 #pragma once
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <cstdarg>
-#include <cstring>
+#include "Header.hpp"
 
 #define EXECP					std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
 #define STAR_NO_MIN				 0

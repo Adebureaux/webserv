@@ -1,24 +1,29 @@
 #pragma once
-
 #include <set>
 #include <map>
 #include <vector>
+#include <ctime>
 #include <string>
 #include <string>
 #include <cerrno>
 #include <cstring>
 #include <cstdarg>
-#include <cstring>
 #include <cstdlib>
 #include <csignal>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
+#include <dirent.h>
 #include <exception>
 #include <stdexcept>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
+#include <sys/sysmacros.h>
+#include <exception>
+#include <stdexcept>
 
 // Augustin
 typedef struct s_location {
@@ -72,6 +77,11 @@ typedef struct s_server_block {
 #define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
 #define CATCH_VAR(X)			_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
 // End Aymeric
+
+// Romain
+typedef enum e_state { ERROR = -1 , WAITING, INCOMPLETE, READY, DONE } t_state;
+typedef enum e_file_type {FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN} file_type;
+// End Romain
 
 /*
 ** color letters

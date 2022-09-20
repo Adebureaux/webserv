@@ -1,5 +1,4 @@
 #pragma once
-#include "Header.hpp"
 #include "Request.hpp"
 #include "Autoindex.hpp"
 

@@ -1,5 +1,7 @@
 #include "Utility.hpp"
 
+// PLACEHOLDER: should instead
+
 Message::Message(Client *c) :
 	client(c),
 	state(INCOMPLETE),
