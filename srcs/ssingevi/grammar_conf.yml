@@ -38,7 +38,7 @@
 
 # sub_delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
 
-# location_var = *(OWS ( method | autoindex | index | upload | cgi) end_of_line)
+# location_var = *(OWS ( method | autoindex | index | upload | cgi | redirect) end_of_line)
 
 # method = 'method' ':' OWS ('GET' | 'POST' | 'DELETE') *2 ( OWS ',' OWS ('GET' | 'POST' | 'DELETE')) end_of_line
 
@@ -49,6 +49,9 @@
 # upload = 'upload' ':' OWS ('on' OWS path) | 'off') end_of_line
 
 # cgi = 'cgi' ':' OWS path end_of_line
+
+# redirect = "redirect" ':' OWS path end_of_line
+
 # location end
 
 # server_name = 'server_name' ':' OWS 1*unreserved OWS end_of_line
