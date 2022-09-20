@@ -49,13 +49,6 @@
 		// autoindex_localtime off;
 		// Context:	http, server, location
 
-#define _td "<td>"
-#define _ntd "</td>"
-#define _th "<th>"
-#define _nth "</th>"
-#define _tr "<tr>"
-#define _ntr "</tr>"
-
 typedef enum e_file_type {FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN} file_type;
 
 class File
@@ -87,6 +80,12 @@ private:
 	static const char *_html_a_end;
 	static const char *_html_file_icon;
 	static const char *_html_folder_icon;
+	static const char *_td;
+	static const char *_ntd;
+	static const char *_th;
+	static const char *_nth;
+	static const char *_tr;
+	static const char *_ntr;
 
 	std::string _create_link(File file);
 public:
