@@ -78,6 +78,32 @@ public:
 	};
 };
 
+File get_file_infos(std::string target, int folder, std::string path)
+{
+	struct stat infos;
+	File target_infos(target, path);
+
+	if(fstatat(folder, target.c_str(), &infos, 0) == 0)
+	{
+		target_infos.valid = true;
+		target_infos.time_stamp_str = ctime(&infos.st_mtime);
+		target_infos.time_stamp_raw = infos.st_mtime;
+		target_infos.size = infos.st_size;
+		target_infos.IO_read_block = infos.st_blksize;
+		if(infos.st_mode & S_IFDIR) //it's a directory
+			target_infos.type = DIRECTORY;
+		else if(infos.st_mode & S_IFREG) //it's a file
+			target_infos.type = FILE_TYPE;
+		else if(infos.st_mode & S_IFLNK) //it's a symlink
+			target_infos.type = SYMLINK;
+		else //something else
+			target_infos.type = UNKNOWN;
+	}
+	else
+		target_infos.valid = false;
+	return target_infos;
+};
+
 class Autoindex
 {
 private:
@@ -118,6 +144,27 @@ public:
 	std::vector<File> files;
 
 	Autoindex(std::vector<File> f) : files(f) {};
+
+	Autoindex(char const *target)
+	{
+		ls(target);
+	};
+
+	~Autoindex(void) {};
+
+	void ls(char const *target)
+	{
+		DIR *folder;
+		struct dirent *entry;
+		std::vector<File> filelist;
+		if (!(folder = opendir(target)))
+			return ;
+		while ((entry = readdir(folder)))
+			filelist.push_back(get_file_infos(entry->d_name, dirfd(folder), target));
+		closedir(folder);
+		files = filelist;
+	};
+
 	std::pair<std::string, size_t> out()
 	{
 		std::stringstream output;
@@ -143,31 +190,7 @@ void printInfos(const File &info)
 	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n";
 };
 
-File get_file_infos(std::string target, int folder, std::string path)
-{
-	struct stat infos;
-	File target_infos(target, path);
 
-	if(fstatat(folder, target.c_str(), &infos, 0) == 0)
-	{
-		target_infos.valid = true;
-		target_infos.time_stamp_str = ctime(&infos.st_mtime);
-		target_infos.time_stamp_raw = infos.st_mtime;
-		target_infos.size = infos.st_size;
-		target_infos.IO_read_block = infos.st_blksize;
-		if(infos.st_mode & S_IFDIR) //it's a directory
-			target_infos.type = DIRECTORY;
-		else if(infos.st_mode & S_IFREG) //it's a file
-			target_infos.type = FILE_TYPE;
-		else if(infos.st_mode & S_IFLNK) //it's a symlink
-			target_infos.type = SYMLINK;
-		else //something else
-			target_infos.type = UNKNOWN;
-	}
-	else
-		target_infos.valid = false;
-	return target_infos;
-};
 
 std::vector<File> ls(char const *target)
 {
