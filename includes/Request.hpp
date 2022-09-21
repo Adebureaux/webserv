@@ -17,7 +17,7 @@ class Request : public Parser
 	std::string const					get_host() const;
 	std::string const					get_request_target() const;
 	std::string const					get_message_body() const;
-	std::pair<bool, std::string>		get_var_by_name(const std::string &name);
+	std::pair<bool, std::string>		get_var_by_name(const std::string &name) const;
 	std::pair<bool, std::string> 		get_header_var_by_name(const std::string &name) const;
 	std::map<std::string, std::string>	get_var_map() const;
 	std::map<std::string, std::string>	get_header_var_map() const;

@@ -45,6 +45,7 @@ void Response::_init_status_code(void) const
 void Response::_create_get(const Request& request)
 {
 	(void)request; // where is the var "path" in request instance ?
+	std::cout << C_G_GREEN << "REQUEST_TARGET " << request.get_request_target() << C_RES << std::endl;
 	std::ifstream file("index.html"); // Integrate a root where to start finding
 	std::stringstream ssbuffer;
 	std::stringstream content_size_stream;

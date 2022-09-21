@@ -242,7 +242,7 @@ void Request::request_target()
 	{
 		throw EXECP;
 	}
-	CATCH_VAR("REQUEST_TARGET");
+	_var_map["REQUEST_TARGET"] = std::string(_raw_str.begin()+ old_head + 1,_raw_str.begin() + _head);
 }
 
 void Request::origin_form()
@@ -788,7 +788,7 @@ std::string const Request::get_host() const
 
 std::string const Request::get_request_target() const
 {
-	std::pair<bool, std::string> ret = get_header_var_by_name("Request_target");
+	std::pair<bool, std::string> ret = get_var_by_name("REQUEST_TARGET");
 
 	return  ((ret.first) ? ret.second : "");
 }
@@ -798,7 +798,7 @@ std::string const Request::get_message_body() const
 	return (std::string(_raw_str.begin() + _head_msg_body, _raw_str.end()));
 }
 
-std::pair<bool, std::string> Request::get_var_by_name(const std::string &name)
+std::pair<bool, std::string> Request::get_var_by_name(const std::string &name) const
 {
 	try
 	{

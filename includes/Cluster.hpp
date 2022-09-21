@@ -13,6 +13,7 @@ class Cluster
 
 	private:
 	void _add_server(int fd, uint32_t revents);
+	int _init_socket(void);
 
 	private:
 	int						_epoll_fd;
