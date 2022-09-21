@@ -1,7 +1,7 @@
 #include "Header.hpp"
 
 Location::Location()
-: get_method(false), post_method(false), delete_method(false), redirect(),root(), autoindex(false), default_file(), CGI(), upload(false, "")
+: get_method(true), post_method(true), delete_method(true), redirect(),root(), autoindex(false), default_file(), CGI(), upload(false, "")
 {}
 
 Location::Location(const Location &cpy)
@@ -26,7 +26,7 @@ Location &Location::operator=(const Location &cpy)
 }
 
 Server_block::Server_block()
-: port(), address(), server_names(), main(false), error_pages(), root(), body_size(), locations()
+: port(-1), address(), server_names(), main(false), error_pages(), root(), body_size(BUFFER_SIZE), locations()
 {}
 
 Server_block::Server_block(const Server_block &cpy)

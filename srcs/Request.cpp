@@ -242,7 +242,7 @@ void Request::request_target()
 	{
 		throw EXECP;
 	}
-	CATCH_VAR("REQUEST_TARGET");
+	_var_map["REQUEST_TARGET"] = std::string(_raw_str.begin()+ old_head + 1,_raw_str.begin() + _head);
 }
 
 void Request::origin_form()
@@ -480,7 +480,8 @@ void Request::dec_octet()
 {
 	try
 	{
-		_or("naaaa", &Request::DIGIT, "rn", '1', '9', &Request::DIGIT,"cnn", '1', &Request::DIGIT, &Request::DIGIT, "crn", '2', '0', '4', &Request::DIGIT, "Rr", "25", '0', '5');
+		_or("aaaan", "Rr", "25", '0', '5',  "crn", '2', '0', '4', &Request::DIGIT, "cnn", '1', &Request::DIGIT, &Request::DIGIT, "rn", '1', '9', &Request::DIGIT, &Request::DIGIT);
+		// _or("naaaa", &Request::DIGIT, "rn", '1', '9', &Request::DIGIT,"cnn", '1', &Request::DIGIT, &Request::DIGIT, "crn", '2', '0', '4', &Request::DIGIT, "Rr", "25", '0', '5');
 	}
 	catch(const std::exception& e)
 	{
@@ -788,7 +789,7 @@ std::string const Request::get_host()
 
 std::string const Request::get_request_target()
 {
-	std::pair<bool, std::string> ret = get_header_var_by_name("Request_target");
+	std::pair<bool, std::string> ret = get_var_by_name("REQUEST_TARGET");
 
 	return  ((ret.first) ? ret.second : "");
 }

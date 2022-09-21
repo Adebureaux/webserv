@@ -1,5 +1,5 @@
 #pragma once
-#include "Parser.hpp"
+#include "../../includes/Parser.hpp"
 #include "Header.hpp"
 #include <set>
 #include <map>
@@ -11,15 +11,15 @@
 
 /*
 // typedef struct s_location {
-	// bool			get_method;
-	// bool			post_method;
-	// bool			delete_method;
-	// std::string		redirect;
-	// bool			autoindex;
-	// std::string		root;
-	std::string		default_file;
-	// std::string		CGI;
-	bool			upload;
+	// bool								get_method;
+	// bool								post_method;
+	// bool								delete_method;
+	// std::string						redirect;
+	// bool								autoindex;
+	// std::string						root; mandatory
+	// std::string						default_file; opt si autoindex true
+	// std::string						CGI;
+	// std::pair<bool, std::string>		upload;
 } t_location;
 */
 
@@ -47,8 +47,10 @@ class Conf : public Parser
 	Conf &operator=(const Conf &src);
 	~Conf();
 
-	std::string const					get_raw_conf();
-	bool								is_valid();
+	std::string const									get_raw_conf();
+	bool												is_valid();
+	std::map<int, std::map<std::string, Server_block> > get_conf_map(void);
+	std::string											get_error_msg(void);
 
 	private:
 
@@ -57,7 +59,19 @@ class Conf : public Parser
 	typedef void (Conf::*pf)(void);
 	std::vector<Server_block> _serv_vector;
 	int				_current_error_code;
+	bool			_catch_method;
+	std::string		_error_msg;
+	bool			_is_valid;
+	std::map<int, std::map<std::string, Server_block> > _ret;
 
+
+	// std::map<int, std::map<std::string, Server_block> >
+	// std::vector<std::map<std::string, Server_block> >
+	/*
+	std::map<int, std::map<std::string, Server_block> >;
+
+	*/
+// fsefsef[8080]
 	/*
 	fct_pointer_tag
 	s/S rule *
@@ -70,6 +84,9 @@ class Conf : public Parser
 	C	_is_charset
 	*/
 
+	void _test_validity_block(void) const;
+	void _check_locations(std::vector<Location> const &locations) const;
+	void _create_ret_map(void);
 	void catch_var_header_field(size_t old_head);
 	void expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *arg);											// ✓
 	void finish_expand(std::string::const_iterator start, std::string::const_iterator end, va_list *arg);				// ✓
@@ -82,10 +99,12 @@ class Conf : public Parser
 	void _remove_comment(void);
 	void conf(void);
 	void server_block(void);
+	void server_var(void);
 	void location_block(void);
 	// void path_location(void);
-	void path(void);
 	void location_var(void);
+	void location_catch_var(void);
+	void path(void);
 	void redirect(void);
 	void method(void);
 	void catch_method(void);

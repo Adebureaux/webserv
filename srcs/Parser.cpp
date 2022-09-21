@@ -1,4 +1,4 @@
-#include "Parser.hpp"
+#include "../includes/Parser.hpp"
 
 Parser::Parser() : _head(0), _raw_str()
 {
@@ -383,7 +383,7 @@ void Parser::_or(const std::string &fct_ptr_tag, va_list *arg)
 			if(start +1 >= end)
 			{
 				_head = old_head;
-				throw std::invalid_argument("error _or" + std::string(e.what()));
+				throw std::invalid_argument("error _or/" + std::string(e.what()));
 			}
 		}
 		start++;
