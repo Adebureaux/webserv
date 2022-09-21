@@ -1,7 +1,6 @@
 NAME		= webserv
 
 SRCS		=	srcs/Cluster.cpp\
-				srcs/Server.cpp\
 				srcs/Client.cpp\
 				srcs/Request.cpp\
 				srcs/Response.cpp\

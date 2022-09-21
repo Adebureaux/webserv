@@ -44,8 +44,10 @@ typedef struct s_server_block {
 	std::map<int, std::string>				error_pages;	// Optional
 	// std::map<int, std::string>				*default_error_pages;	// Optional
 	size_t									body_size;		// Optional ? (setup default value)
-	std::vector<t_location>					locations;		// Optional
+	std::vector<t_location>					locations;		// Mandatory
 } t_server_block;
+
+typedef std::map<int, std::map<std::string, t_server_block> > server_map;
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128

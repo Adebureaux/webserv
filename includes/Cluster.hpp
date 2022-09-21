@@ -1,5 +1,4 @@
 #pragma once
-#include "Server.hpp"
 #include "Client.hpp"
 
 class Cluster
@@ -13,11 +12,11 @@ class Cluster
 
 	private:
 	void _add_server(int fd, uint32_t revents);
-	int _init_socket(void);
+	int _init_socket(t_server_block config);
 
 	private:
 	int						_epoll_fd;
 	int						_server_number;
-	std::map<int, Server>	_servers;
+	server_map				_servers; // int -> server_fd / string -> server_name / t_server_block -> config
 	std::set<Client*>		_clients;
 };

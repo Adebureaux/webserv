@@ -5,7 +5,7 @@ class Client;
 
 class Message
 {
-public:
+	public:
 	Client			*client;
 	t_state			state;
 	std::string		raw_data;
@@ -21,7 +21,7 @@ public:
 
 class File
 {
-public:
+	public:
 	bool				valid;
 	std::string 		name;
 	std::string 		path;
@@ -33,6 +33,10 @@ public:
 	unsigned long long	IO_read_block;
 	File(std::string target, std::string folder);
 	~File();
+
+	// TODO ==> Create 2 functions :
+	// export_content() --> write the content of the file inside a std::string (public attribute)
+	// find_type() --> give the file extention with the mime type (example text/html for .html file)
 };
 
 File get_file_infos(std::string target, int folder, std::string path);

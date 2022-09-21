@@ -54,10 +54,10 @@ void Cluster::parse(const std::string& file)
 
 	for (int i = 0; i < _server_number; i++)
 	{
-		Server server(conf[i]);
-		fd = server.init_socket();
+		fd = _init_socket(conf[i]);
 		_add_server(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
-		_servers.insert(std::make_pair(fd, server));
+		_servers[fd][conf[i].server_names] = conf[i];
+		// IMPORTANT : Here we have to check if a server_block have the same port than an other, then add other configurations to the second map
 	}
 }
 
@@ -81,10 +81,10 @@ void Cluster::event_loop(void)
 		}
 		for (int i = 0; i < epoll_ret; i++)
 		{
-			std::map<int, Server>::iterator it = _servers.find(events[i].data.fd);
+			server_map::iterator it = _servers.find(events[i].data.fd);
 			if (it != _servers.end()) // if event from server (aka should be a new client trying to connect)
 			{
-				Client *client = new Client(_epoll_fd, it->second, &_clients);
+				Client *client = new Client(_epoll_fd, it, &_clients);
 				_clients.insert(client);
 			}
 			else
@@ -116,29 +116,28 @@ void Cluster::_add_server(int fd, uint32_t revents)
 		std::cerr << C_B_RED << "Cannot add fd" << fd << " to epoll" << C_RES << std::endl;
 }
 
-// int Cluster::_init_socket(void)
-// {
-// 	int fd;
-// 	int opt = 1;
-// 	sockaddr_in addr;
-// 	socklen_t addr_len = sizeof(addr);
+int Cluster::_init_socket(t_server_block config)
+{
+	int fd;
+	int opt = 1;
+	sockaddr_in addr;
+	socklen_t addr_len = sizeof(addr);
 
-// 	if ((fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP)) == -1)
-// 		std::cerr << C_B_RED << "Cannot create socket" << C_RES << std::endl;
-// 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
-// 		std::cerr << C_B_RED << "Cannot change socket options" << C_RES << std::endl;
-// 	std::memset(&addr, 0, sizeof(addr));
-// 	addr.sin_family = AF_INET;
-// 	addr.sin_port = htons(config.port);
-// 	addr.sin_addr.s_addr = inet_addr(config.address.c_str());
-// 	if (bind(fd, (sockaddr*)&addr, addr_len) == -1)
-// 		std::cerr << C_B_RED << "Cannot bind " << config.address << ":" << config.port << C_RES << std::endl;
-// 	if (listen(fd, SOMAXCONN) == -1)
-// 		std::cerr << C_B_RED << "Cannot listen " << config.address << ":" << config.port << C_RES << std::endl;
-// 	server_fd = fd;
-// 	std::cerr << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
-// 	return (fd);
-// }
+	if ((fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP)) == -1)
+		std::cerr << C_B_RED << "Cannot create socket" << C_RES << std::endl;
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
+		std::cerr << C_B_RED << "Cannot change socket options" << C_RES << std::endl;
+	std::memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(config.port);
+	addr.sin_addr.s_addr = inet_addr(config.address.c_str());
+	if (bind(fd, (sockaddr*)&addr, addr_len) == -1)
+		std::cerr << C_B_RED << "Cannot bind " << config.address << ":" << config.port << C_RES << std::endl;
+	if (listen(fd, SOMAXCONN) == -1)
+		std::cerr << C_B_RED << "Cannot listen " << config.address << ":" << config.port << C_RES << std::endl;
+	std::cerr << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
+	return (fd);
+}
 
 int main(int ac, char **argv, char **envp)
 {

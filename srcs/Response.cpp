@@ -2,16 +2,15 @@
 
 std::map<int, std::string> status_code;
 
-void Response::create(const Request& request, const std::string& root)
+void Response::create(const Request& request, const std::map<std::string, t_server_block>::iterator& config)
 {
 	_status = 200;
-	_root = root;
 	if (!status_code.size())
 		_init_status_code();
 	if (!request.is_valid())
 		_status = 400;
-	if (request.get_method() == GET)
-		_create_get(request);
+	else if (request.get_method() == GET)
+		_create_get(request, config);
 	_generate_response();
 }
 
@@ -42,11 +41,10 @@ void Response::_init_status_code(void) const
 	status_code.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\n"));
 }
 
-void Response::_create_get(const Request& request)
+void Response::_create_get(const Request& request, const std::map<std::string, t_server_block>::iterator& config)
 {
-	(void)request; // where is the var "path" in request instance ?
-	std::cout << C_G_GREEN << "REQUEST_TARGET " << request.get_request_target() << C_RES << std::endl;
-	std::ifstream file("index.html"); // Integrate a root where to start finding
+	(void)config;
+	std::ifstream file(request.get_request_target().c_str()); // Integrate a root where to start finding
 	std::stringstream ssbuffer;
 	std::stringstream content_size_stream;
 	std::string buffer;
@@ -56,7 +54,7 @@ void Response::_create_get(const Request& request)
 	buffer = ssbuffer.str();
 	content_size_stream << buffer.size();
 	_header.append("Content-Type: text/html\n"); // SETUP CONTENT-TYPE HERE
-	_header.append("Content-Length: ");
+	_header.append("Content-Length: "); // SETUP CONTENT-LENGTH HERE
 	_header.append(content_size_stream.str());
 	_content.append(buffer);
 	std::cout << C_G_GREEN << _content << C_RES << std::endl;
