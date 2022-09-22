@@ -48,14 +48,11 @@ typedef struct s_server_block {
 } t_server_block;
 
 typedef std::map<int, std::map<std::string, t_server_block> > server_map;
+typedef std::map<std::string, t_server_block> config_map;
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
-
-	//Response
-#define CONTINUE	"100 Continue"
-#define OK 			"200 OK"
 
 // End Augustin
 
