@@ -39,6 +39,7 @@ class File
 
 	~File();
 	void get_content(void);
+	//void get_mime_type(void);
 	// TODO ==> Create 2 functions :
 	// export_content() --> write the content of the file inside a std::string (public attribute)
 	// find_type() --> give the file extention with the mime type (example text/html for .html file)

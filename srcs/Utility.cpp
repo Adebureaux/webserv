@@ -25,6 +25,8 @@ File::File(std::string name, std::string path) : name(name), path(path)
 {
 	struct stat infos;
 	std::stringstream target_uri;
+
+	valid = false;
 	if (path.empty())
 		target_uri << name;
 	else
@@ -46,8 +48,6 @@ File::File(std::string name, std::string path) : name(name), path(path)
 		else //something else
 			type = UNKNOWN;
 	}
-	else
-		valid = false;
 };
 
 File::File(const File &src)

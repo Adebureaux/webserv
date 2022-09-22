@@ -7,21 +7,34 @@
 //                  CRLF
 //                  [ message-body ]
 
+typedef void(Response::*Method)(const Request&, const config_map::iterator&);
+Method method[3] = { &Response::create_get, &Response::create_post, &Response::create_delete };
 std::map<int, std::string> start_lines;
 
-void Response::create(const Request& request, const config_map::iterator& config)
+Response::Response() : _status(200), _response(std::string()), _header(std::string()), _body(std::string())
 {
 	_status = 200;
 	if (!start_lines.size())
 		_init_start_lines();
+}
+
+Response::~Response()
+{
+	_header.erase();
+	_body.erase();
+	_response.erase();
+}
+
+void Response::create(const Request& request, const config_map::iterator& config)
+{
 	if (!request.is_valid())
 		_status = 400;
 	else if (request.get_method() == GET)
-		_create_get(request, config);
+		create_get(request, config);
 	else if (request.get_method() == POST)
-		_create_post(request, config);
+		create_post(request, config);
 	else if (request.get_method() == DELETE)
-		_create_delete(request, config);
+		create_delete(request, config);
 	_generate_response();
 }
 
@@ -40,6 +53,36 @@ size_t Response::get_size(void) const
 	return (_response.size());
 }
 
+void Response::create_get(const Request& request, const config_map::iterator& config)
+{
+	(void)config;
+	std::stringstream size;
+	File file(request.get_request_target().c_str(), ""); // Integrate a root where to start finding
+	file.get_content();
+	if (file.type == FILE_TYPE && file.valid)
+	{
+		size << file.size;
+		_header_field("Content-Type", "text/html");
+		_header_field("Content-Length", size.str());
+		_body.append(file.content);
+	}
+	else
+		_status = 404; 
+
+}
+
+void Response::create_post(const Request& request, const config_map::iterator& config)
+{
+	(void)request;
+	(void)config;
+}
+
+void Response::create_delete(const Request& request, const config_map::iterator& config)
+{
+	(void)request;
+	(void)config;
+}
+
 void Response::_init_start_lines(void) const
 {
 	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\r\n"));
@@ -52,44 +95,21 @@ void Response::_init_start_lines(void) const
 	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\r\n"));
 }
 
-void Response::_create_get(const Request& request, const config_map::iterator& config)
-{
-	(void)config;
-	std::stringstream size;
-	File file(request.get_request_target().c_str(), ""); // Integrate a root where to start finding
-	file.get_content();
-	size << file.size;
-	// if (file.type != FILE_TYPE || !file.valid)
-		// gerer cas ou le fichier est invalid
-	_header.append("Content-Type: text/html"); // SETUP CONTENT-TYPE HERE
-	_header.append("\r\n");
-	std::cout << C_G_GREEN << _body << C_RES << std::endl;
-	_header.append("Content-Length: "); // SETUP CONTENT-LENGTH HERE
-	_body.append(size.str());
-	_header.append("\r\n\r\n");
-	_body.append(file.content);
-	std::cout << C_G_GREEN << _body << C_RES << std::endl;
-}
-
-void Response::_create_post(const Request& request, const config_map::iterator& config)
-{
-	(void)request;
-	(void)config;
-}
-
-void Response::_create_delete(const Request& request, const config_map::iterator& config)
-{
-	(void)request;
-	(void)config;
-}
-
 void Response::_generate_response(void)
 {
 	_response = start_lines[_status];
 	_response.append(_header);
+	_response.append("\r\n");
 	_header.erase();
-	_response.append("\r\n\r\n");
 	_response.append(_body);
 	_body.erase();
 	std::cout << C_G_GREEN << _response << C_RES;
+}
+
+void Response::_header_field(const std::string& header, const std::string& field)
+{
+	_header.append(header);
+	_header.append(": ");
+	_header.append(field);
+	_header.append("\r\n");
 }

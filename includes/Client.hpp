@@ -14,13 +14,13 @@ class Client
 	int respond(void);
 
 	private:
-	int _receive(void);
+	ssize_t _receive(void);
 	void _addEventListener(uint32_t revents);
 
 	private:
 	int					_fd;
 	int					_epoll_fd;
-	server_map::iterator& _server;
+	server_map::iterator& _servers;
 	std::set<Client*>	*_clients;
 	sockaddr_in			_address;
 	Message				_request;

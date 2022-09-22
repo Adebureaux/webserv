@@ -1,48 +1,41 @@
 #include "Client.hpp"
 
-Client::Client(int epoll, server_map::iterator& server, std::set<Client *> *clients) : _epoll_fd(epoll), _server(server), _clients(clients), _request(this)
+Client::Client(int epoll, server_map::iterator& servers, std::set<Client*> *clients) : _epoll_fd(epoll), _servers(servers), _clients(clients), _request(this)
 {
 	socklen_t addr_len = sizeof(_address);
 
 	std::memset(&_address, 0, addr_len);
-	if ((_fd = accept(server->first, (sockaddr*)&_address, &addr_len)) < 0)
+	if ((_fd = accept(servers->first, (sockaddr*)&_address, &addr_len)) < 0)
 	{
 		if (errno == EAGAIN)
 			return; // should thow an exception to force auto deletion because of new construction
 		exit(-1);  // should thow an exception to force auto deletion because of new construction
 	}
-	std::cout << "new client with fd: " << _fd << " accepted on server:" << server->first << std::endl;
+	std::cout << "new client with fd: " << _fd << " accepted on server:" << servers->first << std::endl;
 	_addEventListener(EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
 };
 
 Client::~Client()
 {
-	(void)disconnect();
-	_clients->erase(this);
+	disconnect();
 	//remove all messages
 };
 
-int Client::_receive(void)
+ssize_t Client::_receive(void)
 {
 	static char buffer[BUFFER_SIZE];
-	std::stringstream res;
-	int ret = 0;
-	if ((ret = recv(_fd, buffer, sizeof(buffer), 0)) > 0)
+	ssize_t rd;
+
+	std::memset(buffer, 0, BUFFER_SIZE);
+	rd = recv(_fd, buffer, BUFFER_SIZE, 0);
+
+	if (rd > 0)
 	{
-		res << buffer;
-		std::memset(buffer, 0, ret);
+		_request.raw_data.append(buffer);
+		if (_request.raw_data.find("\r\n\r\n") != std::string::npos)
+			_request.state = READY;
 	}
-	else if (ret <= 0)
-		disconnect();
-	_request.raw_data.append(res.str());
-	if (_request.raw_data.find("\r\n\r\n") != std::string::npos)
-	{
-		_request.state = READY;
-	}
-	if (ret < 0)
-		return ret;
-	// std::cout << "received request:\n" << request.raw_data << std::endl;
-	return (res.str().size());
+	return (rd);
 }
 
 void Client::_addEventListener(uint32_t revents)
@@ -62,13 +55,10 @@ void Client::disconnect(void)
 {
 	epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _fd, NULL);
 	close(_fd);
-	_clients->erase(this);
 };
 
 void Client::handleEvent(uint32_t revents)
 {
-	int recv_ret = 0;
-
 	if (revents & (EPOLLERR | EPOLLHUP))
 	{
 		disconnect();// must close collection and destroy client as well as its ref in the clients collection
@@ -77,9 +67,9 @@ void Client::handleEvent(uint32_t revents)
 	}
 	if (revents & EPOLLIN)
 	{
-		recv_ret = _receive();
-		if (recv_ret <= 0) {
-			disconnect(); // must close collection and destroy client
+		if (_receive() < 0)
+		{
+			disconnect(); // must close connection and destroy client
 			throw std::exception();
 			return;
 		}
@@ -95,7 +85,6 @@ void Client::handleEvent(uint32_t revents)
 
 void Client::handle_request(void)
 {
-	std::cout << _request.raw_data;
 	_request.info = Request(_request.raw_data);
 	//std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
 };
@@ -104,7 +93,7 @@ int Client::respond(void)
 {
 	// We should find here which config of server we pass to Response, instead of the hard coded "webserv.fr"
 	// If host does not exist, that's the first server for this host:port who should serve the client
-	_response.create(_request.info, _server->second.find("weebserv.fr"));
+	_response.create(_request.info, _servers->second.find("webserv.fr"));
 	send(_fd, _response.send(), _response.get_size(), 0);
 	_response.erase();
 	if (_request.info.get_connection() != "keep-alive") // Leak with keep-alive !
