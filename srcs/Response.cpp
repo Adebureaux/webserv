@@ -1,4 +1,5 @@
 #include "Response.hpp"
+#include "Utility.hpp"
 
 std::map<int, std::string> status_code;
 
@@ -44,21 +45,18 @@ void Response::_init_status_code(void) const
 void Response::_create_get(const Request& request, const std::map<std::string, t_server_block>::iterator& config)
 {
 	(void)config;
-	std::ifstream file(request.get_request_target().c_str()); // Integrate a root where to start finding
-	std::stringstream ssbuffer;
-	std::stringstream content_size_stream;
-	std::string buffer;
-
-	ssbuffer << file.rdbuf();
-	file.close();
-	buffer = ssbuffer.str();
-	content_size_stream << buffer.size();
+	std::stringstream size;
+	File file(request.get_request_target().c_str(), ""); // Integrate a root where to start finding
+	file.get_content();
+	size << file.size;
+	// if (file.type != FILE_TYPE || !file.valid)
+		// gerer cas ou le fichier est invalid
 	_header.append("Content-Type: text/html\n"); // SETUP CONTENT-TYPE HERE
 	_header.append("Content-Length: "); // SETUP CONTENT-LENGTH HERE
-	_header.append(content_size_stream.str());
-	_content.append(buffer);
+	_header.append(size.str());
+	_content.append(file.content);
 	std::cout << C_G_GREEN << _content << C_RES << std::endl;
-}	
+}
 
 void Response::_generate_response(void)
 {

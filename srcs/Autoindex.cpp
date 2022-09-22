@@ -23,7 +23,7 @@ std::string Autoindex::_create_link(File file)
 		<< _ntd
 		<< _td
 			<< _html_a_start << "/"
-			<< file.URI << "\">"
+			<< file.uri << "\">"
 			<< file.name
 			<< _html_a_end
 		<< _ntd
@@ -49,15 +49,18 @@ Autoindex::Autoindex(char const *relative_path_only)
 
 Autoindex::~Autoindex(void) {};
 
-void Autoindex::ls(char const *target)
+void Autoindex::ls(char const *root)
 {
 	DIR *folder;
-	struct dirent *entry;
+	struct dirent *file;
 	std::vector<File> filelist;
-	if (!(folder = opendir(target)))
+	if (!(folder = opendir(root)))
 		return ;
-	while ((entry = readdir(folder)))
-		filelist.push_back(get_file_infos(entry->d_name, dirfd(folder), target));
+	while ((file = readdir(folder)))
+	{
+		File newfile = File(file->d_name, root);
+		filelist.push_back(newfile);
+	}
 	closedir(folder);
 	files = filelist;
 };
@@ -79,24 +82,11 @@ std::pair<std::string, size_t> Autoindex::to_html(void)
 
 void printFileInfos(const File &info)
 {
-	std::cout << info.URI << " is valid: "<< info.valid << "\t";
+	std::cout << info.uri << " is valid: "<< info.valid << "\t";
 	std::cout << "last modification: "<< info.time_stamp_str << "\t";
 	std::cout << " - "<< info.time_stamp_raw << "\t";
 	std::cout << "type: "<< (info.type == DIRECTORY ? "DIR \t" : "File\t");
 	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n";
-};
-
-std::vector<File> ls(char const *target)
-{
-	DIR *folder;
-	struct dirent *entry;
-	std::vector<File> filelist;
-	if (!(folder = opendir(target)))
-		return filelist;
-	while ((entry = readdir(folder)))
-		filelist.push_back(get_file_infos(entry->d_name, dirfd(folder), target));
-	closedir(folder);
-	return filelist;
 };
 
 // int main(int argc, char const *argv[]) {

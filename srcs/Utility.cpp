@@ -1,6 +1,5 @@
 #include "Utility.hpp"
-
-// PLACEHOLDER: should instead
+// #include "../includes/Utility.hpp"
 
 Message::Message(Client *c) :
 	client(c),
@@ -22,37 +21,101 @@ size_t Message::size(void) const
 	return raw_data.size();// PLACEHOLDER !!
 }; // should return response buffer size
 
-File::File(std::string target, std::string folder) : name(target), path(folder)
+File::File(std::string name, std::string path) : name(name), path(path)
 {
+	struct stat infos;
 	std::stringstream target_uri;
-	target_uri << folder << "/" << name;
-	URI = target_uri.str();
+	if (path.empty())
+		target_uri << name;
+	else
+		target_uri << path << "/" << name;
+	uri = target_uri.str();
+	if(stat(uri.c_str(), &infos) == 0)
+	{
+		valid = true;
+		time_stamp_str = ctime(&infos.st_mtime);
+		time_stamp_raw = infos.st_mtime;
+		size = infos.st_size;
+		IO_read_block = infos.st_blksize;
+		if(infos.st_mode & S_IFDIR) //it's a directory
+			type = DIRECTORY;
+		else if(infos.st_mode & S_IFREG) //it's a file
+			type = FILE_TYPE;
+		else if(infos.st_mode & S_IFLNK) //it's a symlink
+			type = SYMLINK;
+		else //something else
+			type = UNKNOWN;
+	}
+	else
+		valid = false;
+};
+
+File::File(const File &src)
+{
+	name = src.name;
+	path = src.path;
+	uri = src.uri;
+	type = src.type;
+	IO_read_block = src.IO_read_block;
+	size = src.size;
+	content = src.content;
+	valid = src.valid;
+	time_stamp_raw = src.time_stamp_raw;
+	time_stamp_str = src.time_stamp_str;
+	mime_type = src.mime_type;
+};
+
+File &File::operator=(const File &src)
+{
+	name = src.name;
+	path = src.path;
+	uri = src.uri;
+	type = src.type;
+	IO_read_block = src.IO_read_block;
+	size = src.size;
+	content = src.content;
+	valid = src.valid;
+	time_stamp_raw = src.time_stamp_raw;
+	time_stamp_str = src.time_stamp_str;
+	mime_type = src.mime_type;
+	return *this;
 };
 
 File::~File() {};
 
-File get_file_infos(std::string target, int folder, std::string path)
+void File::get_content()
 {
-	struct stat infos;
-	File target_infos(target, path);
-
-	if(fstatat(folder, target.c_str(), &infos, 0) == 0)
+	std::ifstream file(uri.c_str());
+	std::stringstream ssbuffer;
+	if (file.rdbuf()->is_open())
 	{
-		target_infos.valid = true;
-		target_infos.time_stamp_str = ctime(&infos.st_mtime);
-		target_infos.time_stamp_raw = infos.st_mtime;
-		target_infos.size = infos.st_size;
-		target_infos.IO_read_block = infos.st_blksize;
-		if(infos.st_mode & S_IFDIR) //it's a directory
-			target_infos.type = DIRECTORY;
-		else if(infos.st_mode & S_IFREG) //it's a file
-			target_infos.type = FILE_TYPE;
-		else if(infos.st_mode & S_IFLNK) //it's a symlink
-			target_infos.type = SYMLINK;
-		else //something else
-			target_infos.type = UNKNOWN;
+		ssbuffer << file.rdbuf();
+		content = ssbuffer.str();
+		file.close();
 	}
 	else
-		target_infos.valid = false;
+		valid = false;
+};
+
+File get_file_infos(std::string target, std::string path)
+{
+	File target_infos(target, path);
+
 	return target_infos;
+};
+
+std::vector<File> ls(char const *root)
+{
+	DIR *folder;
+	struct dirent *file;
+	std::vector<File> filelist;
+	if (!(folder = opendir(root)))
+		return filelist;
+	while ((file = readdir(folder)))
+	{
+		File newfile = File(file->d_name, root);
+		filelist.push_back(newfile);
+	}
+	closedir(folder);
+	return filelist;
 };

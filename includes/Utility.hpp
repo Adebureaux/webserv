@@ -25,19 +25,25 @@ class File
 	bool				valid;
 	std::string 		name;
 	std::string 		path;
-	std::string 		URI;
+	std::string 		uri; // = path + / + name
 	std::string 		time_stamp_str;
 	long 				time_stamp_raw;
 	file_type			type;
 	unsigned long long	size;
 	unsigned long long	IO_read_block;
+	std::string			content;
+	std::string			mime_type;
 	File(std::string target, std::string folder);
-	~File();
+	File(const File &src);
+	File &operator=(const File &src);
 
+	~File();
+	void get_content(void);
 	// TODO ==> Create 2 functions :
 	// export_content() --> write the content of the file inside a std::string (public attribute)
 	// find_type() --> give the file extention with the mime type (example text/html for .html file)
 };
 
-File get_file_infos(std::string target, int folder, std::string path);
+File get_file_infos(std::string target, std::string path, int folder_fd);
 void printFileInfos(const File &info);
+std::vector<File> ls(char const *root);
