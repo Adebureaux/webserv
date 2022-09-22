@@ -13,7 +13,6 @@ std::map<int, std::string> start_lines;
 
 Response::Response() : _status(200), _response(std::string()), _header(std::string()), _body(std::string())
 {
-	_status = 200;
 	if (!start_lines.size())
 		_init_start_lines();
 }
@@ -29,12 +28,7 @@ void Response::create(const Request& request, const config_map::iterator& config
 {
 	if (!request.is_valid())
 		_status = 400;
-	else if (request.get_method() == GET)
-		create_get(request, config);
-	else if (request.get_method() == POST)
-		create_post(request, config);
-	else if (request.get_method() == DELETE)
-		create_delete(request, config);
+	(this->*method[request.get_method()])(request, config);
 	_generate_response();
 }
 
@@ -58,11 +52,12 @@ void Response::create_get(const Request& request, const config_map::iterator& co
 	(void)config;
 	std::stringstream size;
 	File file(request.get_request_target().c_str(), ""); // Integrate a root where to start finding
-	file.get_content();
+	file.set_content();
+	file.set_mime_type();
 	if (file.type == FILE_TYPE && file.valid)
 	{
 		size << file.size;
-		_header_field("Content-Type", "text/html");
+		_header_field("Content-Type", file.mime_type);
 		_header_field("Content-Length", size.str());
 		_body.append(file.content);
 	}
@@ -100,10 +95,11 @@ void Response::_generate_response(void)
 	_response = start_lines[_status];
 	_response.append(_header);
 	_response.append("\r\n");
+	std::cout << C_G_GREEN << _header << C_RES;
 	_header.erase();
 	_response.append(_body);
 	_body.erase();
-	std::cout << C_G_GREEN << _response << C_RES;
+	//std::cout << C_G_GREEN << _response << C_RES;
 }
 
 void Response::_header_field(const std::string& header, const std::string& field)

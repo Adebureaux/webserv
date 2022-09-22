@@ -32,16 +32,26 @@ class File
 	unsigned long long	size;
 	unsigned long long	IO_read_block;
 	std::string			content;
+	std::string			ext;
 	std::string			mime_type;
 	File(std::string target, std::string folder);
 	File(const File &src);
 	File &operator=(const File &src);
 
 	~File();
-	void get_content(void);
+
+	void set_content(void);
+	void set_mime_type(void);
+
+	struct entry
+	{
+		const std::string& ext;
+		const std::string& mime_type;
+	};
+	static File::entry types[MIME_TYPE_NUMBER];
+	
 	//void get_mime_type(void);
 	// TODO ==> Create 2 functions :
-	// export_content() --> write the content of the file inside a std::string (public attribute)
 	// find_type() --> give the file extention with the mime type (example text/html for .html file)
 };
 
