@@ -53,6 +53,7 @@ typedef std::map<std::string, t_server_block> config_map;
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
+#define MIME_TYPE_NUMBER 347
 
 // End Augustin
 

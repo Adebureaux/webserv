@@ -16,8 +16,11 @@ Cluster::Cluster() {
 Cluster::~Cluster()
 {
 	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
+<<<<<<< HEAD
 	{
 		// (*it)->disconnect();
+=======
+>>>>>>> master
 		delete *it;
 	}
 	_clients.clear();
