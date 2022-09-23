@@ -17,6 +17,7 @@ Client::Client(int epoll, server_map::iterator& servers, std::set<Client*> *clie
 
 Client::~Client()
 {
+	std::cout << C_G_RED << "Destructor client called\n" << C_RES;
 	disconnect();
 	//remove all messages
 };
@@ -55,6 +56,7 @@ void Client::disconnect(void)
 {
 	epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _fd, NULL);
 	close(_fd);
+	_clients->erase(this);
 };
 
 void Client::handleEvent(uint32_t revents)
@@ -67,7 +69,7 @@ void Client::handleEvent(uint32_t revents)
 	}
 	if (revents & EPOLLIN)
 	{
-		if (_receive() < 0)
+		if (_receive() <= 0)
 		{
 			disconnect(); // must close connection and destroy client
 			throw std::exception();

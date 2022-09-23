@@ -12,9 +12,6 @@ class Client
 	void handleEvent(uint32_t revents);
 	void handle_request(void);
 	int respond(void);
-	int					_epoll_fd;
-	server_map::iterator& _servers;
-	std::set<Client*>	*_clients;
 
 	private:
 	ssize_t _receive(void);
@@ -22,6 +19,9 @@ class Client
 
 	private:
 	int					_fd;
+	int					_epoll_fd;
+	server_map::iterator& _servers;
+	std::set<Client*>	*_clients;
 	sockaddr_in			_address;
 	Message				_request;
 	Response			_response;

@@ -17,6 +17,6 @@ class Cluster
 	private:
 	int						_epoll_fd;
 	int						_server_number;
-	server_map				_servers; // int -> server_fd / string -> server_name / t_server_block -> config
+	server_map				_servers;
 	std::set<Client*>		_clients;
 };

@@ -1,29 +1,6 @@
 #pragma once
 #include "Parser.hpp"
 
-// Augustin
-typedef struct s_location {
-	bool			get_method = false;
-	bool			post_method = false;
-	bool			delete_method = false;
-	std::string		redirect = "";
-	std::string		root = "";
-	bool			Autoindex = false;
-	std::string		default_file = "";
-	std::string		CGI = "";
-	std::pair<bool, std::string>	upload = std::pair<bool, std::string>(false, "");
-} t_location;
-
-typedef struct s_server_block {
-	int										port = 0;			// Mandatory
-	std::string								address = "";		// Mandatory
-	std::string								server_names = "";	// Optional
-	bool									main = false; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
-	std::map<int, std::string>				error_pages;	// Optional
-	size_t									body_size = 0;		// Optional ? (setup default value)
-	std::vector<t_location>					locations;		// Optional
-} t_server_block;
-
 class Conf : public Parser
 {
 	public:

@@ -26,6 +26,7 @@ Response::~Response()
 
 void Response::create(const Request& request, const config_map::iterator& config)
 {
+	// std::cout << "server names = " << config->second.server_names << std::endl; 
 	if (!request.is_valid())
 		_status = 400;
 	(this->*method[request.get_method()])(request, config);
