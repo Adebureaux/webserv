@@ -22,12 +22,12 @@ class Message
 class File
 {
 	public:
-	bool				valid;
 	std::string 		name;
 	std::string 		path;
 	std::string 		uri; // = path + / + name
 	std::string 		time_stamp_str;
 	long 				time_stamp_raw;
+	bool				valid;
 	file_type			type;
 	unsigned long long	size;
 	unsigned long long	IO_read_block;

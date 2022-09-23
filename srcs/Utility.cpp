@@ -21,12 +21,11 @@ size_t Message::size(void) const
 	return raw_data.size();// PLACEHOLDER !!
 }; // should return response buffer size
 
-File::File(std::string name, std::string path) : name(name), path(path)
+File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN)
 {
 	struct stat infos;
 	std::stringstream target_uri;
 
-	valid = false;
 	if (path.empty())
 		target_uri << name;
 	else
@@ -45,8 +44,6 @@ File::File(std::string name, std::string path) : name(name), path(path)
 			type = FILE_TYPE;
 		else if(infos.st_mode & S_IFLNK) //it's a symlink
 			type = SYMLINK;
-		else //something else
-			type = UNKNOWN;
 	}
 };
 

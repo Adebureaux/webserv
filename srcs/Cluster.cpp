@@ -141,11 +141,16 @@ int Cluster::_init_socket(t_server_block config)
 
 int main(int ac, char **argv, char **envp)
 {
-	(void)ac;
 	(void)argv;
 	(void)envp;
-	// Parse .conf file in cluster.config structure
+	if (ac != 2)
+	{
+		std::cerr << C_G_RED << "Missing argument" << std::endl;
+		return (1);
+	}
 	Cluster cluster;
+
+	File conf(argv[1], "");
 
 	cluster.parse("config.conf");
 	cluster.event_loop();

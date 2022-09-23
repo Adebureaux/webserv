@@ -1,6 +1,6 @@
 #pragma once
-#include "Parser.hpp"
-#include "Shared.hpp"
+#include "../../includes/Parser.hpp"
+#include "Header.hpp"
 #include <set>
 #include <map>
 #include <vector>
