@@ -55,11 +55,6 @@ void Client::disconnect(void)
 {
 	epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _fd, NULL);
 	close(_fd);
-<<<<<<< HEAD
-	_clients->erase(this);
-	// delete this;
-=======
->>>>>>> master
 };
 
 void Client::handleEvent(uint32_t revents)
@@ -98,11 +93,7 @@ int Client::respond(void)
 {
 	// We should find here which config of server we pass to Response, instead of the hard coded "webserv.fr"
 	// If host does not exist, that's the first server for this host:port who should serve the client
-<<<<<<< HEAD
-	_response.create(_request.info, _server->second.find("webserv.fr"));
-=======
 	_response.create(_request.info, _servers->second.find("webserv.fr"));
->>>>>>> master
 	send(_fd, _response.send(), _response.get_size(), 0);
 	_response.erase();
 	if (_request.info.get_connection() != "keep-alive") // Leak with keep-alive !

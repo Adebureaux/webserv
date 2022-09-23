@@ -51,21 +51,6 @@ void Response::create_get(const Request& request, const config_map::iterator& co
 {
 	(void)config;
 	std::stringstream size;
-<<<<<<< HEAD
-	File file(request.get_request_target().c_str(), "srcs"); // Integrate a root where to start finding
-	file.get_content();
-	size << file.content.size();
-	// if (file.type != FILE_TYPE || !file.valid)
-		// gerer cas ou le fichier est invalid
-	_header.append("Content-Type: text/html"); // SETUP CONTENT-TYPE HERE
-	_header.append("\r\n");
-	std::cout << C_G_GREEN << _body << C_RES << std::endl;
-	_header.append("Content-Length: "); // SETUP CONTENT-LENGTH HERE
-	_body.append(size.str());
-	_header.append("\r\n\r\n");
-	_body.append(file.content);
-	std::cout << C_G_GREEN << _body << C_RES << std::endl;
-=======
 	File file(request.get_request_target().c_str(), ""); // Integrate a root where to start finding
 	file.set_content();
 	file.set_mime_type();
@@ -77,9 +62,8 @@ void Response::create_get(const Request& request, const config_map::iterator& co
 		_body.append(file.content);
 	}
 	else
-		_status = 404; 
+		_status = 404;
 
->>>>>>> master
 }
 
 void Response::create_post(const Request& request, const config_map::iterator& config)
