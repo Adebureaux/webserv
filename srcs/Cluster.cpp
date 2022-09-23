@@ -15,15 +15,18 @@ Cluster::Cluster() {
 
 Cluster::~Cluster()
 {
-	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.begin(); it++)
+	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
+	{
+		// (*it)->disconnect();
 		delete *it;
+	}
 	_clients.clear();
 }
 
 void Cluster::parse(const std::string& file)
 {
 	int fd;
-	(void)file;
+	std::cout << file<<std::endl;
 	// Should parse the .conf here
 
 	// Example below, hard coded part (should use file later)
@@ -97,8 +100,8 @@ void Cluster::event_loop(void)
 				{
 					// (void)e;
 					std::cout << std::endl << e.what() << std::endl;
-					_clients.erase((Client*)(events[i].data.ptr));
 					delete (Client*)(events[i].data.ptr);
+					_clients.erase((Client*)(events[i].data.ptr));
 				}
 			}
 		}

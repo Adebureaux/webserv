@@ -56,9 +56,9 @@ void Response::_create_get(const Request& request, const config_map::iterator& c
 {
 	(void)config;
 	std::stringstream size;
-	File file(request.get_request_target().c_str(), ""); // Integrate a root where to start finding
+	File file(request.get_request_target().c_str(), "srcs"); // Integrate a root where to start finding
 	file.get_content();
-	size << file.size;
+	size << file.content.size();
 	// if (file.type != FILE_TYPE || !file.valid)
 		// gerer cas ou le fichier est invalid
 	_header.append("Content-Type: text/html"); // SETUP CONTENT-TYPE HERE
