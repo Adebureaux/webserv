@@ -95,7 +95,7 @@ int Client::respond(void)
 {
 	// We should find here which config of server we pass to Response, instead of the hard coded "webserv.fr"
 	// If host does not exist, that's the first server for this host:port who should serve the client
-	_response.create(_request.info, _servers->second.find("webserv.fr"));
+	_response.create(_request.info, _servers->second.begin());
 	send(_fd, _response.send(), _response.get_size(), 0);
 	_response.erase();
 	if (_request.info.get_connection() != "keep-alive") // Leak with keep-alive !
