@@ -6,23 +6,19 @@
 class Client 
 {
 	public:
-	Client(int epoll, server_map::iterator& server, std::set<Client*> *clients);
-	virtual ~Client();
-	void disconnect(void);
-	void handleEvent(uint32_t revents);
+	Client(int fd, server_map::iterator& servers);
+	~Client();
+
 	void handle_request(void);
 	int respond(void);
-	int					_epoll_fd;
-	server_map::iterator& _servers;
-	std::set<Client*>	*_clients;
+	int get_fd(void);
+	int get_request_state(void);
 
-	private:
 	ssize_t _receive(void);
-	void _addEventListener(uint32_t revents);
 
 	private:
 	int					_fd;
-	sockaddr_in			_address;
+	server_map::iterator& _servers;
 	Message				_request;
 	Response			_response;
 };
