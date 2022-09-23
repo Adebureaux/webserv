@@ -1,10 +1,11 @@
 #pragma once
 #include "Client.hpp"
+#include "Conf.hpp"
 
 class Cluster
 {
 	public:
-	Cluster();
+	Cluster(const Conf& config);
 	~Cluster();
 
 	void parse(const std::string& file);
@@ -18,5 +19,6 @@ class Cluster
 	int						_epoll_fd;
 	int						_server_number;
 	server_map				_servers;
+	server_map_tmp			_servers_tmp;
 	std::set<Client*>		_clients;
 };

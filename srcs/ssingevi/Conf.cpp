@@ -827,7 +827,7 @@ void Conf::_create_ret_map(void)
 	}
 }
 
-std::map<int, std::map<std::string, Server_block> > Conf::get_conf_map(void)
+std::map<int, std::map<std::string, Server_block> > Conf::get_conf_map(void) const
 {
 	return(_ret);
 }

@@ -1,5 +1,53 @@
 #include "Utility.hpp"
-// #include "../includes/Utility.hpp"
+
+Location::Location()
+: get_method(true), post_method(true), delete_method(true), redirect(),root(), autoindex(false), default_file(), CGI(), upload(false, "")
+{}
+
+Location::Location(const Location &cpy)
+{
+	*this = cpy;
+}
+
+Location::~Location(){}
+
+Location &Location::operator=(const Location &cpy)
+{
+	get_method = cpy.get_method;
+	post_method = cpy.post_method;
+	delete_method = cpy.delete_method;
+	redirect = cpy.redirect;
+	root = cpy.root;
+	autoindex = cpy.autoindex;
+	default_file = cpy.default_file;
+	CGI = cpy.CGI;
+	upload = cpy.upload;
+	return (*this);
+}
+
+Server_block::Server_block()
+: port(-1), address(), server_names(), main(false), error_pages(), root(), body_size(BUFFER_SIZE), locations()
+{}
+
+Server_block::Server_block(const Server_block &cpy)
+{
+	*this = cpy;
+}
+
+Server_block::~Server_block()
+{}
+
+Server_block &Server_block::operator=(const Server_block &cpy)
+{
+	port = cpy.port;
+	address = cpy.address;
+	server_names = cpy.server_names;
+	main = cpy.main;
+	error_pages = cpy.error_pages;
+	body_size = cpy.body_size;
+	locations = cpy.locations;
+	return (*this);
+}
 
 Message::Message(Client *c) :
 	client(c),
@@ -138,6 +186,7 @@ void File::set_mime_type(void)
 }
 
 File::entry File::types[MIME_TYPE_NUMBER] =  {
+  {"conf", "webserv/conf"},
   {"*3gpp", "audio/3gpp"},
   {"*jpm", "video/jpm"},
   {"*mp3", "audio/mp3"},

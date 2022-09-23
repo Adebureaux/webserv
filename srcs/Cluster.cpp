@@ -7,10 +7,20 @@ void signal_handler(int sig) {
 		run = false;
 }
 
-Cluster::Cluster() {
+Cluster::Cluster(const Conf& config)
+{
+	// int fd;
+
 	if ((_epoll_fd = epoll_create(true)) == -1)
 		std::cerr << C_B_RED << "Cannot create epoll" << C_RES << std::endl;
 	std::signal(SIGINT, signal_handler);
+	_servers_tmp = config.get_conf_map();
+	// for (server_map_tmp::iterator it = _servers_tmp.begin(); it != _servers_tmp.end(); it++)
+	// {
+	// 	fd = _init_socket(it->second->second);
+	// 	_add_server(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
+	// 	_servers_tmp[fd][conf[i].server_names] = conf[i];
+	// }
 }
 
 Cluster::~Cluster()
@@ -141,16 +151,28 @@ int Cluster::_init_socket(t_server_block config)
 
 int main(int ac, char **argv, char **envp)
 {
-	(void)argv;
 	(void)envp;
 	if (ac != 2)
 	{
-		std::cerr << C_G_RED << "Missing argument" << std::endl;
+		std::cerr << C_G_RED << "Missing argument: configuration file" << C_RES << std::endl;
 		return (1);
 	}
-	Cluster cluster;
-
 	File conf(argv[1], "");
+	if (!conf.valid || conf.type != FILE_TYPE)
+	{
+		std::cerr << C_G_RED << "Configuration file is not valid" << C_RES << std::endl;
+		return (1);
+	}
+	conf.set_content();
+	conf.set_mime_type();
+	if (conf.mime_type != "webserv/conf")
+	{
+		std::cerr << C_G_RED << "Configuration file extension should be .conf" << C_RES << std::endl;
+		return (1);
+	}
+
+	Conf config(conf.content);
+	Cluster cluster(config);
 
 	cluster.parse("config.conf");
 	cluster.event_loop();

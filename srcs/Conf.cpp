@@ -515,6 +515,7 @@ void Conf::cgi(void)
 void Conf::server_name(void)
 {
 	size_t old_head = _head;
+	(void)old_head;
 	try
 	{
 		_and("Rcnnnn", "server_name", ':', &Conf::OWS, &Conf::server_name_value, &Conf::OWS, &Conf::end_of_line);
@@ -529,6 +530,7 @@ void Conf::server_name(void)
 void Conf::server_name_value(void)
 {
 	size_t old_head = _head;
+	(void)old_head;
 	try
 	{
 		n_star_m(1, STAR_NO_MAX, &Conf::unreserved);
@@ -557,6 +559,7 @@ void Conf::listen(void)
 void Conf::port(void)
 {
 	size_t old_head = _head;
+	(void)old_head;
 	try
 	{
 		n_star_m(1, STAR_NO_MAX, &Conf::DIGIT);
@@ -659,6 +662,7 @@ void Conf::host(void)
 {
 	// std::cout << __FUNCTION__ << std::endl;
 	size_t old_head = _head;
+	(void)old_head;
 	try
 	{
 		_and("Rcnnn", "host", ':', &Conf::OWS, &Conf::IPv4address, &Conf::end_of_line);
@@ -697,6 +701,7 @@ void Conf::IPv4address()
 void Conf::dec_octet()
 {
 	size_t old_head = _head;
+	(void)old_head;
 	try
 	{
 		// std::cout << __FUNCTION__ << std::endl;
@@ -827,7 +832,7 @@ void Conf::_create_ret_map(void)
 	}
 }
 
-std::map<int, std::map<std::string, Server_block> > Conf::get_conf_map(void)
+std::map<int, std::map<std::string, Server_block> > Conf::get_conf_map(void) const
 {
 	return(_ret);
 }
