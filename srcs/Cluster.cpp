@@ -15,7 +15,7 @@ Cluster::Cluster() {
 
 Cluster::~Cluster()
 {
-	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.begin(); it++)
+	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
 		delete *it;
 	_clients.clear();
 }
