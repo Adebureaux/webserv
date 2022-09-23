@@ -23,33 +23,6 @@
 #include <arpa/inet.h>
 #include <sys/sysmacros.h>
 
-// Augustin
-typedef struct s_location {
-	bool			get_method;
-	bool			post_method;
-	bool			delete_method;
-	std::string		redirect;
-	std::string		root;
-	bool			Autoindex;
-	std::string		default_file;
-	std::string		CGI;
-	bool			upload;
-} t_location;
-
-typedef struct s_server_block {
-	int										port;			// Mandatory
-	std::string								address;		// Mandatory
-	std::string								server_names;	// Optional
-	bool									main; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
-	std::map<int, std::string>				error_pages;	// Optional
-	// std::map<int, std::string>				*default_error_pages;	// Optional
-	size_t									body_size;		// Optional ? (setup default value)
-	std::vector<t_location>					locations;		// Mandatory
-} t_server_block;
-
-typedef std::map<int, std::map<std::string, t_server_block> > server_map;
-typedef std::map<std::string, t_server_block> config_map;
-
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000

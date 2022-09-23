@@ -832,10 +832,11 @@ void Conf::_create_ret_map(void)
 	}
 }
 
-std::map<int, std::map<std::string, Server_block> > Conf::get_conf_map(void) const
+std::map<int, std::map<std::string, Server_block> >& Conf::get_conf_map(void)
 {
 	return(_ret);
 }
+
 std::string Conf::get_error_msg(void)
 {
 	return(_error_msg);

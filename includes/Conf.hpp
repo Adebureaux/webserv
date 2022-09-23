@@ -3,8 +3,8 @@
 #include "Parser.hpp"
 #include "Utility.hpp"
 
-typedef std::map<std::string, Server_block> config_map_tmp;
-typedef std::map<int, config_map_tmp> server_map_tmp;
+typedef std::map<std::string, Server_block>	config_map;
+typedef std::map<int, config_map>			server_map;
 
 class Conf : public Parser
 {
@@ -15,7 +15,7 @@ class Conf : public Parser
 	~Conf();
 
 	bool												is_valid();
-	std::map<int, std::map<std::string, Server_block> > get_conf_map(void) const;
+	std::map<int, std::map<std::string, Server_block> >& get_conf_map(void);
 	std::string											get_error_msg(void);
 
 	private:
