@@ -1,13 +1,25 @@
 #include "Utility.hpp"
 // #include "../includes/Utility.hpp"
 
-Message::Message(Client *c) :
-	client(c),
+Message::Message(void) :
 	state(INCOMPLETE),
 	raw_data(""), // ! PLACEHOLDER
-	ptr(NULL),
 	info("DEFAULT")
 {};
+
+Message::Message(const Message &src) :	state(src.state),
+	raw_data(src.raw_data), // ! PLACEHOLDER
+	info(src.info)
+{};
+
+Message &Message::operator=(const Message &src)
+{
+  state = src.state;
+  raw_data = src.raw_data;
+  info = src.info;
+	return *this;
+};
+
 
 Message::~Message() {};
 

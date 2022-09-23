@@ -1,22 +1,28 @@
 #include "Client.hpp"
 
-Client::Client(int epoll, server_map::iterator& servers, std::set<Client*> *clients) : _epoll_fd(epoll), _servers(servers), _clients(clients), _request(this)
+Client::Client(int epoll, int fd, server_map::iterator& servers) : _epoll_fd(epoll), _fd(fd), _servers(servers)
 {
-	socklen_t addr_len = sizeof(_address);
-
-	std::memset(&_address, 0, addr_len);
-	if ((_fd = accept(servers->first, (sockaddr*)&_address, &addr_len)) < 0)
-	{
-		if (errno == EAGAIN)
-			return; // should thow an exception to force auto deletion because of new construction
-		exit(-1);  // should thow an exception to force auto deletion because of new construction
-	}
-	std::cout << "new client with fd: " << _fd << " accepted on server:" << servers->first << std::endl;
 	_addEventListener(EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
+};
+
+Client::Client(const Client& rhs) : _servers(rhs._servers)
+{
+	*this = rhs;
+};
+
+Client& Client::operator=(const Client& rhs)
+{
+	_epoll_fd = rhs._epoll_fd;
+	_fd = rhs._fd;
+	_servers = rhs._servers;
+	_request = rhs._request;
+	_response = rhs._response;
+	return *this;
 };
 
 Client::~Client()
 {
+	std::cout << C_G_RED << "ICI DESTRUCTEUR" << C_RES << std::endl;
 	disconnect();
 	//remove all messages
 };
@@ -43,7 +49,7 @@ void Client::_addEventListener(uint32_t revents)
 	epoll_event event;
 
 	std::memset(&event, 0, sizeof(event));
-	event.data.ptr = this;
+	event.data.fd = _fd;
 	event.events = revents;
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _fd, &event) < 0)
 		exit(-2);

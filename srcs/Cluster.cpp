@@ -15,9 +15,9 @@ Cluster::Cluster() {
 
 Cluster::~Cluster()
 {
-	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.begin(); it++)
-		delete *it;
-	_clients.clear();
+	// for (std::set<Client>::iterator it = _clients.begin(); it != _clients.begin(); it++)
+	// 	delete *it;
+	// _clients.clear();
 }
 
 void Cluster::parse(const std::string& file)
@@ -84,25 +84,45 @@ void Cluster::event_loop(void)
 			server_map::iterator it = _servers.find(events[i].data.fd);
 			if (it != _servers.end()) // if event from server (aka should be a new client trying to connect)
 			{
-				Client *client = new Client(_epoll_fd, it, &_clients);
-				_clients.insert(client);
+				_add_client(it);
+				// _clients.insert(std::make_pair(_fd, Client(_epoll_fd, it));
 			}
 			else
 			{
 				try
 				{
-					((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
+					// std::set<Client>::iterator it = _clients.find(Client());
+					_clients.find(events[i].data.fd)->second.handleEvent(events[i].events);
+					//_clients[events[i].data.ptr].handleEvent(events[i].events);
+					//((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
 				}
 				catch (const std::exception& e)
 				{
 					// (void)e;
 					std::cout << std::endl << e.what() << std::endl;
-					_clients.erase((Client*)(events[i].data.ptr));
-					delete (Client*)(events[i].data.ptr);
+					//_clients.erase(events[i].data.ptr);
+					// delete (Client*)(events[i].data.ptr);
 				}
 			}
 		}
 	}
+}
+
+void Cluster::_add_client(server_map::iterator& servers)
+{
+	sockaddr address;
+	socklen_t addr_len = sizeof(address);
+	int fd;
+
+	std::memset(&address, 0, addr_len);
+	if ((fd = accept(servers->first, (sockaddr*)&address, &addr_len)) < 0)
+	{
+		if (errno == EAGAIN)
+			return; // should thow an exception to force auto deletion because of new construction
+		exit(-1);  // should thow an exception to force auto deletion because of new construction
+	}
+	std::cout << "new client with fd: " << fd << " accepted on server:" << servers->first << std::endl;
+	_clients.insert(std::make_pair(fd, Client(_epoll_fd, fd, servers)));
 }
 
 void Cluster::_add_server(int fd, uint32_t revents)

@@ -6,13 +6,17 @@ class Client;
 class Message
 {
 	public:
-	Client			*client;
+	// Client			*client;
 	t_state			state;
 	std::string		raw_data;
-	Message			*ptr; // response || request
+	// Message			*ptr; // response || request
 	Request			info;
 
-	Message(Client *c);
+	Message(void);
+	Message(const Message &src);
+	Message &operator=(const Message &src);
+
+
 	virtual ~Message();
 	const char *data(void) const;// should return complete response buffer; wether it's an error or correct page
 	size_t size(void) const; // should return response buffer size

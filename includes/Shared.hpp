@@ -49,6 +49,7 @@ typedef struct s_server_block {
 
 typedef std::map<int, std::map<std::string, t_server_block> > server_map;
 typedef std::map<std::string, t_server_block> config_map;
+//typedef std::map<int, Client> client_map;
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128

@@ -6,7 +6,9 @@
 class Client 
 {
 	public:
-	Client(int epoll, server_map::iterator& server, std::set<Client*> *clients);
+	Client(int epoll, int fd, server_map::iterator& server);
+	Client(const Client& rhs);
+	Client& operator=(const Client& rhs);
 	virtual ~Client();
 	void disconnect(void);
 	void handleEvent(uint32_t revents);
@@ -18,11 +20,9 @@ class Client
 	void _addEventListener(uint32_t revents);
 
 	private:
-	int					_fd;
-	int					_epoll_fd;
-	server_map::iterator& _servers;
-	std::set<Client*>	*_clients;
-	sockaddr_in			_address;
-	Message				_request;
-	Response			_response;
+	int						_epoll_fd;
+	int						_fd;
+	server_map::iterator& 	_servers;
+	Message					_request;
+	Response				_response;
 };
