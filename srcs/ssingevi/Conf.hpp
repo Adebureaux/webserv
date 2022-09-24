@@ -1,10 +1,43 @@
 #pragma once
-#include "Shared.hpp"
-#include "Parser.hpp"
-#include "Utility.hpp"
+#include "../../includes/Parser.hpp"
+#include "Header.hpp"
+#include <set>
+#include <map>
+#include <vector>
+#include <string>
+#include <iostream>
+#include <exception>
+#include <stdexcept>
 
-typedef std::map<std::string, Server_block>	config_map;
-typedef std::map<int, config_map>			server_map;
+/*
+// typedef struct s_location {
+	// bool								get_method;
+	// bool								post_method;
+	// bool								delete_method;
+	// std::string						redirect;
+	// bool								autoindex;
+	// std::string						root; mandatory
+	// std::string						default_file; opt si autoindex true
+	// std::string						CGI;
+	// std::pair<bool, std::string>		upload;
+} t_location;
+*/
+
+// class Server_block {
+// 	public:
+// 	Server_block();
+// 	Server_block(const Server_block &cpy);
+// 	~Server_block();
+// 	Server_block &operator=(const Server_block &cpy);
+
+	// int										port;			// Mandatory
+	// std::string								address;		// Mandatory
+	// std::string								server_names;	// Optional
+	// bool									main; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
+	// std::map<int, std::string>				error_pages;	// Optional
+	// size_t									body_size;		// Optional ? (setup default value)
+	// std::vector<Location>					locations;		// Optional
+// };
 
 class Conf : public Parser
 {
@@ -14,8 +47,9 @@ class Conf : public Parser
 	Conf &operator=(const Conf &src);
 	~Conf();
 
+	std::string const									get_raw_conf();
 	bool												is_valid();
-	std::map<int, std::map<std::string, Server_block> >& get_conf_map(void);
+	std::map<int, std::map<std::string, Server_block> > get_conf_map(void);
 	std::string											get_error_msg(void);
 
 	private:

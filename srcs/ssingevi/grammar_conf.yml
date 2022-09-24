@@ -49,6 +49,9 @@
 # upload = 'upload' ':' OWS ('on' OWS path) | 'off') end_of_line
 
 # cgi = 'cgi' ':' OWS path end_of_line
+
+# redirect = "redirect" ':' OWS path end_of_line
+
 # location end
 
 # server_name = 'server_name' ':' OWS 1*unreserved OWS end_of_line

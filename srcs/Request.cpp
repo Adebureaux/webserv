@@ -480,7 +480,8 @@ void Request::dec_octet()
 {
 	try
 	{
-		_or("naaaa", &Request::DIGIT, "rn", '1', '9', &Request::DIGIT,"cnn", '1', &Request::DIGIT, &Request::DIGIT, "crn", '2', '0', '4', &Request::DIGIT, "Rr", "25", '0', '5');
+		_or("aaaan", "Rr", "25", '0', '5',  "crn", '2', '0', '4', &Request::DIGIT, "cnn", '1', &Request::DIGIT, &Request::DIGIT, "rn", '1', '9', &Request::DIGIT, &Request::DIGIT);
+		// _or("naaaa", &Request::DIGIT, "rn", '1', '9', &Request::DIGIT,"cnn", '1', &Request::DIGIT, &Request::DIGIT, "crn", '2', '0', '4', &Request::DIGIT, "Rr", "25", '0', '5');
 	}
 	catch(const std::exception& e)
 	{

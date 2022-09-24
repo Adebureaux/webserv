@@ -1,5 +1,4 @@
 #include "Response.hpp"
-#include "Utility.hpp"
 
 // https://www.rfc-editor.org/rfc/rfc7230.html#section-3 --> reference
 // HTTP-message   = start-line
@@ -7,14 +6,13 @@
 //                  CRLF
 //                  [ message-body ]
 
-typedef void(Response::*Method)(const Request&, const config_map::iterator&);
-Method method[3] = { &Response::create_get, &Response::create_post, &Response::create_delete };
 std::map<int, std::string> start_lines;
+std::map<int, std::string> errors;
 
 Response::Response() : _status(200), _response(std::string()), _header(std::string()), _body(std::string())
 {
-	if (!start_lines.size())
-		_init_start_lines();
+	_init_start_lines();
+	_init_errors();
 }
 
 Response::~Response()
@@ -24,11 +22,22 @@ Response::~Response()
 	_response.erase();
 }
 
-void Response::create(const Request& request, const config_map::iterator& config)
+void Response::create(const Request& request, config_map& config)
 {
 	if (!request.is_valid())
 		_status = 400;
-	(this->*method[request.get_method()])(request, config);
+	else
+	{
+		config_map::iterator it = config.find(request.get_host());
+		if (it == config.end())
+			it = config.begin();
+		if (request.get_method() == GET)
+			create_get(request, it->second);
+		else if (request.get_method() == POST)
+			create_post(request, it->second);
+		else if (request.get_method() == DELETE)
+			create_delete(request, it->second);
+	}
 	_generate_response();
 }
 
@@ -47,11 +56,10 @@ size_t Response::get_size(void) const
 	return (_response.size());
 }
 
-void Response::create_get(const Request& request, const config_map::iterator& config)
+void Response::create_get(const Request& request, Server_block& config)
 {
-	(void)config;
 	std::stringstream size;
-	File file(request.get_request_target().c_str(), ""); // Integrate a root where to start finding
+	File file(request.get_request_target().c_str(), config.root);
 	file.set_content();
 	file.set_mime_type();
 	if (file.type == FILE_TYPE && file.valid)
@@ -62,17 +70,22 @@ void Response::create_get(const Request& request, const config_map::iterator& co
 		_body.append(file.content);
 	}
 	else
+	{
 		_status = 404;
+		_header_field("Content-Type", "text/html");
+		_header_field("Content-Length", "68");
+		_body.append(errors[_status]);
+	}
 
 }
 
-void Response::create_post(const Request& request, const config_map::iterator& config)
+void Response::create_post(const Request& request, Server_block& config)
 {
 	(void)request;
 	(void)config;
 }
 
-void Response::create_delete(const Request& request, const config_map::iterator& config)
+void Response::create_delete(const Request& request, Server_block& config)
 {
 	(void)request;
 	(void)config;
@@ -90,6 +103,11 @@ void Response::_init_start_lines(void) const
 	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\r\n"));
 }
 
+void Response::_init_errors(void) const
+{
+	errors.insert(std::make_pair(404, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 404: Not Found</center>"));
+}
+
 void Response::_generate_response(void)
 {
 	_response = start_lines[_status];
@@ -99,7 +117,6 @@ void Response::_generate_response(void)
 	_header.erase();
 	_response.append(_body);
 	_body.erase();
-	//std::cout << C_G_GREEN << _response << C_RES;
 }
 
 void Response::_header_field(const std::string& header, const std::string& field)

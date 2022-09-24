@@ -6,6 +6,7 @@ SRCS		=	srcs/Cluster.cpp\
 				srcs/Response.cpp\
 				srcs/Parser.cpp\
 				srcs/Utility.cpp\
+				srcs/Conf.cpp\
 				srcs/Autoindex.cpp
 
 INCS		= -I includes
