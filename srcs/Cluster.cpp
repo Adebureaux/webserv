@@ -27,6 +27,18 @@ Cluster::Cluster(server_map& config)
 
 Cluster::~Cluster()
 {
+	if (_clients.empty())
+		return;
+	while (1)
+	{
+		std::set<Client*>::iterator it = _clients.begin();
+		if (it != _clients.end())
+		{
+			Client *ptr = *it;
+			delete ptr;
+		}
+		else break;
+	}
 	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
 		delete *it;
 	_clients.clear();
@@ -54,7 +66,7 @@ void Cluster::event_loop(void)
 			server_map::iterator it = _servers.find(events[i].data.fd);
 			if (it != _servers.end())
 			{
-				Client *client = new Client(_epoll_fd, it->first, it->second, &_clients);
+				Client *client = new Client(_epoll_fd, it->first, &it->second, &_clients);
 				_clients.insert(client);
 			}
 			else

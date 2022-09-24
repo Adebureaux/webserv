@@ -9,7 +9,7 @@ typedef std::map<int, config_map> server_map;
 class Client
 {
 	public:
-	Client(int epoll, int server_fd, config_map& config, std::set<Client*> *clients);
+	Client(int epoll, int server_fd, config_map *config, std::set<Client*> *clients);
 	virtual ~Client();
 	void disconnect(void);
 	void handleEvent(uint32_t revents);
@@ -23,7 +23,7 @@ class Client
 	private:
 	int						_fd;
 	int						_epoll_fd;
-	config_map&				_config;
+	config_map				*_config;
 	std::set<Client*>		*_clients;
 	sockaddr_in				_address;
 	Message					_request;
