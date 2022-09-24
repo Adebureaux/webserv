@@ -65,9 +65,7 @@ void Cluster::event_loop(void)
 				}
 				catch (const std::exception& e)
 				{
-					// (void)e;
-					std::cout << std::endl << e.what() << std::endl;
-					_clients.erase((Client*)(events[i].data.ptr));
+					(void)e;
 					delete (Client*)(events[i].data.ptr);
 				}
 			}
