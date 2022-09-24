@@ -39,9 +39,6 @@ Cluster::~Cluster()
 		}
 		else break;
 	}
-	for (std::set<Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
-		delete *it;
-	_clients.clear();
 }
 
 void Cluster::event_loop(void)
