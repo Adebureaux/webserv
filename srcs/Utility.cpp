@@ -187,6 +187,7 @@ void File::set_mime_type(void)
 
 File::entry File::types[MIME_TYPE_NUMBER] =  {
   {"conf", "webserv/conf"},
+  {"ico", "image/x-icon"},
   {"*3gpp", "audio/3gpp"},
   {"*jpm", "video/jpm"},
   {"*mp3", "audio/mp3"},

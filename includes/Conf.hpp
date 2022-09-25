@@ -15,7 +15,7 @@ class Conf : public Parser
 	~Conf();
 
 	bool												is_valid();
-	std::map<int, std::map<std::string, Server_block> >& get_conf_map(void);
+	server_map& 										get_conf_map(void);
 	std::string											get_error_msg(void);
 
 	private:
@@ -28,7 +28,7 @@ class Conf : public Parser
 	bool			_catch_method;
 	std::string		_error_msg;
 	bool			_is_valid;
-	std::map<int, std::map<std::string, Server_block> > _ret;
+	server_map _ret;
 
 
 	// std::map<int, std::map<std::string, Server_block> >
