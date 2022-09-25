@@ -29,6 +29,7 @@ void Response::create(const Request& request, config_map& config)
 	else
 	{
 		config_map::iterator it = config.find(request.get_host());
+		std::cout << request.get_host() << std::endl;
 		if (it == config.end())
 			it = config.begin();
 		if (request.get_method() == GET)
