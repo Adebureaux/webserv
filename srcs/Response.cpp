@@ -72,7 +72,21 @@ void Response::create_get(const Request& request, Server_block& config)
 	}
 	else
 	{
-		_status = 404;
+		// if FILE_TYPE && permissions ! R  && found -> 403
+		// if not_found -> 404
+		// if DIRECTORY
+			// if default index is set in conf and found in the folder -> send this file
+			// else if default index is not set and autoindex is on in conf -> send autoindex generated html file
+		// else if invalid file (for whatever reason) -> bad request
+
+		if (!(file.permissions & R))
+			_status = 403;
+		else if (file.not_found)
+			_status = 404;
+		else if (file.type == DIRECTORY)
+			_status = 400; // TEMPORARY
+		else
+			_status = 400;
 		_header_field("Content-Type", "text/html");
 		_header_field("Content-Length", "68");
 		_body.append(errors[_status]);
@@ -106,6 +120,8 @@ void Response::_init_start_lines(void) const
 
 void Response::_init_errors(void) const
 {
+	errors.insert(std::make_pair(400, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 400:BadRequest</center>"));
+	errors.insert(std::make_pair(403, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 403: Forbidden</center>"));
 	errors.insert(std::make_pair(404, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 404: Not Found</center>"));
 }
 

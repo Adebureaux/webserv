@@ -69,7 +69,7 @@ size_t Message::size(void) const
 	return raw_data.size();// PLACEHOLDER !!
 }; // should return response buffer size
 
-File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0)
+File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false)
 {
 	struct stat infos;
 	std::stringstream target_uri;
@@ -119,6 +119,7 @@ File::File(const File &src)
 	time_stamp_str = src.time_stamp_str;
 	mime_type = src.mime_type;
 	permissions = src.permissions;
+	not_found = src.not_found;
 };
 
 File &File::operator=(const File &src)
@@ -135,6 +136,8 @@ File &File::operator=(const File &src)
 	time_stamp_str = src.time_stamp_str;
 	mime_type = src.mime_type;
 	permissions = src.permissions;
+	not_found = src.not_found;
+	
 	return *this;
 };
 
