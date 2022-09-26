@@ -72,6 +72,7 @@ class File
 	std::string			ext;
 	std::string			mime_type;
 	char				permissions:3;
+	bool				not_found;
 	File(std::string target, std::string folder);
 	File(const File &src);
 	File &operator=(const File &src);

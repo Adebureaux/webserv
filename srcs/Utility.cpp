@@ -80,6 +80,11 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 	else
 		target_uri << path << "/" << name;
 	uri = target_uri.str();
+	if ((not_found = access(uri.c_str(), F_OK)))
+	{
+		valid = false;
+		return ;
+	}
 	set_permissions();
 	if((error = stat(uri.c_str(), &infos)) == 0)
 	{
@@ -93,7 +98,7 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 		else if(S_ISREG(infos.st_mode) || S_ISLNK(infos.st_mode)) //it's a file
 			type = FILE_TYPE;
 	}
-	// std::cout << uri << " is :\t";
+	// std::cout << uri << " is not_found :" << not_found << "\n";
 	// std::cout << (permissions & R ? "READABLE, " : "NOT_READABLE, ");
 	// std::cout << (permissions & W ? "WRITABLE, " : "NOT_WRITABLE, ");
 	// std::cout << (permissions & X ? "EXECUTABLE" : "NOT_EXECUTABLE");
