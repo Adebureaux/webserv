@@ -59,16 +59,6 @@ Message::Message(Client *c) :
 
 Message::~Message() {};
 
-const char *Message::data(void) const
-{
-	return raw_data.c_str();// PLACEHOLDER !!
-}; // should return complete response buffer; wether it's an error or correct page
-
-size_t Message::size(void) const
-{
-	return raw_data.size();// PLACEHOLDER !!
-}; // should return response buffer size
-
 File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false)
 {
 	struct stat infos;
@@ -213,7 +203,7 @@ void File::set_mime_type(void)
 	mime_type = "text/plain";
 }
 
-File::entry File::types[MIME_TYPE_NUMBER] =  {
+File::entry File::types[MIME_TYPE_NUMBER] = {
   {"conf", "webserv/conf"},
   {"ico", "image/x-icon"},
   {"*3gpp", "audio/3gpp"},

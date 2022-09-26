@@ -46,16 +46,18 @@ void Cluster::event_loop(void)
 	int epoll_ret;
 	epoll_event events[MAX_EVENTS];
 
-	while (run) {
+	while (run)
+	{
 		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, TIMEOUT_VALUE);
-		if (epoll_ret == 0)
-			std::cerr << C_G_MAGENTA << "Waiting for new connection ..." << C_RES << std::endl;
-		else if (epoll_ret == -1) {
-			if (errno == EINTR) {
-				std::cerr << std::endl << C_G_MAGENTA << "Closing websev..." << C_RES << std::endl;
+		if (!epoll_ret)
+			std::cout << C_G_MAGENTA << "Waiting for new connection ..." << C_RES << std::endl;
+		else if (epoll_ret == -1)
+		{
+			if (errno == EINTR)
+			{
+				std::cout << std::endl << C_G_MAGENTA << "Closing websev..." << C_RES << std::endl;
 				continue;
 			}
-			std::cerr << C_B_RED << "epoll_wait failed" << C_RES << std::endl;
 			break;
 		}
 		for (int i = 0; i < epoll_ret; i++)
@@ -109,10 +111,13 @@ int Cluster::_init_socket(const Server_block& config) const
 	addr.sin_port = htons(config.port);
 	addr.sin_addr.s_addr = inet_addr(config.address.c_str());
 	if (bind(fd, (sockaddr*)&addr, addr_len) == -1)
+	{
 		std::cerr << C_B_RED << "Cannot bind " << config.address << ":" << config.port << C_RES << std::endl;
+		std::exit(1);
+	}
 	if (listen(fd, SOMAXCONN) == -1)
 		std::cerr << C_B_RED << "Cannot listen " << config.address << ":" << config.port << C_RES << std::endl;
-	std::cerr << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
+	std::cout << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
 	return (fd);
 }
 

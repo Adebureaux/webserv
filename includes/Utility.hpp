@@ -33,9 +33,10 @@ class Server_block {
 	std::string								server_names;	// Optional
 	bool									main; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
 	std::map<int, std::string>				error_pages;	// Optional
-	std::string								root;
+	std::string								root;			// Should remove this variable ? Unused ?
 	size_t									body_size;		// Optional ? (setup default value)
 	std::vector<Location>					locations;		// Optional
+	// std::map<std::string, Location> Gota add the path related to the location !
 };
 
 
@@ -49,9 +50,7 @@ class Message
 	Request			info;
 
 	Message(Client *c);
-	virtual ~Message();
-	const char *data(void) const;// should return complete response buffer; wether it's an error or correct page
-	size_t size(void) const; // should return response buffer size
+	~Message();
 };
 
 
@@ -90,10 +89,6 @@ class File
 		const std::string& mime_type;
 	};
 	static File::entry types[MIME_TYPE_NUMBER];
-
-	//void get_mime_type(void);
-	// TODO ==> Create 2 functions :
-	// find_type() --> give the file extention with the mime type (example text/html for .html file)
 };
 
 File get_file_infos(std::string target, std::string path, int folder_fd);

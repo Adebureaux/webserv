@@ -28,8 +28,8 @@ void Response::create(const Request& request, config_map& config)
 		_status = 400;
 	else
 	{
-		config_map::iterator it = config.find(request.get_host());
-		std::cout << request.get_host() << std::endl;
+		config_map::iterator it = config.find(request.get_host()); // Need to find the good location here
+		// std::cout << request.get_host() << std::endl;
 		if (it == config.end())
 			it = config.begin();
 		if (request.get_method() == GET)
@@ -161,14 +161,14 @@ void Response::create_delete(const Request& request, Server_block& config)
 
 void Response::_init_start_lines(void) const
 {
-	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\r\n"));
-	start_lines.insert(std::make_pair(200, "HTTP/1.1 200 OK\r\n"));
-	start_lines.insert(std::make_pair(400, "HTTP/1.1 400 Bad Request\r\n"));
-	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\r\n"));
-	start_lines.insert(std::make_pair(404, "HTTP/1.1 404 Not Found\r\n"));
-	start_lines.insert(std::make_pair(405, "HTTP/1.1 405 Method Not Allowed\r\n"));
-	start_lines.insert(std::make_pair(500, "HTTP/1.1 500 Internal Server Error\r\n"));
-	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\r\n"));
+	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\n"));
+	start_lines.insert(std::make_pair(200, "HTTP/1.1 200 OK\n"));
+	start_lines.insert(std::make_pair(400, "HTTP/1.1 400 Bad Request\n"));
+	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\n"));
+	start_lines.insert(std::make_pair(404, "HTTP/1.1 404 Not Found\n"));
+	start_lines.insert(std::make_pair(405, "HTTP/1.1 405 Method Not Allowed\n"));
+	start_lines.insert(std::make_pair(500, "HTTP/1.1 500 Internal Server Error\n"));
+	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\n"));
 }
 
 void Response::_init_errors(void) const
@@ -176,7 +176,7 @@ void Response::_init_errors(void) const
 	errors.insert(std::make_pair(400, ERROR_HTML_400));
 	errors.insert(std::make_pair(403, ERROR_HTML_403));
 	errors.insert(std::make_pair(404, ERROR_HTML_404));
-	errors.insert(std::make_pair(405, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 405: Method Not Allowed</center>"));
+	errors.insert(std::make_pair(405, ERROR_HTML_405));
 	errors.insert(std::make_pair(500, ERROR_HTML_500));
 	errors.insert(std::make_pair(501, ERROR_HTML_501));
 }
@@ -186,7 +186,6 @@ void Response::_generate_response(void)
 	_response = start_lines[_status];
 	_response.append(_header);
 	_response.append("\r\n");
-	std::cout << C_G_GREEN << _header << C_RES;
 	_header.erase();
 	_response.append(_body);
 	_body.erase();

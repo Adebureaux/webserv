@@ -35,7 +35,7 @@ Request &Request::operator=(const Request &src)
 	return (*this);
 }
 
-Request::~Request(){}
+Request::~Request() {}
 
 bool Request::is_valid() const
 {
