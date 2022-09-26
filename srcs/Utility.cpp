@@ -69,30 +69,35 @@ size_t Message::size(void) const
 	return raw_data.size();// PLACEHOLDER !!
 }; // should return response buffer size
 
-File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN)
+File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0)
 {
 	struct stat infos;
 	std::stringstream target_uri;
+	int error = 0;
 
 	if (path.empty())
 		target_uri << name;
 	else
 		target_uri << path << "/" << name;
 	uri = target_uri.str();
-	if(stat(uri.c_str(), &infos) == 0)
+	set_permissions();
+	if((error = stat(uri.c_str(), &infos)) == 0)
 	{
 		valid = true;
 		time_stamp_str = ctime(&infos.st_mtime);
 		time_stamp_raw = infos.st_mtime;
 		size = infos.st_size;
 		IO_read_block = infos.st_blksize;
-		if(infos.st_mode & S_IFDIR) //it's a directory
+		if(S_ISDIR(infos.st_mode)) //it's a directory
 			type = DIRECTORY;
-		else if(infos.st_mode & S_IFREG) //it's a file
+		else if(S_ISREG(infos.st_mode) || S_ISLNK(infos.st_mode)) //it's a file
 			type = FILE_TYPE;
-		else if(infos.st_mode & S_IFLNK) //it's a symlink
-			type = SYMLINK;
 	}
+	// std::cout << uri << " is :\t";
+	// std::cout << (permissions & R ? "READABLE, " : "NOT_READABLE, ");
+	// std::cout << (permissions & W ? "WRITABLE, " : "NOT_WRITABLE, ");
+	// std::cout << (permissions & X ? "EXECUTABLE" : "NOT_EXECUTABLE");
+	// std::cout << std::endl;
 };
 
 File::File(const File &src)
@@ -108,6 +113,7 @@ File::File(const File &src)
 	time_stamp_raw = src.time_stamp_raw;
 	time_stamp_str = src.time_stamp_str;
 	mime_type = src.mime_type;
+	permissions = src.permissions;
 };
 
 File &File::operator=(const File &src)
@@ -123,10 +129,21 @@ File &File::operator=(const File &src)
 	time_stamp_raw = src.time_stamp_raw;
 	time_stamp_str = src.time_stamp_str;
 	mime_type = src.mime_type;
+	permissions = src.permissions;
 	return *this;
 };
 
 File::~File() {};
+
+void File::set_permissions()
+{
+	if (!access(uri.c_str(), R_OK))
+		permissions |= R;
+	if (!access(uri.c_str(), W_OK))
+		permissions |= W;
+	if (!access(uri.c_str(), X_OK))
+		permissions |= X;
+};
 
 void File::set_content()
 {

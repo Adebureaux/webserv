@@ -64,18 +64,20 @@ class File
 	std::string 		time_stamp_str;
 	long 				time_stamp_raw;
 	bool				valid;
+	// typedef enum e_error {NOT_FOUND = -1, OK, FORBIDDEN_R, FORBIDDEN_W, INVALID_NAME} error;
 	file_type			type;
 	unsigned long long	size;
 	unsigned long long	IO_read_block;
 	std::string			content;
 	std::string			ext;
 	std::string			mime_type;
+	char				permissions:3;
 	File(std::string target, std::string folder);
 	File(const File &src);
 	File &operator=(const File &src);
 
 	~File();
-
+	void set_permissions();
 	void set_content(void);
 	void set_mime_type(void);
 
@@ -85,7 +87,7 @@ class File
 		const std::string& mime_type;
 	};
 	static File::entry types[MIME_TYPE_NUMBER];
-	
+
 	//void get_mime_type(void);
 	// TODO ==> Create 2 functions :
 	// find_type() --> give the file extention with the mime type (example text/html for .html file)

@@ -14,6 +14,7 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
+#include <fcntl.h>
 #include <dirent.h>
 #include <exception>
 #include <stdexcept>
@@ -50,6 +51,10 @@
 // Romain
 typedef enum e_state { ERROR = -1 , WAITING, INCOMPLETE, READY, DONE } t_state;
 typedef enum e_file_type { FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN } file_type;
+#define R 1
+#define W 2
+#define X 4
+
 // End Romain
 
 /*

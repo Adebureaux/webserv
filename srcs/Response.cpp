@@ -61,10 +61,10 @@ void Response::create_get(const Request& request, Server_block& config)
 {
 	std::stringstream size;
 	File file(request.get_request_target().c_str(), config.root);
-	file.set_content();
-	file.set_mime_type();
-	if (file.type == FILE_TYPE && file.valid)
+	if (file.type == FILE_TYPE && file.valid && (file.permissions & R))
 	{
+		file.set_content();
+		file.set_mime_type();
 		size << file.size;
 		_header_field("Content-Type", file.mime_type);
 		_header_field("Content-Length", size.str());
@@ -72,7 +72,7 @@ void Response::create_get(const Request& request, Server_block& config)
 	}
 	else
 	{
-		_status = 404; 
+		_status = 404;
 		_header_field("Content-Type", "text/html");
 		_header_field("Content-Length", "68");
 		_body.append(errors[_status]);
