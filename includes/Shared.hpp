@@ -23,6 +23,7 @@
 #include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <sys/sysmacros.h>
+#include "Errors_html.hpp"
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
@@ -54,7 +55,6 @@ typedef enum e_file_type { FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN } file_type;
 #define R 1
 #define W 2
 #define X 4
-
 // End Romain
 
 /*

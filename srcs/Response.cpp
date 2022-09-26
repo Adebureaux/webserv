@@ -108,7 +108,7 @@ void Response::create_get(const Request& request, Server_block& config)
 			_header_field("Content-Length", size.str());
 			_body.append(res.first);
 			_status = 200;
-			
+
 		}
 		else
 		{
@@ -173,12 +173,12 @@ void Response::_init_start_lines(void) const
 
 void Response::_init_errors(void) const
 {
-	errors.insert(std::make_pair(400, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 400: Bad Request</center>"));
-	errors.insert(std::make_pair(403, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 403: Forbidden</center>"));
-	errors.insert(std::make_pair(404, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 404: Not Found</center>"));
+	errors.insert(std::make_pair(400, ERROR_HTML_400));
+	errors.insert(std::make_pair(403, ERROR_HTML_403));
+	errors.insert(std::make_pair(404, ERROR_HTML_404));
 	errors.insert(std::make_pair(405, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 405: Method Not Allowed</center>"));
-	errors.insert(std::make_pair(500, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 500: Internal Server Error</center>"));
-	errors.insert(std::make_pair(501, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 501: Not Implemented</center>"));
+	errors.insert(std::make_pair(500, ERROR_HTML_500));
+	errors.insert(std::make_pair(501, ERROR_HTML_501));
 }
 
 void Response::_generate_response(void)
