@@ -71,6 +71,7 @@ void Response::create_get(const Request& request, Server_block& config)
 		_header_field("Content-Type", file.mime_type);
 		_header_field("Content-Length", size.str());
 		_body.append(file.content);
+		_status = 200;
 	}
 	else if (file.type == DIRECTORY && file.valid && (file.permissions & R))
 	{
@@ -94,6 +95,8 @@ void Response::create_get(const Request& request, Server_block& config)
 			_header_field("Content-Type", default_file.mime_type);
 			_header_field("Content-Length", size.str());
 			_body.append(default_file.content);
+			_status = 200;
+
 			return ;
 		}
 		if (AUTOINDEX_ON) // need to properly check this
@@ -104,6 +107,8 @@ void Response::create_get(const Request& request, Server_block& config)
 			size << res.second;
 			_header_field("Content-Length", size.str());
 			_body.append(res.first);
+			_status = 200;
+			
 		}
 		else
 		{
