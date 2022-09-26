@@ -57,6 +57,8 @@ size_t Response::get_size(void) const
 	return (_response.size());
 }
 
+#define AUTOINDEX_ON 1
+
 void Response::create_get(const Request& request, Server_block& config)
 {
 	std::stringstream size;
@@ -70,6 +72,52 @@ void Response::create_get(const Request& request, Server_block& config)
 		_header_field("Content-Length", size.str());
 		_body.append(file.content);
 	}
+	else if (file.type == DIRECTORY && file.valid && (file.permissions & R))
+	{
+		std::vector<File> filelist = ls(request.get_request_target().c_str());
+		File default_file;
+		bool default_found = false;
+		for (std::vector<File>::iterator it = filelist.begin(); it != filelist.end(); it++)
+		{
+			if (it->name == "index.html") // need to change config.index to location specific default fileS
+			{
+				default_file = *it;
+				default_found = true;
+				break;
+			}
+		}
+		if (default_found && default_file.type == FILE_TYPE && file.valid && (file.permissions & R))
+		{
+			default_file.set_content();
+			default_file.set_mime_type();
+			size << default_file.size;
+			_header_field("Content-Type", default_file.mime_type);
+			_header_field("Content-Length", size.str());
+			_body.append(default_file.content);
+			return ;
+		}
+		if (AUTOINDEX_ON) // need to properly check this
+		{
+			Autoindex autoindex(filelist);
+			std::pair<std::string, size_t> res = autoindex.to_html();
+			_header_field("Content-Type", "text/html");
+			size << res.second;
+			_header_field("Content-Length", size.str());
+			_body.append(res.first);
+		}
+		else
+		{
+			if (!(default_file.permissions & R))
+				_status = 403;
+			else
+				_status = 400;
+			_header_field("Content-Type", "text/html");
+			size << errors[_status].size();
+			_header_field("Content-Length", size.str());
+			_body.append(errors[_status]);
+			return ;
+		}
+	}
 	else
 	{
 		// if FILE_TYPE && permissions ! R  && found -> 403
@@ -79,16 +127,16 @@ void Response::create_get(const Request& request, Server_block& config)
 			// else if default index is not set and autoindex is on in conf -> send autoindex generated html file
 		// else if invalid file (for whatever reason) -> bad request
 
-		if (!(file.permissions & R))
-			_status = 403;
-		else if (file.not_found)
+		if (file.not_found)
 			_status = 404;
-		else if (file.type == DIRECTORY)
-			_status = 400; // TEMPORARY
+		else if (!(file.permissions & R))
+			_status = 403;
+
 		else
 			_status = 400;
 		_header_field("Content-Type", "text/html");
-		_header_field("Content-Length", "68");
+		size << errors[_status].size();
+		_header_field("Content-Length", size.str());
 		_body.append(errors[_status]);
 	}
 
@@ -120,9 +168,12 @@ void Response::_init_start_lines(void) const
 
 void Response::_init_errors(void) const
 {
-	errors.insert(std::make_pair(400, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 400:BadRequest</center>"));
+	errors.insert(std::make_pair(400, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 400: Bad Request</center>"));
 	errors.insert(std::make_pair(403, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 403: Forbidden</center>"));
 	errors.insert(std::make_pair(404, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 404: Not Found</center>"));
+	errors.insert(std::make_pair(405, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 405: Method Not Allowed</center>"));
+	errors.insert(std::make_pair(500, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 500: Internal Server Error</center>"));
+	errors.insert(std::make_pair(501, "<!DOCTYPE html>\n<html>\n<body>\n<center>Error 501: Not Implemented</center>"));
 }
 
 void Response::_generate_response(void)

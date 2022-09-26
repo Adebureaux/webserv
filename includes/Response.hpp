@@ -2,6 +2,7 @@
 #include "Shared.hpp"
 #include "Request.hpp"
 #include "Utility.hpp"
+#include "Autoindex.hpp"
 #include "Conf.hpp"
 
 class Response

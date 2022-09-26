@@ -121,6 +121,9 @@ File::File(const File &src)
 	permissions = src.permissions;
 	not_found = src.not_found;
 };
+File::File(void)
+{
+};
 
 File &File::operator=(const File &src)
 {
@@ -137,7 +140,7 @@ File &File::operator=(const File &src)
 	mime_type = src.mime_type;
 	permissions = src.permissions;
 	not_found = src.not_found;
-	
+
 	return *this;
 };
 
