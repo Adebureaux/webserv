@@ -11,7 +11,7 @@
 std::map<int, std::string> start_lines;
 std::map<int, std::string> errors;
 
-Response::Response() : _status(400)
+Response::Response() : _status(100)
 {
 	_init_start_lines();
 	_init_errors();
@@ -24,12 +24,11 @@ void Response::create(const Request& request, config_map& config)
 	if (!request.is_valid())
 	{
 		_status = 400;
-		// if (request)
+		// if (request http version != HTTP/1.1)
 		// TODO bad HTTP version 	
 	}
 	else
 	{
-		// Location ?
 		config_map::iterator it = config.find(request.get_host());
 		if (it == config.end())
 		{
@@ -68,8 +67,9 @@ size_t Response::get_size(void) const
 
 void Response::create_get(const Request& request, Server_block& config)
 {
+	(void)config;
 	std::stringstream size;
-	File file(request.get_request_target().c_str(), config.root);
+	File file =_find_location(request, config);
 	// std::cout << C_B_RED << request.get_request_target() << C_RES << std::endl;
 	// std::cout << C_B_BLUE << file.uri << C_RES << std::endl;
 	// std::cout << C_B_GRAY << file.name << C_RES << std::endl;
@@ -85,12 +85,12 @@ void Response::create_get(const Request& request, Server_block& config)
 	}
 	else if (file.type == DIRECTORY && file.valid && (file.permissions & R))
 	{
-		std::vector<File> filelist = ls(request.get_request_target().c_str());
+		std::vector<File> filelist = ls(file.name.c_str());
 		File default_file;
 		bool default_found = false;
 		for (std::vector<File>::iterator it = filelist.begin(); it != filelist.end(); it++)
 		{
-			if (it->name == "index.html") // need to change config.index to location specific default fileS
+			if (it->name == "") // need to change config.index to location specific default files
 			{
 				default_file = *it;
 				default_found = true;
@@ -107,7 +107,7 @@ void Response::create_get(const Request& request, Server_block& config)
 			_body.append(default_file.content);
 			_status = 200;
 
-			return ;
+			return;
 		}
 		if (AUTOINDEX_ON) // need to properly check this
 		{
@@ -130,7 +130,7 @@ void Response::create_get(const Request& request, Server_block& config)
 			size << errors[_status].size();
 			_header_field("Content-Length", size.str());
 			_body.append(errors[_status]);
-			return ;
+			return;
 		}
 	}
 	else
@@ -161,6 +161,21 @@ void Response::create_delete(const Request& request, Server_block& config)
 	(void)config;
 }
 
+File Response::_find_location(const Request& request, Server_block& config)
+{
+	File requested(request.get_request_target(), "");
+
+	for (location_map::iterator it = config.locations.begin(); it != config.locations.end(); it++)
+	{
+		std::cout << C_G_BLUE << "searched uri = " << requested.uri << " + " << requested.name << std::endl;
+		std::cout << C_G_BLUE << "tested uri = " << it->first << C_RES << std::endl;
+		std::cout << C_G_BLUE << "is file valid ? " << requested.valid << std::endl;
+		// return (File("", ""));
+	}
+	_location = NULL;
+	return (requested);
+}
+
 void Response::_init_start_lines(void) const
 {
 	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\n"));
@@ -172,6 +187,7 @@ void Response::_init_start_lines(void) const
 	start_lines.insert(std::make_pair(500, "HTTP/1.1 500 Internal Server Error\n"));
 	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\n"));
 }
+
 
 void Response::_init_errors(void) const
 {

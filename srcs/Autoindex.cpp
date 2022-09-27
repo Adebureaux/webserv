@@ -99,15 +99,6 @@ std::pair<std::string, size_t> Autoindex::to_html(void)
 	return std::make_pair(html, html.size());
 };
 
-void printFileInfos(const File &info)
-{
-	std::cout << C_G_CYAN<<"URI:" << info.uri << " is valid: "<< info.valid << "\t" << "name:" << info.name << "\t";
-	std::cout << "last modification: "<< info.time_stamp_str << "\t";
-	std::cout << " - "<< info.time_stamp_raw << "\t";
-	std::cout << "type: "<< (info.type == DIRECTORY ? "DIR \t" : "File\t");
-	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n" << C_RES;
-};
-
 // int main(int argc, char const *argv[]) {
 // 	(void)argc;
 // 	std::cout << Autoindex(argv[1]).to_html().first << std::endl;

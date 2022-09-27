@@ -1,4 +1,3 @@
-- Remplacer le location vector par location map<string(URL PATH), Location>
 - Remplacer les checks par les vrai Locations
 - Gerer les _status --> 405, 501, HTTP verions
 - Gerer les redirections

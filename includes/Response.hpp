@@ -20,15 +20,16 @@ class Response
 	void		create_delete(const Request& request, Server_block& config);
 
 	private:
-	void		_generate_response(void);
-	void		_init_start_lines(void) const;
-	void 		_init_errors(void) const;
-	void		_header_field(const std::string& header, const std::string& field);
-
+	File	_find_location(const Request& request, Server_block& config);
+	void	_generate_response(void);
+	void	_init_start_lines(void) const;
+	void 	_init_errors(void) const;
+	void	_header_field(const std::string& header, const std::string& field);
 
 	private:
 	int			_status;
-	std::string _response;
+	Location	*_location;
+	std::string	_response;
 	std::string	_header;
 	std::string	_body;
 };

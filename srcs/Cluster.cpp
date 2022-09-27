@@ -27,6 +27,9 @@ Cluster::Cluster(server_map& config)
 
 Cluster::~Cluster()
 {
+	for (server_map::iterator it = _servers.begin(); it != _servers.end(); it++)
+		close(it->first);
+	close(_epoll_fd);
 	if (_clients.empty())
 		return;
 	while (1)
@@ -91,8 +94,7 @@ void Cluster::_add_server(int fd, uint32_t revents) const
 	std::memset(&event, 0, sizeof(event));
 	event.data.fd = fd;
 	event.events = revents;
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
-		std::cerr << C_B_RED << "Cannot add fd" << fd << " to epoll" << C_RES << std::endl;
+	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event);
 }
 
 int Cluster::_init_socket(const Server_block& config) const
@@ -112,12 +114,14 @@ int Cluster::_init_socket(const Server_block& config) const
 	addr.sin_addr.s_addr = inet_addr(config.address.c_str());
 	if (bind(fd, (sockaddr*)&addr, addr_len) == -1)
 	{
-		std::cerr << C_B_RED << "Cannot bind " << config.address << ":" << config.port << C_RES << std::endl;
-		std::exit(1);
+		std::cerr << C_B_RED << "Address " << config.address << ":" << config.port << " already in use" << C_RES << std::endl;
+		run = false;
 	}
-	if (listen(fd, SOMAXCONN) == -1)
-		std::cerr << C_B_RED << "Cannot listen " << config.address << ":" << config.port << C_RES << std::endl;
-	std::cout << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
+	else
+	{
+		listen(fd, SOMAXCONN);
+		std::cout << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
+	}
 	return (fd);
 }
 

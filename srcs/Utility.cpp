@@ -1,7 +1,7 @@
 #include "Utility.hpp"
 
 Location::Location()
-: get_method(true), post_method(true), delete_method(true), redirect(),root(), autoindex(false), default_file(), CGI(), upload(false, "")
+: get_method(true), post_method(true), delete_method(true), redirect(),root(), autoindex(false), default_file(), CGI(), upload(false, ""), uri()
 {}
 
 Location::Location(const Location &cpy)
@@ -22,11 +22,12 @@ Location &Location::operator=(const Location &cpy)
 	default_file = cpy.default_file;
 	CGI = cpy.CGI;
 	upload = cpy.upload;
+	uri = cpy.uri;
 	return (*this);
 }
 
 Server_block::Server_block()
-: port(-1), address(), server_names(), main(false), error_pages(), root(), body_size(BUFFER_SIZE), locations()
+: port(-1), address(), server_names(), main(false), error_pages(), body_size(BUFFER_SIZE), locations()
 {}
 
 Server_block::Server_block(const Server_block &cpy)
@@ -156,7 +157,7 @@ File &File::operator=(const File &src)
 
 File::~File() {};
 
-void File::set_permissions()
+void File::set_permissions(void)
 {
 	if (!access(uri.c_str(), R_OK))
 		permissions |= R;
@@ -166,7 +167,7 @@ void File::set_permissions()
 		permissions |= X;
 };
 
-void File::set_content()
+void File::set_content(void)
 {
 	std::ifstream file(uri.c_str());
 	std::stringstream ssbuffer;
@@ -178,29 +179,6 @@ void File::set_content()
 	}
 	else
 		valid = false;
-};
-
-File get_file_infos(std::string target, std::string path)
-{
-	File target_infos(target, path);
-
-	return target_infos;
-};
-
-std::vector<File> ls(char const *root)
-{
-	DIR *folder;
-	struct dirent *file;
-	std::vector<File> filelist;
-	if (!(folder = opendir(root)))
-		return filelist;
-	while ((file = readdir(folder)))
-	{
-		File newfile = File(file->d_name, root);
-		filelist.push_back(newfile);
-	}
-	closedir(folder);
-	return filelist;
 };
 
 void File::set_mime_type(void)
@@ -222,6 +200,38 @@ void File::set_mime_type(void)
 	}
 	mime_type = "text/plain";
 }
+
+File get_file_infos(std::string target, std::string path)
+{
+	File target_infos(target, path);
+
+	return target_infos;
+};
+
+void printFileInfos(const File &info)
+{
+	std::cout << C_G_CYAN<<"URI:" << info.uri << " is valid: "<< info.valid << "\t" << "name:" << info.name << "\t";
+	std::cout << "last modification: "<< info.time_stamp_str << "\t";
+	std::cout << " - "<< info.time_stamp_raw << "\t";
+	std::cout << "type: "<< (info.type == DIRECTORY ? "DIR \t" : "File\t");
+	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n" << C_RES;
+};
+
+std::vector<File> ls(char const *root)
+{
+	DIR *folder;
+	struct dirent *file;
+	std::vector<File> filelist;
+	if (!(folder = opendir(root)))
+		return filelist;
+	while ((file = readdir(folder)))
+	{
+		File newfile = File(file->d_name, root);
+		filelist.push_back(newfile);
+	}
+	closedir(folder);
+	return filelist;
+};
 
 const File::entry File::types[MIME_TYPE_NUMBER] = {
 	{"conf", "webserv/conf"},

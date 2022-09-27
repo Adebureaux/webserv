@@ -3,6 +3,7 @@
 
 class Client;
 
+
 class Location {
 	public:
 	Location();
@@ -19,7 +20,10 @@ class Location {
 	std::string						default_file;
 	std::string						CGI;
 	std::pair<bool, std::string>	upload;
+	std::string 					uri;
 };
+
+typedef std::map<std::string, Location> location_map;
 
 class Server_block {
 	public:
@@ -33,10 +37,8 @@ class Server_block {
 	std::string								server_names;	// Optional
 	bool									main; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
 	std::map<int, std::string>				error_pages;	// Optional
-	std::string								root;			// Should remove this variable ? Unused ?
 	size_t									body_size;		// Optional ? (setup default value)
-	std::vector<Location>					locations;		// Optional
-	// std::map<std::string, Location> Gota add the path related to the location !
+	location_map							locations;// Gota add the path related to the location !
 };
 
 
@@ -77,12 +79,10 @@ class File
 	File(std::string target, std::string folder);
 	File(const File &src);
 	File &operator=(const File &src);
-
 	~File();
-	void set_permissions();
+	void set_permissions(void);
 	void set_content(void);
 	void set_mime_type(void);
-
 	struct entry
 	{
 		const std::string& ext;

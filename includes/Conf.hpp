@@ -51,7 +51,7 @@ class Conf : public Parser
 	*/
 
 	void _test_validity_block(void) const;
-	void _check_locations(std::vector<Location> const &locations) const;
+	void _check_locations(location_map const &locations) const;
 	void _create_ret_map(void);
 	void catch_var_header_field(size_t old_head);
 	void expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *arg);											// ✓
@@ -67,6 +67,7 @@ class Conf : public Parser
 	void server_block(void);
 	void server_var(void);
 	void location_block(void);
+	void location_uri(void);
 	// void path_location(void);
 	void location_var(void);
 	void location_catch_var(void);
