@@ -1,6 +1,6 @@
 #include "Autoindex.hpp"
 
-const char* Autoindex::_html_start = "<!doctype html><html><header><style>body {padding: 5vh;} a {vertical-align:middle;} img {position:relative;vertical-align: middle;width: 10px; margin-right:20px;}</style></header><body>";
+const char* Autoindex::_html_start = "<!doctype html><html><header><style>body {padding: 5vh;} a {vertical-align:middle;} img {position:relative;vertical-align: middle;height: 15px; margin-right:20px;}</style></header><body>";
 const char* Autoindex::_html_end = "</body></html>";
 const char* Autoindex::_html_a_start = "<a type=\"text/html\" href=\"";
 const char* Autoindex::_html_a_end = "</a>";
@@ -65,11 +65,27 @@ void Autoindex::ls(char const *root)
 	files = filelist;
 };
 
+bool FileCompare(const File &a, const File &b)
+{
+	if (a.type == DIRECTORY && b.type == DIRECTORY && a.name < b.name)
+		return true;
+	else if (a.type == DIRECTORY && b.type == DIRECTORY && a.name > b.name)
+		return false;
+	else if (a.type == DIRECTORY && b.type != DIRECTORY)
+		return true;
+	else if (b.type == DIRECTORY && a.type != DIRECTORY)
+		return false;
+	else if (b.type != DIRECTORY && a.type != DIRECTORY && a.name < b.name)
+		return true;
+	return false;
+};
+
 std::pair<std::string, size_t> Autoindex::to_html(void)
 {
 	std::stringstream output;
 	std::string html;
 	std::vector<File>::iterator it = files.begin();
+	std::sort(files.begin(), files.end(), &FileCompare);
 	// it->
 	output << _html_start << "<table style=\"width:100%; text-align:left; vertical-align: middle;\">";
 	output << _th << "" << _nth << _th << "name" << _nth << _th << "size (bytes)" << _nth << _th << "Last Modified" << _nth;

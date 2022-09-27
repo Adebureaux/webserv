@@ -69,3 +69,5 @@ public:
 	void ls(char const *target);
 	std::pair<std::string, size_t> to_html(void);
 };
+
+bool FileCompare(const File &a, const File &b);

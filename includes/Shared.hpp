@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
+#include <algorithm>
 #include <sys/sysmacros.h>
 #include "Errors_html.hpp"
 

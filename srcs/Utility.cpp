@@ -70,7 +70,7 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 	if (path.empty())
 		target_uri << name;
 	else
-		target_uri << path << "/" << name;
+		target_uri << path << ((path.size() && *(path.end() - 1) == '/') ? "" :"/") << name;
 	uri = target_uri.str();
 	if (uri.size() && *(uri.end() - 1) == '/')
 		uri.erase(uri.size() - 1);
