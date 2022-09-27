@@ -69,9 +69,12 @@ std::pair<std::string, size_t> Autoindex::to_html(void)
 {
 	std::stringstream output;
 	std::string html;
+	std::vector<File>::iterator it = files.begin();
+	// it->
 	output << _html_start << "<table style=\"width:100%; text-align:left; vertical-align: middle;\">";
 	output << _th << "" << _nth << _th << "name" << _nth << _th << "size (bytes)" << _nth << _th << "Last Modified" << _nth;
-	for (std::vector<File>::iterator it = files.begin(); it != files.end(); it++) {
+	for (; it != files.end(); it++) {
+		printFileInfos(*it);
 		output << _create_link(*it);
 	}
 	output << "</table>";
@@ -82,11 +85,11 @@ std::pair<std::string, size_t> Autoindex::to_html(void)
 
 void printFileInfos(const File &info)
 {
-	std::cout << info.uri << " is valid: "<< info.valid << "\t";
+	std::cout << C_G_CYAN<<"URI:" << info.uri << " is valid: "<< info.valid << "\t" << "name:" << info.name << "\t";
 	std::cout << "last modification: "<< info.time_stamp_str << "\t";
 	std::cout << " - "<< info.time_stamp_raw << "\t";
 	std::cout << "type: "<< (info.type == DIRECTORY ? "DIR \t" : "File\t");
-	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n";
+	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n" << C_RES;
 };
 
 // int main(int argc, char const *argv[]) {

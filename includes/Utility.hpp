@@ -88,7 +88,7 @@ class File
 		const std::string& ext;
 		const std::string& mime_type;
 	};
-	static File::entry types[MIME_TYPE_NUMBER];
+	static const entry types[MIME_TYPE_NUMBER];
 };
 
 File get_file_infos(std::string target, std::string path, int folder_fd);

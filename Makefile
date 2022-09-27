@@ -34,7 +34,7 @@ fclean: clean
 re: fclean all
 
 test: $(NAME)
-		./$(NAME)
+		./$(NAME) test.conf
 
 -include $(DEPS)
 
