@@ -63,6 +63,9 @@ void Response::create_get(const Request& request, Server_block& config)
 {
 	std::stringstream size;
 	File file(request.get_request_target().c_str(), config.root);
+	std::cout << C_B_RED << request.get_request_target() << C_RES << std::endl;
+	std::cout << C_B_BLUE << file.uri << C_RES << std::endl;
+	std::cout << C_B_GRAY << file.name << C_RES << std::endl;
 	if (file.type == FILE_TYPE && file.valid && (file.permissions & R))
 	{
 		file.set_content();
@@ -125,18 +128,10 @@ void Response::create_get(const Request& request, Server_block& config)
 	}
 	else
 	{
-		// if FILE_TYPE && permissions ! R  && found -> 403
-		// if not_found -> 404
-		// if DIRECTORY
-			// if default index is set in conf and found in the folder -> send this file
-			// else if default index is not set and autoindex is on in conf -> send autoindex generated html file
-		// else if invalid file (for whatever reason) -> bad request
-
 		if (file.not_found)
 			_status = 404;
 		else if (!(file.permissions & R))
 			_status = 403;
-
 		else
 			_status = 400;
 		_header_field("Content-Type", "text/html");

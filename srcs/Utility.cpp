@@ -76,12 +76,15 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 		uri.erase(uri.size() - 1);
 	if ((not_found = access(uri.c_str(), F_OK)))
 	{
+		std::cout << "OUPS -> " << uri << std::endl;
+
 		valid = false;
 		return ;
 	}
 	set_permissions();
 	if((error = stat(uri.c_str(), &infos)) == 0)
 	{
+		std::cout << "OK -> " << uri << std::endl;
 		valid = true;
 		time_stamp_str = ctime(&infos.st_mtime);
 		time_stamp_raw = infos.st_mtime;
