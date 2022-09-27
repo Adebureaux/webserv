@@ -1,0 +1,9 @@
+- Remplacer le location vector par location map<string(URL PATH), Location>
+- Remplacer les checks par les vrai Locations
+- Gerer les _status --> 405, 501, HTTP verions
+- Gerer les redirections
+- Parsing de l'URL prend pas en compte les '//'
+- Integrer CGI
+- Improve CSS autoindex
+- Post Response
+- Delete Response

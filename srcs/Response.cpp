@@ -1,37 +1,44 @@
 #include "Response.hpp"
 
-// https://www.rfc-editor.org/rfc/rfc7230.html#section-3 --> reference
-// HTTP-message   = start-line
-//                  *( header-field CRLF )
-//                  CRLF
-//                  [ message-body ]
+// https://www.rfc-editor.org/rfc/rfc2616#section-6 --> reference
+    //    Response      = Status-Line               ; Section 6.1
+    //                    *(( general-header        ; Section 4.5
+    //                     | response-header        ; Section 6.2
+    //                     | entity-header ) CRLF)  ; Section 7.1
+    //                    CRLF
+    //                    [ message-body ]
 
 std::map<int, std::string> start_lines;
 std::map<int, std::string> errors;
 
-Response::Response() : _status(200), _response(std::string()), _header(std::string()), _body(std::string())
+Response::Response() : _status(400)
 {
 	_init_start_lines();
 	_init_errors();
 }
 
-Response::~Response()
-{
-	_header.erase();
-	_body.erase();
-	_response.erase();
-}
+Response::~Response() {}
 
 void Response::create(const Request& request, config_map& config)
 {
 	if (!request.is_valid())
+	{
 		_status = 400;
+		// if (request)
+		// TODO bad HTTP version 	
+	}
 	else
 	{
-		config_map::iterator it = config.find(request.get_host()); // Need to find the good location here
-		// std::cout << request.get_host() << std::endl;
+		// Location ?
+		config_map::iterator it = config.find(request.get_host());
 		if (it == config.end())
-			it = config.begin();
+		{
+			for (config_map::iterator itr = config.begin(); itr != config.end(); itr++)
+			{
+				if (itr->second.main == true)
+					it = itr;
+			}
+		}
 		if (request.get_method() == GET)
 			create_get(request, it->second);
 		else if (request.get_method() == POST)
@@ -63,9 +70,9 @@ void Response::create_get(const Request& request, Server_block& config)
 {
 	std::stringstream size;
 	File file(request.get_request_target().c_str(), config.root);
-	std::cout << C_B_RED << request.get_request_target() << C_RES << std::endl;
-	std::cout << C_B_BLUE << file.uri << C_RES << std::endl;
-	std::cout << C_B_GRAY << file.name << C_RES << std::endl;
+	// std::cout << C_B_RED << request.get_request_target() << C_RES << std::endl;
+	// std::cout << C_B_BLUE << file.uri << C_RES << std::endl;
+	// std::cout << C_B_GRAY << file.name << C_RES << std::endl;
 	if (file.type == FILE_TYPE && file.valid && (file.permissions & R))
 	{
 		file.set_content();

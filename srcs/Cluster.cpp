@@ -18,7 +18,7 @@ Cluster::Cluster(server_map& config)
 	{
 		config_map::const_iterator it_m = it->second.begin();
 		fd = _init_socket(it_m->second);
-		_add_server(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
+		_add_server(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR);
 		for (; it_m != it->second.end(); it_m++)
 			_servers[fd][it_m->second.server_names] = it_m->second;
 	}
