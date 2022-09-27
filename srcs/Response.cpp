@@ -70,9 +70,11 @@ void Response::create_get(const Request& request, Server_block& config)
 	(void)config;
 	std::stringstream size;
 	File file =_find_location(request, config);
+	std::cout << C_G_RED << "We return " << file.name << C_RES << std::endl;
 	// std::cout << C_B_RED << request.get_request_target() << C_RES << std::endl;
 	// std::cout << C_B_BLUE << file.uri << C_RES << std::endl;
 	// std::cout << C_B_GRAY << file.name << C_RES << std::endl;
+
 	if (file.type == FILE_TYPE && file.valid && (file.permissions & R))
 	{
 		file.set_content();
@@ -85,12 +87,12 @@ void Response::create_get(const Request& request, Server_block& config)
 	}
 	else if (file.type == DIRECTORY && file.valid && (file.permissions & R))
 	{
-		std::vector<File> filelist = ls(file.name.c_str());
+		std::vector<File> filelist = ls(file.uri.c_str());
 		File default_file;
 		bool default_found = false;
 		for (std::vector<File>::iterator it = filelist.begin(); it != filelist.end(); it++)
 		{
-			if (it->name == "") // need to change config.index to location specific default files
+			if (_location && it->name == _location->default_file) // need to change config.index to location specific default files
 			{
 				default_file = *it;
 				default_found = true;
@@ -109,7 +111,7 @@ void Response::create_get(const Request& request, Server_block& config)
 
 			return;
 		}
-		if (AUTOINDEX_ON) // need to properly check this
+		if (_location && _location->autoindex)
 		{
 			Autoindex autoindex(filelist);
 			std::pair<std::string, size_t> res = autoindex.to_html();
@@ -135,7 +137,9 @@ void Response::create_get(const Request& request, Server_block& config)
 	}
 	else
 	{
-		if (file.not_found)
+		if (_location && !_location->get_method)
+			_status = 405;
+		else if (file.not_found)
 			_status = 404;
 		else if (!(file.permissions & R))
 			_status = 403;
@@ -163,17 +167,32 @@ void Response::create_delete(const Request& request, Server_block& config)
 
 File Response::_find_location(const Request& request, Server_block& config)
 {
-	File requested(request.get_request_target(), "");
+	// // TO UNCOMMENT WHEN FIXED
+	// location_map::iterator it = config.locations.find(request.get_request_target());
+
+	// temporary fix ! this should be this format directly from .conf file
+	// expected path + file format : path/to/filename
+	// expected path + directory format : path/to/directory/
+	// expected file format : filename.txt
+	// expected directory format : directory/
+	// + location should accept '/' only
+	File requested(request.get_request_target());
+	std::cout << C_G_RED << "We search " << requested.path << C_RES << std::endl;
 
 	for (location_map::iterator it = config.locations.begin(); it != config.locations.end(); it++)
 	{
-		std::cout << C_G_BLUE << "searched uri = " << requested.uri << " + " << requested.name << std::endl;
-		std::cout << C_G_BLUE << "tested uri = " << it->first << C_RES << std::endl;
-		std::cout << C_G_BLUE << "is file valid ? " << requested.valid << std::endl;
-		// return (File("", ""));
+		std::string fix = it->first.substr(1);
+		fix.append("/");
+		std::cout << C_G_RED << "We try " << fix << C_RES << std::endl;
+		if (requested.path == fix)
+		{
+			_location = &it->second;
+			return (File(requested.name, _location->root.substr(1)));
+		}
 	}
 	_location = NULL;
 	return (requested);
+	// end temporary fix
 }
 
 void Response::_init_start_lines(void) const

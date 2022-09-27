@@ -17,20 +17,22 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <exception>
+#include <algorithm>
 #include <stdexcept>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
-#include <algorithm>
 #include <sys/sysmacros.h>
 #include "Errors_html.hpp"
+
+#define DEBUG false
+
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
 #define MIME_TYPE_NUMBER 349
-#define DEBUG false
 
 // End Augustin
 

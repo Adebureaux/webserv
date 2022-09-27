@@ -76,6 +76,7 @@ class File
 	bool				not_found;
 
 	File(void);
+	File(std::string filename);
 	File(std::string target, std::string folder);
 	File(const File &src);
 	File &operator=(const File &src);
@@ -94,3 +95,5 @@ class File
 File get_file_infos(std::string target, std::string path, int folder_fd);
 void printFileInfos(const File &info);
 std::vector<File> ls(char const *root);
+std::string find_path(const std::string& uri);
+std::string find_basename(const std::string& uri);

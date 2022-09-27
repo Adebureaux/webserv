@@ -103,6 +103,11 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 	// std::cout << std::endl;
 };
 
+File::File(std::string filename)
+{
+	*this = File(find_basename(filename), find_path(filename));
+}
+
 File::File(const File &src)
 {
 	name = src.name;
@@ -232,6 +237,19 @@ std::vector<File> ls(char const *root)
 	closedir(folder);
 	return filelist;
 };
+
+std::string find_basename(const std::string& uri)
+{
+	return (uri.substr(uri.find_last_of("/") + 1));
+}
+
+std::string find_path(const std::string& uri)
+{
+	std::size_t pos = uri.find_last_of("/");
+	if (pos == std::string::npos)
+		return ("");
+	return (uri.substr(0, pos + 1));
+}
 
 const File::entry File::types[MIME_TYPE_NUMBER] = {
 	{"conf", "webserv/conf"},

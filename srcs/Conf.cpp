@@ -270,36 +270,36 @@ void Conf::server_var(void)
 
 void Conf::location_block(void)
 {
-    try
-    {
-        _and("Rnnnsnnnnnnn", "location:" , &Conf::OWS, &Conf::location_uri, &Conf::OWS, STAR_NO_MIN, 1, &Conf::LF, &Conf::OWS, &Conf::OB, &Conf::end_of_line, &Conf::location_var, &Conf::OWS, &Conf::CB, &Conf::end_of_line);
-        std::cout << __FUNCTION__ << std::endl;
-    }
-    catch(const std::exception& e)
-    {
-        // std::cout << __FUNCTION__ << std::endl;
-        // std::cout <<"------------"<< std::endl <<  &_raw_str[_head] << std::endl;
-        throw EXECP;
-    }
+	try
+	{
+		_and("Rnnnsnnnnnnn", "location:" , &Conf::OWS, &Conf::location_uri, &Conf::OWS, STAR_NO_MIN, 1, &Conf::LF, &Conf::OWS, &Conf::OB, &Conf::end_of_line, &Conf::location_var, &Conf::OWS, &Conf::CB, &Conf::end_of_line);
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		// std::cout << __FUNCTION__ << std::endl;
+		// std::cout <<"------------"<< std::endl <<  &_raw_str[_head] << std::endl;
+		throw EXECP;
+	}
 	if (_current_server_block.locations.count(_current_location.uri))
 		throw EXECP_("two locations have the same uri");
-    _current_server_block.locations.insert(std::make_pair(_current_location.uri, _current_location));
-    _current_location = Location();
-    _catch_method = false;
+	_current_server_block.locations.insert(std::make_pair(_current_location.uri, _current_location));
+	_current_location = Location();
+	_catch_method = false;
 }
 
 void Conf::location_uri(void)
 {
-    size_t old_head = _head;
-    try
-    {
-        path();
-    }
-    catch(const std::exception& e)
-    {
-        throw EXECP;
-    }
-    _current_location.uri =  std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head);
+	size_t old_head = _head;
+	try
+	{
+		path();
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+	_current_location.uri =  std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head);
 }
 
 // void Conf::path_location(void)
