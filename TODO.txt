@@ -6,3 +6,11 @@
 - Improve CSS autoindex
 - Post Response
 - Delete Response
+
+Problemes:
+1. si l'autoindex est active, index n'est pas obligatoire (sinon ca sert a rien)
+2. si location= / et sa root= / ca marche pas
+3. l'index d'une location doit etre le nom d'un fichier sans path ni rien d'autre (cf: c'est juste un fichier a chercher dans la root d'une location)
+4. l'index ne fait rien apparement
+5. en fait l'index n'est jamais obligatoire
+6. la root d'une location devrait pouvoir etre relative
