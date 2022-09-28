@@ -1,7 +1,7 @@
 #include "Utility.hpp"
 
 Location::Location()
-: get_method(true), post_method(true), delete_method(true), redirect(),root(), autoindex(false), default_file(), CGI(), upload(false, ""), uri()
+: get_method(true), post_method(true), delete_method(true), redirect(), root(), autoindex(false), default_file("index.html"), CGI(), upload(false, ""), uri()
 {}
 
 Location::Location(const Location &cpy)
@@ -63,27 +63,23 @@ Message::~Message() {};
 File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false)
 {
 	struct stat infos;
-	std::stringstream target_uri;
-	int error = 0;
 
-	if (name == ".")
-		name = "";
-	if (path.empty())
-		target_uri << name;
+	if (path[0] == '/' && path != "/")
+		path = path.substr(1);
+	if (path == "/")
+		uri = name;
+	else if (*(path.end() - 1) != '/')
+		uri = path + '/' + name;
 	else
-		target_uri << path << ((path.size() && *(path.end() - 1) == '/') ? "" :"/") << name;
-	uri = target_uri.str();
-	if (uri.size() && *(uri.end() - 1) == '/')
-		uri.erase(uri.size() - 1);
-	if ((not_found = access(uri.c_str(), F_OK)))
+		uri = path + name;
+	std::cout << C_G_RED << "IN FILE = |" << name << "| path = |" << path << "| uri = |" << uri << "|" << C_RES << std::endl;
+	if (access(uri.c_str(), F_OK))
 	{
-		// std::cout << "OUPS -> " << uri << std::endl;
-
 		valid = false;
-		return ;
+		return;
 	}
 	set_permissions();
-	if((error = stat(uri.c_str(), &infos)) == 0)
+	if (!stat(uri.c_str(), &infos))
 	{
 		// std::cout << "OK -> " << uri << std::endl;
 		valid = true;
@@ -240,6 +236,7 @@ std::vector<File> ls(char const *root)
 
 std::string find_basename(const std::string& uri)
 {
+	//std::cout << C_G_RED << uri << std::endl;
 	return (uri.substr(uri.find_last_of("/") + 1));
 }
 
@@ -247,7 +244,7 @@ std::string find_path(const std::string& uri)
 {
 	std::size_t pos = uri.find_last_of("/");
 	if (pos == std::string::npos)
-		return ("");
+		return ("/");
 	return (uri.substr(0, pos + 1));
 }
 

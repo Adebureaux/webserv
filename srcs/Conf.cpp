@@ -739,7 +739,7 @@ void Conf::path(void)
 {
 	try
 	{
-		n_star_m_and(1, STAR_NO_MAX, "cs", '/', 1, STAR_NO_MAX, &Conf::unreserved);
+		_and("sS",STAR_NO_MIN, STAR_NO_MAX, &Conf::unreserved, AND, STAR_NO_MIN, STAR_NO_MAX, "cs", '/', STAR_NO_MIN, STAR_NO_MAX, &Conf::unreserved);
 	}
 	catch(const std::exception& e)
 	{
@@ -795,9 +795,9 @@ void Conf::body_size_value(void)
 	_current_server_block.body_size = atoi(std::string(_raw_str.begin() + old_head,_raw_str.begin() + _head).c_str());
 }
 
-void Conf::_test_validity_block(void) const
+void Conf::_test_validity_block(void)
 {
-	std::vector<Server_block>::const_iterator it = _serv_vector.begin();
+	std::vector<Server_block>::iterator it = _serv_vector.begin();
 	std::vector<Server_block>::const_iterator ite = _serv_vector.end();
 	for (; it != ite; it++)
 	{
@@ -811,18 +811,16 @@ void Conf::_test_validity_block(void) const
 	}
 }
 
-void Conf::_check_locations(location_map const &locations) const
+void Conf::_check_locations(location_map &locations) const
 {
-	location_map::const_iterator it  = locations.begin();
+	location_map::iterator it  = locations.begin();
 	location_map::const_iterator ite = locations.end();
 
 	for (; it != ite; it++)
 	{
-		if (it->second.default_file == "" && !it->second.autoindex)
-			throw EXECP_("no default_file");
-		if (it->second.root == "")
-			throw EXECP_("root not valid");
-		if (it->second.uri == "")
+		if (it->second.root.empty())
+			it->second.root = it->second.uri;
+		if (it->second.uri.empty())
 			throw EXECP_("uri not valid");
 	}
 }

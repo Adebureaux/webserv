@@ -50,8 +50,8 @@ class Conf : public Parser
 	C	_is_charset
 	*/
 
-	void _test_validity_block(void) const;
-	void _check_locations(location_map const &locations) const;
+	void _test_validity_block(void);
+	void _check_locations(location_map &locations) const;
 	void _create_ret_map(void);
 	void catch_var_header_field(size_t old_head);
 	void expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *arg);											// ✓

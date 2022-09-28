@@ -26,7 +26,7 @@
 #include <sys/sysmacros.h>
 #include "Errors_html.hpp"
 
-#define DEBUG false
+#define DEBUG true
 
 
 #define BUFFER_SIZE 4096

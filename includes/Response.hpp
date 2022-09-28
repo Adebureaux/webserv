@@ -10,25 +10,30 @@ class Response
 
 	public:
 	Response();
+	Response(const Response &rhs);
+	Response& operator=(const Response& rhs);
 	~Response();
 	void		create(const Request& request, config_map& config);
 	void		erase(void);
 	const void*	send(void) const;
 	size_t		get_size(void) const;
-	void		create_get(const Request& request, Server_block& config);
+	void		create_get(const Request& request);
 	void		create_post(const Request& request, Server_block& config);
 	void		create_delete(const Request& request, Server_block& config);
 
 	private:
-	File	_find_location(const Request& request, Server_block& config);
-	void	_generate_response(void);
+	void	_find_location(const Request& request, Server_block& config);
+	location_map::iterator _find_longest_location(Server_block& config, std::string path) const;
+	void	_generate_response(int status);
+	void	_construct_response(int status);
 	void	_init_start_lines(void) const;
 	void 	_init_errors(void) const;
+	void	_construct_autoindex(const std::string& filename);
 	void	_header_field(const std::string& header, const std::string& field);
 
 	private:
-	int			_status;
 	Location	*_location;
+	File		_file;
 	std::string	_response;
 	std::string	_header;
 	std::string	_body;

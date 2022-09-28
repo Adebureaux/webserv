@@ -11,10 +11,25 @@
 std::map<int, std::string> start_lines;
 std::map<int, std::string> errors;
 
-Response::Response() : _status(100)
+Response::Response() :  _location(NULL), _file()
 {
 	_init_start_lines();
 	_init_errors();
+}
+
+Response::Response(const Response &rhs)
+{
+	*this = rhs;
+}
+
+Response& Response::operator=(const Response& rhs)
+{
+	_location = rhs._location;
+	_file = rhs._file;
+	_response = rhs._response;
+	_header = rhs._header;
+	_body = rhs._body;
+	return (*this);
 }
 
 Response::~Response() {}
@@ -22,11 +37,7 @@ Response::~Response() {}
 void Response::create(const Request& request, config_map& config)
 {
 	if (!request.is_valid())
-	{
-		_status = 400;
-		// if (request http version != HTTP/1.1)
-		// TODO bad HTTP version 	
-	}
+		_construct_response(400);
 	else
 	{
 		config_map::iterator it = config.find(request.get_host());
@@ -38,19 +49,21 @@ void Response::create(const Request& request, config_map& config)
 					it = itr;
 			}
 		}
+		_find_location(request, it->second);
 		if (request.get_method() == GET)
-			create_get(request, it->second);
+			create_get(request);
 		else if (request.get_method() == POST)
 			create_post(request, it->second);
 		else if (request.get_method() == DELETE)
 			create_delete(request, it->second);
 	}
-	_generate_response();
 }
 
 void Response::erase(void)
 {
 	_response.erase();
+	_header.erase();
+	_body.erase();
 }
 
 const void* Response::send(void) const
@@ -63,93 +76,104 @@ size_t Response::get_size(void) const
 	return (_response.size());
 }
 
-#define AUTOINDEX_ON 1
-
-void Response::create_get(const Request& request, Server_block& config)
+void Response::create_get(const Request& request)
 {
-	(void)config;
-	std::stringstream size;
-	File file =_find_location(request, config);
-	std::cout << C_G_RED << "We return " << file.name << C_RES << std::endl;
+	(void)request;
+	if (_location)
+	{
+		if (!_location->get_method)
+			_construct_response(405);
+		else if (_file.not_found)
+			_construct_response(404);
+		else if (_file.valid && !(_file.permissions & R))
+			_construct_response(403);
+		else if (_file.valid && _file.type == FILE_TYPE && (_file.permissions & R))
+			_construct_response(200);
+		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
+			_construct_autoindex(_file.uri); // TO CHANGE
+		else
+			_construct_response(404);
+	}
+	else
+	{
+		_construct_response(404);
+		std::cout << C_G_RED << "No Location Found" << C_RES << std::endl;
+	}
 	// std::cout << C_B_RED << request.get_request_target() << C_RES << std::endl;
 	// std::cout << C_B_BLUE << file.uri << C_RES << std::endl;
 	// std::cout << C_B_GRAY << file.name << C_RES << std::endl;
 
-	if (file.type == FILE_TYPE && file.valid && (file.permissions & R))
-	{
-		file.set_content();
-		file.set_mime_type();
-		size << file.size;
-		_header_field("Content-Type", file.mime_type);
-		_header_field("Content-Length", size.str());
-		_body.append(file.content);
-		_status = 200;
-	}
-	else if (file.type == DIRECTORY && file.valid && (file.permissions & R))
-	{
-		std::vector<File> filelist = ls(file.uri.c_str());
-		File default_file;
-		bool default_found = false;
-		for (std::vector<File>::iterator it = filelist.begin(); it != filelist.end(); it++)
-		{
-			if (_location && it->name == _location->default_file) // need to change config.index to location specific default files
-			{
-				default_file = *it;
-				default_found = true;
-				break;
-			}
-		}
-		if (default_found && default_file.type == FILE_TYPE && file.valid && (file.permissions & R))
-		{
-			default_file.set_content();
-			default_file.set_mime_type();
-			size << default_file.size;
-			_header_field("Content-Type", default_file.mime_type);
-			_header_field("Content-Length", size.str());
-			_body.append(default_file.content);
-			_status = 200;
+	// if (file.type == FILE_TYPE && file.valid && (file.permissions & R))
+	// {
+	// 	file.set_content();
+	// 	file.set_mime_type();
+	// 	size << file.size;
+	// 	_header_field("Content-Type", file.mime_type);
+	// 	_header_field("Content-Length", size.str());
+	// 	_body.append(file.content);
+	// 	_status = 200;
+	// }
+	// else if (file.type == DIRECTORY && file.valid && (file.permissions & R))
+	// {
+	// 	std::vector<File> filelist = ls(file.uri.c_str());
+	// 	File default_file;
+	// 	bool default_found = false;
+	// 	for (std::vector<File>::iterator it = filelist.begin(); it != filelist.end(); it++)
+	// 	{
+	// 		if (_location && it->name == _location->default_file) // need to change config.index to location specific default files
+	// 		{
+	// 			default_file = *it;
+	// 			default_found = true;
+	// 			break;
+	// 		}
+	// 	}
+	// 	if (default_found && default_file.type == FILE_TYPE && file.valid && (file.permissions & R))
+	// 	{
+	// 		default_file.set_content();
+	// 		default_file.set_mime_type();
+	// 		size << default_file.size;
+	// 		_header_field("Content-Type", default_file.mime_type);
+	// 		_header_field("Content-Length", size.str());
+	// 		_body.append(default_file.content);
+	// 		_status = 200;
 
-			return;
-		}
-		if (_location && _location->autoindex)
-		{
-			Autoindex autoindex(filelist);
-			std::pair<std::string, size_t> res = autoindex.to_html();
-			_header_field("Content-Type", "text/html");
-			size << res.second;
-			_header_field("Content-Length", size.str());
-			_body.append(res.first);
-			_status = 200;
+	// 		return;
+	// 	}
+	// 	if (_location && _location->autoindex)
+	// 	{
+	// 		Autoindex autoindex(filelist);
+	// 		std::pair<std::string, size_t> res = autoindex.to_html();
+	// 		_header_field("Content-Type", "text/html");
+	// 		size << res.second;
+	// 		_header_field("Content-Length", size.str());
+	// 		_body.append(res.first);
+	// 		_status = 200;
 
-		}
-		else
-		{
-			if (!(default_file.permissions & R))
-				_status = 403;
-			else
-				_status = 400;
-			_header_field("Content-Type", "text/html");
-			size << errors[_status].size();
-			_header_field("Content-Length", size.str());
-			_body.append(errors[_status]);
-			return;
-		}
-	}
-	else
-	{
-		if (_location && !_location->get_method)
-			_status = 405;
-		else if (file.not_found)
-			_status = 404;
-		else if (!(file.permissions & R))
-			_status = 403;
-		else
-			_status = 400;
-		_header_field("Content-Type", "text/html");
-		size << errors[_status].size();
-		_header_field("Content-Length", size.str());
-		_body.append(errors[_status]);
-	}
+	// 	}
+	// 	else
+	// 	{
+	// 		if (!(default_file.permissions & R))
+	// 			_status = 403;
+	// 		else
+	// 			_status = 400;
+	// 		_header_field("Content-Type", "text/html");
+	// 		size << errors[_status].size();
+	// 		_header_field("Content-Length", size.str());
+	// 		_body.append(errors[_status]);
+	// 		return;
+	// 	}
+	// }
+	// else
+	// {
+	// 	if (_location && !_location->get_method)
+	// 		_status = 405;
+	// 	else if (file.not_found)
+	// 		_status = 404;
+	// 	else if (!(file.permissions & R))
+	// 		_status = 403;
+	// 	else
+	// 		_status = 400;
+	// }
 
 }
 
@@ -165,34 +189,35 @@ void Response::create_delete(const Request& request, Server_block& config)
 	(void)config;
 }
 
-File Response::_find_location(const Request& request, Server_block& config)
+void Response::_find_location(const Request& request, Server_block& config)
 {
-	// // TO UNCOMMENT WHEN FIXED
-	// location_map::iterator it = config.locations.find(request.get_request_target());
-
-	// temporary fix ! this should be this format directly from .conf file
-	// expected path + file format : path/to/filename
-	// expected path + directory format : path/to/directory/
-	// expected file format : filename.txt
-	// expected directory format : directory/
-	// + location should accept '/' only
 	File requested(request.get_request_target());
-	std::cout << C_G_RED << "We search " << requested.path << C_RES << std::endl;
-
-	for (location_map::iterator it = config.locations.begin(); it != config.locations.end(); it++)
+	std::cout << C_G_RED << "We request name = |" << requested.name << "| path = |" << requested.path << "| uri = |" << requested.uri << "|" << C_RES << std::endl;
+	location_map::iterator it = _find_longest_location(config, requested.path);
+	if (it != config.locations.end())
 	{
-		std::string fix = it->first.substr(1);
-		fix.append("/");
-		std::cout << C_G_RED << "We try " << fix << C_RES << std::endl;
-		if (requested.path == fix)
-		{
-			_location = &it->second;
-			return (File(requested.name, _location->root.substr(1)));
-		}
+		_location = &it->second;
+		// TO CHANGE : la root de la location devrait s'ajouter a la partie demande par le client (File requested)
+		_file = File(requested.name, _location->root);
+		_file.set_content();
+		_file.set_mime_type();
 	}
-	_location = NULL;
-	return (requested);
-	// end temporary fix
+}
+
+location_map::iterator Response::_find_longest_location(Server_block& config, std::string path) const
+{
+	std::size_t pos;
+	location_map::iterator it;
+
+	while ((pos = path.find_last_of('/')) != std::string::npos)
+	{
+		path = path.substr(0, pos);
+		std::cout << C_G_RED << "actual path = " << path + '/' << C_RES << std::endl;
+		if ((it = config.locations.find(path + '/')) != config.locations.end())
+			return (it);
+	}
+	it = config.locations.find("/");
+	return (it);
 }
 
 void Response::_init_start_lines(void) const
@@ -218,14 +243,48 @@ void Response::_init_errors(void) const
 	errors.insert(std::make_pair(501, ERROR_HTML_501));
 }
 
-void Response::_generate_response(void)
+void Response::_generate_response(int status)
 {
-	_response = start_lines[_status];
+	_response = start_lines[status];
 	_response.append(_header);
 	_response.append("\r\n");
 	_header.erase();
 	_response.append(_body);
 	_body.erase();
+}
+
+void Response::_construct_response(int status)
+{
+	std::stringstream size;
+
+	if (status >= 400)
+	{
+		size << errors[status].size();
+		_header_field("Content-Type", "text/html");
+		_header_field("Content-Length", size.str());
+		_body.append(errors[status]);
+	}
+	else
+	{
+		size << _file.content.size();
+		_header_field("Content-Type", _file.mime_type);
+		_header_field("Content-Length", size.str());
+		_body.append(_file.content);
+	}
+	_generate_response(status);
+}
+
+void Response::_construct_autoindex(const std::string& filename)
+{
+	std::stringstream size;
+	Autoindex autoindex(ls(filename.c_str()));
+	std::pair<std::string, size_t> res = autoindex.to_html();
+
+	_header_field("Content-Type", "text/html");
+	size << res.second;
+	_header_field("Content-Length", size.str());
+	_body.append(res.first);
+	_generate_response(200);
 }
 
 void Response::_header_field(const std::string& header, const std::string& field)

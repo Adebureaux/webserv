@@ -6,6 +6,7 @@
 - Improve CSS autoindex
 - Post Response
 - Delete Response
+- Aymeric : faire une fonction file() --> style de la fonction path() (Conf.cpp)
 
 Problemes:
 1. si l'autoindex est active, index n'est pas obligatoire (sinon ca sert a rien)

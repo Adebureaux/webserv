@@ -7,6 +7,8 @@ Request::Request(const std::string& raw_request)
 	{
 
 		http_message();
+		if (_var_map["REQUEST_TARGET"].empty())
+			_var_map["REQUEST_TARGET"] = "/";
 		_is_valid = true;
 	}
 	catch(const std::exception& e)

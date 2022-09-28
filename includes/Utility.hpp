@@ -11,16 +11,16 @@ class Location {
 	~Location();
 	Location &operator=(const Location &cpy);
 
-	bool							get_method;
-	bool							post_method;
-	bool							delete_method;
-	std::string						redirect;
-	std::string						root;
-	bool							autoindex;
-	std::string						default_file;
-	std::string						CGI;
-	std::pair<bool, std::string>	upload;
-	std::string 					uri;
+	bool							get_method;			// Optional
+	bool							post_method;		// Optional
+	bool							delete_method;		// Optional
+	std::string						redirect;			// Optional
+	std::string						root;				// Optional -> Takes the URI by default
+	bool							autoindex;			// Optional -> False by default
+	std::string						default_file;		// Optional -> index.html by default
+	std::string						CGI;				// Optional	
+	std::pair<bool, std::string>	upload;				// Optional
+	std::string 					uri;				// Mandatory -> element map.first in location_map
 };
 
 typedef std::map<std::string, Location> location_map;
@@ -38,7 +38,7 @@ class Server_block {
 	bool									main; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
 	std::map<int, std::string>				error_pages;	// Optional
 	size_t									body_size;		// Optional ? (setup default value)
-	location_map							locations;// Gota add the path related to the location !
+	location_map							locations;		// Mandatory
 };
 
 

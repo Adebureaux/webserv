@@ -133,7 +133,7 @@ int main(int ac, char **argv, char **envp)
 		std::cerr << C_G_RED << "Missing argument: configuration file" << C_RES << std::endl;
 		return (1);
 	}
-	File conf(argv[1], "");
+	File conf(argv[1]);
 	if (!conf.valid || conf.type != FILE_TYPE)
 	{
 		std::cerr << C_G_RED << "Configuration file is not valid" << C_RES << std::endl;
