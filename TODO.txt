@@ -14,3 +14,28 @@ Problemes:
 4. l'index ne fait rien apparement
 5. en fait l'index n'est jamais obligatoire
 6. la root d'une location devrait pouvoir etre relative
+
+example:
+si requete localhost:8080
+
+et que config
+location /
+	index index.html
+	root /var/www/
+
+alors l'url du client ne change pas et il recoi l'index.html de /var/www si il y en a ou une page d'erreur
+mais son navigateur affiche toujours localhost et non localhost/index.html (sauf si il avait demande ca specifiquement)
+
+
+logique reponse:
+ 	get longest location match against requested URI
+	ex: if conf has the following locations / , /html, /html/test
+		and that the uri is /html/test/coucou
+		we get the root of the location /html/test (noted as matched_root folder)
+		and then we serve either the file coucou contained in matched_root,
+		if coucou is a folder we check if there is an index defined in the matched location
+		or get the one defined in server_block
+		if there is still no index found or the file is not present
+		if autoindex is on we send the autoindex, if it's off we send an error:
+		we first check if there is the appropriate error page defined in the matched_location
+		if there is we send it, if not we check in server block and send it, if not we send the one defined internaly
