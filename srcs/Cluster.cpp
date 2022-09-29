@@ -128,12 +128,9 @@ int Cluster::_init_socket(const Server_block& config) const
 int main(int ac, char **argv, char **envp)
 {
 	(void)envp;
-	if (ac < 2)
-	{
-		std::cerr << C_G_RED << "Missing argument: configuration file" << C_RES << std::endl;
-		return (1);
-	}
-	File conf(argv[1]);
+
+	File conf = File(ac >= 2 ? File(argv[1]) : File("webserv.conf"));
+
 	if (!conf.valid || conf.type != FILE_TYPE)
 	{
 		std::cerr << C_G_RED << "Configuration file is not valid" << C_RES << std::endl;

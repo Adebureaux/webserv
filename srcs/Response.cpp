@@ -46,7 +46,10 @@ void Response::create(const Request& request, config_map& config)
 			for (config_map::iterator itr = config.begin(); itr != config.end(); itr++)
 			{
 				if (itr->second.main == true)
+				{
 					it = itr;
+					break;
+				}
 			}
 		}
 		_find_location(request, it->second);
@@ -59,11 +62,14 @@ void Response::create(const Request& request, config_map& config)
 	}
 }
 
-void Response::erase(void)
+void Response::clear(void)
 {
-	_response.erase();
-	_header.erase();
-	_body.erase();
+	_response.clear();
+	_header.clear();
+	_body.clear();
+	_path.clear();
+	_file = File();
+	_location = NULL;
 }
 
 const void* Response::send(void) const
@@ -81,16 +87,16 @@ void Response::create_get(const Request& request)
 	// (void)request;
 	if (_location)
 	{
+		std::cout << C_G_CYAN << "in create_get " << _file.type << " " <<  _file.valid << C_RES << std::endl;
+		std::cout << C_G_CYAN << "in create_get " << _file.uri <<  C_RES << std::endl;
 		if (!_location->get_method)
 			_construct_response(405);
-		else if (_file.not_found)
-			_construct_response(404);
 		else if (_file.valid && !(_file.permissions & R))
 			_construct_response(403);
-		else if (_file.valid && _file.type == FILE_TYPE && (_file.permissions & R))
+		else if (_file.valid && _file.type == FILE_TYPE)
 			_construct_response(200);
-		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-			_construct_autoindex(_file.uri, request.get_request_target()); // TO CHANGE
+		else if (_file.type == DIRECTORY && _location->autoindex)
+			_construct_autoindex(_file.path, request.get_request_target()); // TO CHANGE
 		else
 			_construct_response(404);
 	}
@@ -197,8 +203,17 @@ void Response::_find_location(const Request& request, Server_block& config)
 	if (it != config.locations.end())
 	{
 		_location = &it->second;
-		// TO CHANGE : la root de la location devrait s'ajouter a la partie demande par le client (File requested)
-		_file = File(requested.name, _location->root);
+		_concatenate_path(_location->root, requested.path);
+		if (requested.name.empty()) // --> We are looking for a directory
+		{
+			File file(_location->default_file, _path);
+			if (file.valid && file.type == FILE_TYPE && (file.permissions & R))
+				_file = file;
+			else
+				_file = File(_path);
+		}
+		else
+			_file = File(requested.name, _path);
 		_file.set_content();
 		_file.set_mime_type();
 	}
@@ -216,7 +231,7 @@ location_map::iterator Response::_find_longest_location(Server_block& config, st
 		if ((it = config.locations.find(path + '/')) != config.locations.end())
 			return (it);
 	}
-	it = config.locations.find("/");
+	// it = config.locations.find("/");
 	return (it);
 }
 
@@ -248,9 +263,7 @@ void Response::_generate_response(int status)
 	_response = start_lines[status];
 	_response.append(_header);
 	_response.append("\r\n");
-	_header.erase();
 	_response.append(_body);
-	_body.erase();
 }
 
 void Response::_construct_response(int status)
@@ -293,4 +306,19 @@ void Response::_header_field(const std::string& header, const std::string& field
 	_header.append(": ");
 	_header.append(field);
 	_header.append("\r\n");
+}
+
+void	Response::_concatenate_path(const std::string& root, std::string path)
+{
+	std::string new_path(root);
+	std::string req_path;
+	std::string::difference_type n = std::count(root.begin(), root.end(), '/');
+
+	for (int i = 0; i < n; i++)
+	{
+		path = path.substr(path.find_first_of('/') + 1);
+		std::cout << C_G_CYAN << path << C_RES << std::endl;
+	}
+	new_path.append(path);
+	_path = new_path;
 }

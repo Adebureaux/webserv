@@ -1,7 +1,7 @@
 #include "Utility.hpp"
 
 Location::Location()
-: get_method(true), post_method(true), delete_method(true), redirect(), root(), autoindex(false), default_file("index.html"), CGI(), upload(false, ""), uri()
+: get_method(true), post_method(true), delete_method(true), redirect(), root(), autoindex(false), default_file(""), CGI(), upload(false, ""), uri()
 {}
 
 Location::Location(const Location &cpy)
@@ -62,8 +62,6 @@ Message::~Message() {};
 
 File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false)
 {
-	struct stat infos;
-
 	if (path[0] == '/' && path != "/")
 		path = path.substr(1);
 	if (path == "/")
@@ -72,33 +70,36 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 		uri = path + '/' + name;
 	else
 		uri = path + name;
-	std::cout << C_G_RED << "IN FILE = |" << name << "| path = |" << path << "| uri = |" << uri << "|" << C_RES << std::endl;
 	if (access(uri.c_str(), F_OK))
-	{
-		valid = false;
 		not_found = true;
-		return;
-	}
-	set_permissions();
-	if (!stat(uri.c_str(), &infos))
-	{
-		// std::cout << "OK -> " << uri << std::endl;
-		valid = true;
-		time_stamp_str = std::ctime(&infos.st_mtime);
-		time_stamp_raw = infos.st_mtime;
-		size = infos.st_size;
-		IO_read_block = infos.st_blksize;
-		if(S_ISDIR(infos.st_mode)) //it's a directory
-			type = DIRECTORY;
-		else if(S_ISREG(infos.st_mode) || S_ISLNK(infos.st_mode)) //it's a file
-			type = FILE_TYPE;
-	}
+	else
+		set_infos();
+	// std::cout << C_G_RED << "IN FILE = |" << name << "| path = |" << path << "| uri = |" << uri << "|" << C_RES << std::endl;
 	// std::cout << uri << " is not_found :" << not_found << "\n";
 	// std::cout << (permissions & R ? "READABLE, " : "NOT_READABLE, ");
 	// std::cout << (permissions & W ? "WRITABLE, " : "NOT_WRITABLE, ");
 	// std::cout << (permissions & X ? "EXECUTABLE" : "NOT_EXECUTABLE");
 	// std::cout << std::endl;
 };
+
+void File::set_infos(void)
+{
+	struct stat infos;
+
+	set_permissions();
+	if (!stat(uri.c_str(), &infos))
+	{
+		valid = true;
+		time_stamp_str = std::ctime(&infos.st_mtime);
+		time_stamp_raw = infos.st_mtime;
+		size = infos.st_size;
+		IO_read_block = infos.st_blksize;
+		if (S_ISDIR(infos.st_mode))
+			type = DIRECTORY;
+		else if (S_ISREG(infos.st_mode) || S_ISLNK(infos.st_mode))
+			type = FILE_TYPE;
+	}
+}
 
 File::File(std::string filename)
 {
@@ -133,7 +134,6 @@ File::File(void)
 	valid = true;
 	time_stamp_raw = 0;
 	time_stamp_str = "";
-	// mime_type = NULL;
 	permissions = 0;
 	not_found = false;
 };

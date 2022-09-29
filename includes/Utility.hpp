@@ -82,6 +82,7 @@ class File
 	File &operator=(const File &src);
 	~File();
 	void set_permissions(void);
+	void set_infos(void);
 	void set_content(void);
 	void set_mime_type(void);
 	struct entry

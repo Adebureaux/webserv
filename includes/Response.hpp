@@ -14,7 +14,7 @@ class Response
 	Response& operator=(const Response& rhs);
 	~Response();
 	void		create(const Request& request, config_map& config);
-	void		erase(void);
+	void		clear(void);
 	const void*	send(void) const;
 	size_t		get_size(void) const;
 	void		create_get(const Request& request);
@@ -30,6 +30,7 @@ class Response
 	void 	_init_errors(void) const;
 	void	_construct_autoindex(const std::string& filename, const std::string &pseudo_root);
 	void	_header_field(const std::string& header, const std::string& field);
+	void	_concatenate_path(const std::string& root, std::string path);
 
 	private:
 	Location	*_location;
@@ -37,4 +38,5 @@ class Response
 	std::string	_response;
 	std::string	_header;
 	std::string	_body;
+	std::string _path;
 };

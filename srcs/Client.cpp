@@ -73,7 +73,7 @@ void Client::handleEvent(uint32_t revents)
 	{
 		handle_request();
 		respond();
-		_request.raw_data.erase();
+		_request.raw_data.clear();
 		_request.state = INCOMPLETE;
 	}
 };
@@ -99,7 +99,7 @@ int Client::respond(void)
 		std::cout << (const char*)_response.send() << std::endl;
 		std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
 	}
-	_response.erase();
+	_response.clear();
 	if (_request.info.get_connection() != "keep-alive")
 		throw std::exception();
 	return (0);
