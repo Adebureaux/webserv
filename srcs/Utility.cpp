@@ -76,6 +76,7 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 	if (access(uri.c_str(), F_OK))
 	{
 		valid = false;
+		not_found = true;
 		return;
 	}
 	set_permissions();

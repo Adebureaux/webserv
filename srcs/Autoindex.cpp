@@ -13,7 +13,7 @@ const char* Autoindex::_nth = "</th>";
 const char* Autoindex::_tr = "<tr>";
 const char* Autoindex::_ntr = "</tr>";
 
-std::string Autoindex::_create_link(File file)
+std::string Autoindex::_create_link(File file, const std::string &pseudo_root)
 {
 	std::stringstream output;
 	output
@@ -23,7 +23,7 @@ std::string Autoindex::_create_link(File file)
 		<< _ntd
 		<< _td
 			<< _html_a_start << "/"
-			<< file.uri << "\">"
+			<< pseudo_root << file.name << "\">"
 			<< file.name
 			<< _html_a_end
 		<< _ntd
@@ -80,7 +80,7 @@ bool FileCompare(const File &a, const File &b)
 	return false;
 };
 
-std::pair<std::string, size_t> Autoindex::to_html(void)
+std::pair<std::string, size_t> Autoindex::to_html(const std::string &pseudo_root)
 {
 	std::stringstream output;
 	std::string html;
@@ -91,7 +91,7 @@ std::pair<std::string, size_t> Autoindex::to_html(void)
 	output << _th << "" << _nth << _th << "name" << _nth << _th << "size (bytes)" << _nth << _th << "Last Modified" << _nth;
 	for (; it != files.end(); it++) {
 		printFileInfos(*it);
-		output << _create_link(*it);
+		output << _create_link(*it, pseudo_root);
 	}
 	output << "</table>";
 	output << _html_end;

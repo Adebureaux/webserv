@@ -78,7 +78,7 @@ size_t Response::get_size(void) const
 
 void Response::create_get(const Request& request)
 {
-	(void)request;
+	// (void)request;
 	if (_location)
 	{
 		if (!_location->get_method)
@@ -90,7 +90,7 @@ void Response::create_get(const Request& request)
 		else if (_file.valid && _file.type == FILE_TYPE && (_file.permissions & R))
 			_construct_response(200);
 		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-			_construct_autoindex(_file.uri); // TO CHANGE
+			_construct_autoindex(_file.uri, request.get_request_target()); // TO CHANGE
 		else
 			_construct_response(404);
 	}
@@ -274,11 +274,11 @@ void Response::_construct_response(int status)
 	_generate_response(status);
 }
 
-void Response::_construct_autoindex(const std::string& filename)
+void Response::_construct_autoindex(const std::string& filename, const std::string &pseudo_root)
 {
 	std::stringstream size;
 	Autoindex autoindex(ls(filename.c_str()));
-	std::pair<std::string, size_t> res = autoindex.to_html();
+	std::pair<std::string, size_t> res = autoindex.to_html(pseudo_root);
 
 	_header_field("Content-Type", "text/html");
 	size << res.second;

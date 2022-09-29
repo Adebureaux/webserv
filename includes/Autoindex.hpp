@@ -58,7 +58,7 @@ private:
 	static const char *_tr;
 	static const char *_ntr;
 
-	std::string _create_link(File file);
+	std::string _create_link(File file, const std::string &pseudo_root);
 public:
 	std::vector<File> files;
 
@@ -67,7 +67,7 @@ public:
 	~Autoindex(void);
 
 	void ls(char const *target);
-	std::pair<std::string, size_t> to_html(void);
+	std::pair<std::string, size_t> to_html(const std::string &pseudo_root);
 };
 
 bool FileCompare(const File &a, const File &b);

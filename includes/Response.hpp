@@ -28,7 +28,7 @@ class Response
 	void	_construct_response(int status);
 	void	_init_start_lines(void) const;
 	void 	_init_errors(void) const;
-	void	_construct_autoindex(const std::string& filename);
+	void	_construct_autoindex(const std::string& filename, const std::string &pseudo_root);
 	void	_header_field(const std::string& header, const std::string& field);
 
 	private:
