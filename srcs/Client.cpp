@@ -7,7 +7,6 @@ Client::Client(int epoll, int server_fd, config_map *config, std::set<Client*> *
 	std::memset(&_address, 0, addr_len);
 	if ((_fd = accept(server_fd, (sockaddr*)&_address, &addr_len)) < 0)
 	{
-		// if (errno == EAGAIN)
 		throw std::exception();
 	}
 	if (DEBUG)

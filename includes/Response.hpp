@@ -27,10 +27,10 @@ class Response
 	void	_generate_response(int status);
 	void	_construct_response(int status);
 	void	_init_start_lines(void) const;
-	void 	_init_errors(void) const;
+	void 	_init_errors(Server_block& config) const;
 	void	_construct_autoindex(const std::string& filename, const std::string &pseudo_root);
 	void	_header_field(const std::string& header, const std::string& field);
-	void	_concatenate_path(const std::string& root, std::string path);
+	std::string	_concatenate_path(const std::string& root, std::string path);
 
 	private:
 	Location	*_location;
@@ -38,5 +38,4 @@ class Response
 	std::string	_response;
 	std::string	_header;
 	std::string	_body;
-	std::string _path;
 };
