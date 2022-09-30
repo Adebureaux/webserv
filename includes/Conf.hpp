@@ -15,7 +15,7 @@ class Conf : public Parser
 	~Conf();
 
 	bool												is_valid();
-	std::map<int, std::map<std::string, Server_block> >& get_conf_map(void);
+	server_map& 										get_conf_map(void);
 	std::string											get_error_msg(void);
 
 	private:
@@ -28,7 +28,7 @@ class Conf : public Parser
 	bool			_catch_method;
 	std::string		_error_msg;
 	bool			_is_valid;
-	std::map<int, std::map<std::string, Server_block> > _ret;
+	server_map _ret;
 
 
 	// std::map<int, std::map<std::string, Server_block> >
@@ -50,8 +50,8 @@ class Conf : public Parser
 	C	_is_charset
 	*/
 
-	void _test_validity_block(void) const;
-	void _check_locations(std::vector<Location> const &locations) const;
+	void _test_validity_block(void);
+	void _check_locations(location_map &locations) const;
 	void _create_ret_map(void);
 	void catch_var_header_field(size_t old_head);
 	void expand_va_arg(std::string::const_iterator &fct_it_tag, va_list *arg);											// ✓
@@ -67,6 +67,7 @@ class Conf : public Parser
 	void server_block(void);
 	void server_var(void);
 	void location_block(void);
+	void location_uri(void);
 	// void path_location(void);
 	void location_var(void);
 	void location_catch_var(void);

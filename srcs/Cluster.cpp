@@ -18,8 +18,8 @@ Cluster::Cluster(server_map& config)
 	{
 		config_map::const_iterator it_m = it->second.begin();
 		fd = _init_socket(it_m->second);
-		_add_server(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
-		for (config_map::const_iterator it_m = it->second.begin(); it_m != it->second.end(); it_m++)
+		_add_server(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR);
+		for (; it_m != it->second.end(); it_m++)
 			_servers[fd][it_m->second.server_names] = it_m->second;
 	}
 	config.clear();
@@ -27,6 +27,9 @@ Cluster::Cluster(server_map& config)
 
 Cluster::~Cluster()
 {
+	for (server_map::iterator it = _servers.begin(); it != _servers.end(); it++)
+		close(it->first);
+	close(_epoll_fd);
 	if (_clients.empty())
 		return;
 	while (1)
@@ -46,16 +49,18 @@ void Cluster::event_loop(void)
 	int epoll_ret;
 	epoll_event events[MAX_EVENTS];
 
-	while (run) {
+	while (run)
+	{
 		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, TIMEOUT_VALUE);
-		if (epoll_ret == 0)
-			std::cerr << C_G_MAGENTA << "Waiting for new connection ..." << C_RES << std::endl;
-		else if (epoll_ret == -1) {
-			if (errno == EINTR) {
-				std::cerr << std::endl << C_G_MAGENTA << "Closing websev..." << C_RES << std::endl;
+		if (!epoll_ret)
+			std::cout << C_G_MAGENTA << "Waiting for new connection ..." << C_RES << std::endl;
+		else if (epoll_ret == -1)
+		{
+			if (errno == EINTR)
+			{
+				std::cout << std::endl << C_G_MAGENTA << "Closing websev..." << C_RES << std::endl;
 				continue;
 			}
-			std::cerr << C_B_RED << "epoll_wait failed" << C_RES << std::endl;
 			break;
 		}
 		for (int i = 0; i < epoll_ret; i++)
@@ -90,8 +95,7 @@ void Cluster::_add_server(int fd, uint32_t revents) const
 	std::memset(&event, 0, sizeof(event));
 	event.data.fd = fd;
 	event.events = revents;
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
-		std::cerr << C_B_RED << "Cannot add fd" << fd << " to epoll" << C_RES << std::endl;
+	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event);
 }
 
 int Cluster::_init_socket(const Server_block& config) const
@@ -110,22 +114,24 @@ int Cluster::_init_socket(const Server_block& config) const
 	addr.sin_port = htons(config.port);
 	addr.sin_addr.s_addr = inet_addr(config.address.c_str());
 	if (bind(fd, (sockaddr*)&addr, addr_len) == -1)
-		std::cerr << C_B_RED << "Cannot bind " << config.address << ":" << config.port << C_RES << std::endl;
-	if (listen(fd, SOMAXCONN) == -1)
-		std::cerr << C_B_RED << "Cannot listen " << config.address << ":" << config.port << C_RES << std::endl;
-	std::cerr << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
+	{
+		std::cerr << C_B_RED << "Address " << config.address << ":" << config.port << " already in use" << C_RES << std::endl;
+		run = false;
+	}
+	else
+	{
+		listen(fd, SOMAXCONN);
+		std::cout << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
+	}
 	return (fd);
 }
 
 int main(int ac, char **argv, char **envp)
 {
 	(void)envp;
-	if (ac < 2)
-	{
-		std::cerr << C_G_RED << "Missing argument: configuration file" << C_RES << std::endl;
-		return (1);
-	}
-	File conf(argv[1], "");
+
+	File conf = File(ac >= 2 ? File(argv[1]) : File("webserv.conf"));
+
 	if (!conf.valid || conf.type != FILE_TYPE)
 	{
 		std::cerr << C_G_RED << "Configuration file is not valid" << C_RES << std::endl;

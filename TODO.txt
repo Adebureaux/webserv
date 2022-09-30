@@ -1,0 +1,19 @@
+- Remplacer les checks par les vrai Locations
+- Gerer les _status --> 405, 501, HTTP verions
+- Gerer les redirections
+- Parsing de l'URL prend pas en compte les '//'
+- Integrer CGI
+- Improve CSS autoindex
+- Post Response
+- Delete Response
+- Aymeric : faire une fonction file() --> style de la fonction path() (Conf.cpp)
+
+Problemes:
+1. si l'autoindex est active, index n'est pas obligatoire (sinon ca sert a rien)
+2. si location= / et sa root= / ca marche pas
+3. l'index d'une location doit etre le nom d'un fichier sans path ni rien d'autre (cf: c'est juste un fichier a chercher dans la root d'une location)
+4. l'index ne fait rien apparement
+5. en fait l'index n'est jamais obligatoire
+
+ROMAIN:
+1. replace access function calls with stat

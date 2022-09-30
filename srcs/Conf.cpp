@@ -272,7 +272,7 @@ void Conf::location_block(void)
 {
 	try
 	{
-		_and("Rnsnnnnnnn", "location:" , &Conf::OWS, STAR_NO_MIN, 1, &Conf::LF, &Conf::OWS, &Conf::OB, &Conf::end_of_line, &Conf::location_var, &Conf::OWS, &Conf::CB, &Conf::end_of_line);
+		_and("Rnnnsnnnnnnn", "location:" , &Conf::OWS, &Conf::location_uri, &Conf::OWS, STAR_NO_MIN, 1, &Conf::LF, &Conf::OWS, &Conf::OB, &Conf::end_of_line, &Conf::location_var, &Conf::OWS, &Conf::CB, &Conf::end_of_line);
 		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
@@ -281,9 +281,25 @@ void Conf::location_block(void)
 		// std::cout <<"------------"<< std::endl <<  &_raw_str[_head] << std::endl;
 		throw EXECP;
 	}
-	_current_server_block.locations.push_back(_current_location);
+	if (_current_server_block.locations.count(_current_location.uri))
+		throw EXECP_("two locations have the same uri");
+	_current_server_block.locations.insert(std::make_pair(_current_location.uri, _current_location));
 	_current_location = Location();
 	_catch_method = false;
+}
+
+void Conf::location_uri(void)
+{
+	size_t old_head = _head;
+	try
+	{
+		path();
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+	_current_location.uri =  std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head);
 }
 
 // void Conf::path_location(void)
@@ -723,7 +739,7 @@ void Conf::path(void)
 {
 	try
 	{
-		n_star_m_and(1, STAR_NO_MAX, "cs", '/', 1, STAR_NO_MAX, &Conf::unreserved);
+		_and("sS",STAR_NO_MIN, STAR_NO_MAX, &Conf::unreserved, AND, STAR_NO_MIN, STAR_NO_MAX, "cs", '/', STAR_NO_MIN, STAR_NO_MAX, &Conf::unreserved);
 	}
 	catch(const std::exception& e)
 	{
@@ -779,9 +795,9 @@ void Conf::body_size_value(void)
 	_current_server_block.body_size = atoi(std::string(_raw_str.begin() + old_head,_raw_str.begin() + _head).c_str());
 }
 
-void Conf::_test_validity_block(void) const
+void Conf::_test_validity_block(void)
 {
-	std::vector<Server_block>::const_iterator it = _serv_vector.begin();
+	std::vector<Server_block>::iterator it = _serv_vector.begin();
 	std::vector<Server_block>::const_iterator ite = _serv_vector.end();
 	for (; it != ite; it++)
 	{
@@ -795,17 +811,17 @@ void Conf::_test_validity_block(void) const
 	}
 }
 
-void Conf::_check_locations(std::vector<Location> const &locations) const
+void Conf::_check_locations(location_map &locations) const
 {
-	std::vector<Location> ::const_iterator it  = locations.begin();
-	std::vector<Location>::const_iterator ite = locations.end();
+	location_map::iterator it  = locations.begin();
+	location_map::const_iterator ite = locations.end();
 
 	for (; it != ite; it++)
 	{
-		if (it->default_file == "" && !it->autoindex)
-			throw EXECP_("no default_file");
-		if (it->root == "")
-			throw EXECP_("root not valid");
+		if (it->second.root.empty())
+			it->second.root = it->second.uri;
+		if (it->second.uri.empty())
+			throw EXECP_("uri not valid");
 	}
 }
 

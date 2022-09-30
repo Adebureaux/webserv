@@ -7,17 +7,17 @@ Client::Client(int epoll, int server_fd, config_map *config, std::set<Client*> *
 	std::memset(&_address, 0, addr_len);
 	if ((_fd = accept(server_fd, (sockaddr*)&_address, &addr_len)) < 0)
 	{
-		if (errno == EAGAIN)
-			return; // should thow an exception to force auto deletion because of new construction
 		throw std::exception();
 	}
-	std::cout << "new client with fd: " << _fd << " accepted on server:" << server_fd << std::endl;
+	if (DEBUG)
+		std::cout << C_G_MAGENTA << "Add client " << _fd << " on server " << server_fd << C_RES <<std::endl;
 	_addEventListener(EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
 };
 
 Client::~Client()
 {
-	std::cout << C_G_RED << "Destructor client called" << C_RES << std::endl;
+	if (DEBUG)
+		std::cout << C_G_MAGENTA << "Destruct client " << _fd << C_RES << std::endl;
 	disconnect();
 	_clients->erase(this);
 	
@@ -50,7 +50,6 @@ void Client::_addEventListener(uint32_t revents)
 	event.events = revents;
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _fd, &event) < 0)
 		throw std::exception();
-	std::cout << "\tadded to epoll loop"<< std::endl;
 
 }
 
@@ -73,25 +72,34 @@ void Client::handleEvent(uint32_t revents)
 	{
 		handle_request();
 		respond();
-		_request.raw_data.erase();
+		_request.raw_data.clear();
 		_request.state = INCOMPLETE;
 	}
 };
 
 void Client::handle_request(void)
 {
+	if (DEBUG)
+	{
+		std::cout << C_G_YELLOW << "---------- REQUEST ----------" << std::endl;
+		std::cout << _request.raw_data << std::endl;
+		std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
+	}
 	_request.info = Request(_request.raw_data);
-	//std::cout << "Received request semantics : " << (request.info.is_valid() ? "valid\n" : "invalid\n");
 };
 
 int Client::respond(void)
 {
-	// We should find here which config of server we pass to Response, instead of the hard coded "webserv.fr"
-	// If host does not exist, that's the first server for this host:port who should serve the client
 	_response.create(_request.info, *_config);
 	send(_fd, _response.send(), _response.get_size(), 0);
-	_response.erase();
-	if (_request.info.get_connection() != "keep-alive") // Leak with keep-alive !
+	if (DEBUG)
+	{
+		std::cout << C_G_GREEN << "---------- RESPONSE ---------" << std::endl;
+		std::cout << (const char*)_response.send() << std::endl;
+		std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
+	}
+	_response.clear();
+	if (_request.info.get_connection() != "keep-alive")
 		throw std::exception();
 	return (0);
 };

@@ -14,19 +14,25 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
+#include <fcntl.h>
 #include <dirent.h>
 #include <exception>
+#include <algorithm>
 #include <stdexcept>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <sys/sysmacros.h>
+#include "Errors_html.hpp"
+
+#define DEBUG false
+
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
-#define MIME_TYPE_NUMBER 348
+#define MIME_TYPE_NUMBER 349
 
 // End Augustin
 
@@ -50,6 +56,9 @@
 // Romain
 typedef enum e_state { ERROR = -1 , WAITING, INCOMPLETE, READY, DONE } t_state;
 typedef enum e_file_type { FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN } file_type;
+#define R 1
+#define W 2
+#define X 4
 // End Romain
 
 /*
