@@ -58,6 +58,7 @@ private:
 	static const char *_tr;
 	static const char *_ntr;
 
+	std::string _create_href(File file, std::string pseudo_root);
 	std::string _create_link(File file, const std::string &pseudo_root);
 public:
 	std::vector<File> files;

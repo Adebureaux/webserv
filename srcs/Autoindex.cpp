@@ -13,17 +13,59 @@ const char* Autoindex::_nth = "</th>";
 const char* Autoindex::_tr = "<tr>";
 const char* Autoindex::_ntr = "</tr>";
 
+std::string Autoindex::_create_href(File file, std::string pseudo_root)
+{
+	// (void)file;
+	// (void)pseudo_root;
+	std::stringstream output;
+	std::string temp;
+	std::cout << pseudo_root << std::endl;
+	// if (pseudo_root.empty())
+		output << "/";
+	if (file.name == ".")
+		output << pseudo_root;
+	else if (file.name == "..")
+	{
+		std::string::iterator it = pseudo_root.end();
+		it--;
+		if (pseudo_root.size() > 1 && *it == '/')
+		{
+			it--;
+			while (it != pseudo_root.begin() && *it != '/')
+				it--;
+			std::string new_root;
+			new_root.insert(new_root.begin(), pseudo_root.begin(), it);
+			output << new_root;
+			if (new_root.size())
+				output << "/";
+		}
+	}
+	else if (pseudo_root != "/")
+		output << file.name;
+	else
+		output << pseudo_root << file.name;
+	if (file.type == DIRECTORY && file.name != "." && file.name != "..")
+		output << "/";
+	std::cout << output.str() << std::endl;
+
+	return output.str();
+};
+
 std::string Autoindex::_create_link(File file, const std::string &pseudo_root)
 {
 	std::stringstream output;
+	std::cout << C_G_BLUE << "AUTOINDEX URI = |"
+	<< file.name << "| path = |" << file.path
+	<< "| uri = |" << file.uri << "| pseudo_root |"  << pseudo_root << "|" << C_RES << std::endl;
+
 	output
 	<< _tr
 		<< _td
 			<< (file.type == DIRECTORY ? _html_folder_icon : _html_file_icon)
 		<< _ntd
 		<< _td
-			<< _html_a_start << "/"
-			<< pseudo_root << file.name << "\">"
+			<< _html_a_start
+			<< _create_href(file, pseudo_root) << "\">"
 			<< file.name
 			<< _html_a_end
 		<< _ntd
@@ -37,6 +79,7 @@ std::string Autoindex::_create_link(File file, const std::string &pseudo_root)
 			<< file.time_stamp_str
 		<< _ntd
 	<< _ntr;
+	std::cout << output.str() << std::endl;
 	return output.str();
 };
 

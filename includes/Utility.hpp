@@ -18,7 +18,7 @@ class Location {
 	std::string						root;				// Optional -> Takes the URI by default
 	bool							autoindex;			// Optional -> False by default
 	std::string						default_file;		// Optional -> index.html by default
-	std::string						CGI;				// Optional	
+	std::string						CGI;				// Optional
 	std::pair<bool, std::string>	upload;				// Optional
 	std::string 					uri;				// Mandatory -> element map.first in location_map
 };
@@ -60,12 +60,18 @@ class File
 {
 	public:
 	std::string 		name;
-	std::string 		path;
+	// std::string 		location_name; // the file/folder name which has been requested
+										// needed for autoindex links creations and to build responses
+	std::string 		path; // the complete file/folder path which has been requested
+										// needed for autoindex links creations and to build responses
+	// std::string 		absolute_path; // MUST contain the complete absolute path : "/var/www/index.html"
+	//										this is this variable which will serve to open the file
 	std::string 		uri; // = path + / + name
-	std::string 		time_stamp_str;
-	long 				time_stamp_raw;
 	bool				valid;
 	// typedef enum e_error {NOT_FOUND = -1, OK, FORBIDDEN_R, FORBIDDEN_W, INVALID_NAME} error;
+
+	std::string 		time_stamp_str;
+	long 				time_stamp_raw;
 	file_type			type;
 	unsigned long long	size;
 	unsigned long long	IO_read_block;
