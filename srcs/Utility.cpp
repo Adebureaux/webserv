@@ -62,11 +62,7 @@ Message::~Message() {};
 
 File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false)
 {
-	if (path[0] == '/' && path != "/")
-		path = path.substr(1);
-	if (path == "/")
-		uri = name;
-	else if (*(path.end() - 1) != '/')
+	if (!path.empty() && *(path.end() - 1) != '/')
 		uri = path + '/' + name;
 	else
 		uri = path + name;
@@ -82,7 +78,7 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 	// std::cout << std::endl;
 };
 
-void File::set_infos(void)
+void File::set_infos()
 {
 	struct stat infos;
 
@@ -95,7 +91,12 @@ void File::set_infos(void)
 		size = infos.st_size;
 		IO_read_block = infos.st_blksize;
 		if (S_ISDIR(infos.st_mode))
-			type = DIRECTORY;
+		{
+			if (*uri.rbegin() != '/')
+				valid = false;
+			else
+				type = DIRECTORY;
+		}
 		else if (S_ISREG(infos.st_mode) || S_ISLNK(infos.st_mode))
 			type = FILE_TYPE;
 	}
@@ -245,7 +246,7 @@ std::string find_path(const std::string& uri)
 {
 	std::size_t pos = uri.find_last_of("/");
 	if (pos == std::string::npos)
-		return ("/");
+		return ("");
 	return (uri.substr(0, pos + 1));
 }
 

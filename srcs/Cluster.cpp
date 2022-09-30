@@ -130,7 +130,9 @@ int main(int ac, char **argv, char **envp)
 {
 	(void)envp;
 
-	File conf = File(ac >= 2 ? File(argv[1]) : File("webserv.conf"));
+	std::string pwd = getcwd(NULL, BUFFER_SIZE);
+	pwd.append("/");
+	File conf = File(ac >= 2 ? File(pwd + argv[1]) : File("webserv.conf"));
 
 	if (!conf.valid || conf.type != FILE_TYPE)
 	{

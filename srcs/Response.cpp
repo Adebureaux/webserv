@@ -9,7 +9,6 @@
     //                    [ message-body ]
 
 static std::map<int, std::string> start_lines;
-static std::map<int, std::string> errors;
 
 Response::Response() :  _location(NULL), _file()
 {
@@ -47,7 +46,7 @@ void Response::create(const Request& request, config_map& config)
 			}
 		}
 	}
-	_init_errors(it->second);
+	_load_errors(it->second);
 	_find_location(request, it->second);
 	if (!request.is_valid())
 		_construct_response(400);
@@ -83,6 +82,7 @@ void Response::create_get(const Request& request)
 	if (_location)
 	{
 		std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
+		std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
 		if (!_location->get_method)
 			_construct_response(405);
 		else if (_file.valid && !(_file.permissions & R))
@@ -90,7 +90,7 @@ void Response::create_get(const Request& request)
 		else if (_file.valid && _file.type == FILE_TYPE)
 			_construct_response(200);
 		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-			_construct_autoindex(_file.path, request.get_request_target()); // TO CHANGE
+			_construct_autoindex(_file.path, request.get_request_target());
 		else
 			_construct_response(404);
 	}
@@ -121,8 +121,8 @@ void Response::_find_location(const Request& request, Server_block& config)
 	if (it != config.locations.end())
 	{
 		_location = &it->second;
-		std::string path = _concatenate_path(_location->root, requested.path);
-		if (requested.name.empty()) // --> We are looking for a directory
+		std::string path = _merge_path(_location->root, requested.path);
+		if (requested.name.empty())
 		{
 			File file(_location->default_file, path);
 			if (file.valid && file.type == FILE_TYPE && (file.permissions & R))
@@ -165,15 +165,36 @@ void Response::_init_start_lines(void) const
 }
 
 
-void Response::_init_errors(Server_block& config) const
+void Response::_load_errors(Server_block& config)
 {
-	std::cout << C_G_BLUE << "Number of error files to load " << config.error_pages.size() << std::endl;
-	errors.insert(std::make_pair(400, ERROR_HTML_400));
-	errors.insert(std::make_pair(403, ERROR_HTML_403));
-	errors.insert(std::make_pair(404, ERROR_HTML_404));
-	errors.insert(std::make_pair(405, ERROR_HTML_405));
-	errors.insert(std::make_pair(500, ERROR_HTML_500));
-	errors.insert(std::make_pair(501, ERROR_HTML_501));
+	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 500, 501 };
+	//std::map<int, std::string>::iterator it = config.error_pages.begin();
+	std::map<int, std::string>::iterator find;
+	// std::cout << C_G_BLUE << "Number of error files to load " << config.error_pages.size() << std::endl;
+	for (int i = 0; i < ERROR_NUMBER; i++)
+	{
+		find = config.error_pages.find(errorn[i]);
+		if (find != config.error_pages.end())
+		{
+			File error_file(find->second);
+			if (error_file.valid && error_file.type == FILE_TYPE && (error_file.permissions & R))
+			{
+				error_file.set_content();
+				_errors.erase(errorn[i]);
+				_errors.insert(std::make_pair(errorn[i], error_file.content));
+			}
+		}
+	}
+	// for (std::map<int, std::string>::iterator it = config.error_pages.begin(); it != config.error_pages.end(); it++)
+	// {
+
+	// }
+	_errors.insert(std::make_pair(400, ERROR_HTML_400));
+	_errors.insert(std::make_pair(403, ERROR_HTML_403));
+	_errors.insert(std::make_pair(404, ERROR_HTML_404));
+	_errors.insert(std::make_pair(405, ERROR_HTML_405));
+	_errors.insert(std::make_pair(500, ERROR_HTML_500));
+	_errors.insert(std::make_pair(501, ERROR_HTML_501));
 }
 
 void Response::_generate_response(int status)
@@ -190,10 +211,10 @@ void Response::_construct_response(int status)
 
 	if (status >= 400)
 	{
-		size << errors[status].size();
+		size << _errors[status].size();
 		_header_field("Content-Type", "text/html");
 		_header_field("Content-Length", size.str());
-		_body.append(errors[status]);
+		_body.append(_errors[status]);
 	}
 	else
 	{
@@ -228,13 +249,20 @@ void Response::_header_field(const std::string& header, const std::string& field
 	_header.append("\r\n");
 }
 
-std::string	Response::_concatenate_path(const std::string& root, std::string path)
+std::string	Response::_merge_path(const std::string& root, std::string path)
 {
 	std::string new_path(root);
-	std::string::difference_type n = std::count(root.begin(), root.end(), '/');
+	// std::string::difference_type root_len = std::count(root.begin(), root.end(), '/');
+	// std::string::difference_type path_len = std::count(path.begin(), path.end(), '/');
+	// std::string::difference_type loc_len = std::count(_location->uri.begin(), _location->uri.end(), '/');
 
-	for (int i = 0; i < n; i++)
-		path = path.substr(path.find_first_of('/') + 1);
-	new_path.append(path);
+	// std::cout << C_G_CYAN << "root_len = " << root_len << " " << root << C_RES << std::endl;
+	// std::cout << C_G_CYAN << "path_len = " << path_len << " " << path << C_RES << std::endl;
+	// std::cout << C_G_CYAN << "loc_len = " << loc_len << " " << _location->uri << C_RES << std::endl;
+
+	if (_location->uri != "/")
+		path = path.substr(_location->uri.size());
+	if (path != "/")
+		new_path.append(path);
 	return (new_path);
 }

@@ -33,6 +33,7 @@
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
 #define MIME_TYPE_NUMBER 349
+#define ERROR_NUMBER 6
 
 // End Augustin
 

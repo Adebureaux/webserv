@@ -82,8 +82,8 @@ class File
 	bool				not_found;
 
 	File(void);
-	File(std::string filename);
 	File(std::string target, std::string folder);
+	File(std::string filename);
 	File(const File &src);
 	File &operator=(const File &src);
 	~File();
@@ -91,12 +91,15 @@ class File
 	void set_infos(void);
 	void set_content(void);
 	void set_mime_type(void);
+
+	private:
 	struct entry
 	{
 		const std::string& ext;
 		const std::string& mime_type;
 	};
 	static const entry types[MIME_TYPE_NUMBER];
+	bool _autoindex;
 };
 
 File get_file_infos(std::string target, std::string path, int folder_fd);

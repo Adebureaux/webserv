@@ -20,7 +20,7 @@ std::string Autoindex::_create_href(File file, std::string pseudo_root)
 	std::stringstream output;
 	if (pseudo_root.size() != 1 && *pseudo_root.begin() != '/')
 		pseudo_root.insert(0, "/");
-	std::cout << pseudo_root << std::endl;
+	// std::cout << pseudo_root << std::endl;
 	if (pseudo_root.empty())
 		output << "/";
 	if (file.name == ".")
@@ -49,8 +49,10 @@ std::string Autoindex::_create_href(File file, std::string pseudo_root)
 		if (file.type == DIRECTORY)
 			output << "/";
 	}
+	if (file.type == DIRECTORY)
+		output << "/";
 
-	std::cout << output.str() << std::endl;
+	// std::cout << output.str() << std::endl;
 
 	return output.str();
 };
@@ -58,9 +60,9 @@ std::string Autoindex::_create_href(File file, std::string pseudo_root)
 std::string Autoindex::_create_link(File file, const std::string &pseudo_root)
 {
 	std::stringstream output;
-	std::cout << C_G_BLUE << "AUTOINDEX URI = |"
-	<< file.name << "| path = |" << file.path
-	<< "| uri = |" << file.uri << "| pseudo_root |"  << pseudo_root << "|" << C_RES << std::endl;
+	// std::cout << C_G_BLUE << "AUTOINDEX URI = |"
+	// << file.name << "| path = |" << file.path
+	// << "| uri = |" << file.uri << "| pseudo_root |"  << pseudo_root << "|" << C_RES << std::endl;
 
 	output
 	<< _tr
@@ -83,7 +85,7 @@ std::string Autoindex::_create_link(File file, const std::string &pseudo_root)
 			<< file.time_stamp_str
 		<< _ntd
 	<< _ntr;
-	std::cout << output.str() << std::endl;
+	// std::cout << output.str() << std::endl;
 	return output.str();
 };
 
@@ -137,7 +139,7 @@ std::pair<std::string, size_t> Autoindex::to_html(const std::string &pseudo_root
 	output << _html_start << "<table style=\"width:100%; text-align:left; vertical-align: middle;\">";
 	output << _th << "" << _nth << _th << "name" << _nth << _th << "size (bytes)" << _nth << _th << "Last Modified" << _nth;
 	for (; it != files.end(); it++) {
-		printFileInfos(*it);
+		// printFileInfos(*it);
 		output << _create_link(*it, pseudo_root);
 	}
 	output << "</table>";
