@@ -18,34 +18,38 @@ std::string Autoindex::_create_href(File file, std::string pseudo_root)
 	// (void)file;
 	// (void)pseudo_root;
 	std::stringstream output;
-	std::string temp;
+	if (pseudo_root.size() != 1 && *pseudo_root.begin() != '/')
+		pseudo_root.insert(0, "/");
 	std::cout << pseudo_root << std::endl;
-	// if (pseudo_root.empty())
+	if (pseudo_root.empty())
 		output << "/";
 	if (file.name == ".")
 		output << pseudo_root;
 	else if (file.name == "..")
 	{
 		std::string::iterator it = pseudo_root.end();
+		std::string new_root;
 		it--;
 		if (pseudo_root.size() > 1 && *it == '/')
 		{
 			it--;
 			while (it != pseudo_root.begin() && *it != '/')
 				it--;
-			std::string new_root;
 			new_root.insert(new_root.begin(), pseudo_root.begin(), it);
-			output << new_root;
-			if (new_root.size())
-				output << "/";
 		}
+		output << new_root;
+		// if (new_root.size())
+			output << "/";
 	}
-	else if (pseudo_root != "/")
-		output << file.name;
+	// else if (pseudo_root != "/")
+	// 	output << file.name;
 	else
+	{
 		output << pseudo_root << file.name;
-	if (file.type == DIRECTORY && file.name != "." && file.name != "..")
-		output << "/";
+		if (file.type == DIRECTORY)
+			output << "/";
+	}
+
 	std::cout << output.str() << std::endl;
 
 	return output.str();
