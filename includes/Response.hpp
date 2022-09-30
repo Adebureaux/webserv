@@ -31,6 +31,7 @@ class Response
 	void	_construct_autoindex(const std::string& filename, const std::string &pseudo_root);
 	void	_header_field(const std::string& header, const std::string& field);
 	std::string	_merge_path(const std::string& root, std::string path);
+	std::string	 _parse_host(std::string host);
 
 	private:
 	Location					*_location;

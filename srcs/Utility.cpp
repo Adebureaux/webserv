@@ -70,7 +70,7 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 		not_found = true;
 	else
 		set_infos();
-	std::cout << C_G_RED << "IN FILE = |" << name << "| path = |" << path << "| uri = |" << uri << "|" << C_RES << std::endl;
+	// std::cout << C_G_RED << "IN FILE = |" << name << "| path = |" << path << "| uri = |" << uri << "|" << C_RES << std::endl;
 	// std::cout << uri << " is not_found :" << not_found << "\n";
 	// std::cout << (permissions & R ? "READABLE, " : "NOT_READABLE, ");
 	// std::cout << (permissions & W ? "WRITABLE, " : "NOT_WRITABLE, ");

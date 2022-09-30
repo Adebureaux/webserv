@@ -34,7 +34,7 @@ Response::~Response() {}
 
 void Response::create(const Request& request, config_map& config)
 {
-	config_map::iterator it = config.find(request.get_host());
+	config_map::iterator it = config.find(_parse_host(request.get_host()));
 	if (it == config.end())
 	{
 		for (config_map::iterator itr = config.begin(); itr != config.end(); itr++)
@@ -81,8 +81,8 @@ void Response::create_get(const Request& request)
 {
 	if (_location)
 	{
-		std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
-		std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
+		// std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
+		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
 		if (!_location->get_method)
 			_construct_response(405);
 		else if (_file.valid && !(_file.permissions & R))
@@ -265,4 +265,13 @@ std::string	Response::_merge_path(const std::string& root, std::string path)
 	if (path != "/")
 		new_path.append(path);
 	return (new_path);
+}
+
+std::string Response::_parse_host(std::string host)
+{
+	std::size_t pos = host.find_first_of(':');
+
+	if (pos != std::string::npos)
+		host = host.substr(0, pos);
+	return (host);
 }
