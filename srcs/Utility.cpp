@@ -94,8 +94,7 @@ void File::set_infos()
 		{
 			if (*uri.rbegin() != '/')
 				valid = false;
-			else
-				type = DIRECTORY;
+			type = DIRECTORY;
 		}
 		else if (S_ISREG(infos.st_mode) || S_ISLNK(infos.st_mode))
 			type = FILE_TYPE;

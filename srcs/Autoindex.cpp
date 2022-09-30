@@ -49,8 +49,6 @@ std::string Autoindex::_create_href(File file, std::string pseudo_root)
 		if (file.type == DIRECTORY)
 			output << "/";
 	}
-	if (file.type == DIRECTORY)
-		output << "/";
 
 	// std::cout << output.str() << std::endl;
 
