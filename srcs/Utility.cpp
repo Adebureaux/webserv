@@ -1,7 +1,7 @@
 #include "Utility.hpp"
 
 Location::Location()
-: get_method(true), post_method(true), delete_method(true), redirect(), root(), autoindex(false), default_file(""), CGI(), upload(false, ""), uri()
+: get_method(false), post_method(false), delete_method(false), redirect(), root(), autoindex(false), default_file(""), CGI(), upload(false, ""), uri()
 {}
 
 Location::Location(const Location &cpy)
@@ -71,11 +71,6 @@ File::File(std::string name, std::string path) : name(name), path(path), valid(f
 	else
 		set_infos();
 	// std::cout << C_G_RED << "IN FILE = |" << name << "| path = |" << path << "| uri = |" << uri << "|" << C_RES << std::endl;
-	// std::cout << uri << " is not_found :" << not_found << "\n";
-	// std::cout << (permissions & R ? "READABLE, " : "NOT_READABLE, ");
-	// std::cout << (permissions & W ? "WRITABLE, " : "NOT_WRITABLE, ");
-	// std::cout << (permissions & X ? "EXECUTABLE" : "NOT_EXECUTABLE");
-	// std::cout << std::endl;
 };
 
 void File::set_infos()
@@ -153,7 +148,6 @@ File &File::operator=(const File &src)
 	mime_type = src.mime_type;
 	permissions = src.permissions;
 	not_found = src.not_found;
-
 	return *this;
 };
 

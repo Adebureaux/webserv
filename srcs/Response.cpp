@@ -83,9 +83,14 @@ void Response::create_get(const Request& request)
 	{
 		// std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
 		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
+		
+		// // this below to setup auto redirect to / ending path
+		// if (!_file.valid && _file.type == DIRECTORY)
+		// 	_construct_response(301);
+
 		if (!_location->get_method)
 			_construct_response(405);
-		else if (_file.valid && !(_file.permissions & R))
+		else if (!_file.not_found && !(_file.permissions & R))
 			_construct_response(403);
 		else if (_file.valid && _file.type == FILE_TYPE)
 			_construct_response(200);
@@ -125,7 +130,7 @@ void Response::_find_location(const Request& request, Server_block& config)
 		if (requested.name.empty())
 		{
 			File file(_location->default_file, path);
-			if (file.valid && file.type == FILE_TYPE && (file.permissions & R))
+			if (file.valid && file.type == FILE_TYPE)
 				_file = file;
 			else
 				_file = File(path);
@@ -156,6 +161,7 @@ void Response::_init_start_lines(void) const
 {
 	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\n"));
 	start_lines.insert(std::make_pair(200, "HTTP/1.1 200 OK\n"));
+	start_lines.insert(std::make_pair(301, "HTTP/1.1 301 Moved Permanently\n"));
 	start_lines.insert(std::make_pair(400, "HTTP/1.1 400 Bad Request\n"));
 	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\n"));
 	start_lines.insert(std::make_pair(404, "HTTP/1.1 404 Not Found\n"));
@@ -177,7 +183,7 @@ void Response::_load_errors(Server_block& config)
 		if (find != config.error_pages.end())
 		{
 			File error_file(find->second);
-			if (error_file.valid && error_file.type == FILE_TYPE && (error_file.permissions & R))
+			if (error_file.valid && error_file.type == FILE_TYPE)
 			{
 				error_file.set_content();
 				_errors.erase(errorn[i]);
@@ -209,19 +215,27 @@ void Response::_construct_response(int status)
 {
 	std::stringstream size;
 
-	if (status >= 400)
-	{
-		size << _errors[status].size();
-		_header_field("Content-Type", "text/html");
-		_header_field("Content-Length", size.str());
-		_body.append(_errors[status]);
-	}
-	else
+	if (status < 300)
 	{
 		size << _file.content.size();
 		_header_field("Content-Type", _file.mime_type);
 		_header_field("Content-Length", size.str());
 		_body.append(_file.content);
+	}
+	else if (status < 400)
+	{
+		size << _file.content.size();
+		_header_field("content-Type", _file.mime_type);
+		_header_field("content-Length", size.str());
+		// _header_field("location", "http://hello.com:1234/img/"); --> Redirect properly
+		_body.append(_file.content);
+	}
+	else
+	{
+		size << _errors[status].size();
+		_header_field("Content-Type", "text/html");
+		_header_field("Content-Length", size.str());
+		_body.append(_errors[status]);
 	}
 	_generate_response(status);
 }
@@ -229,7 +243,7 @@ void Response::_construct_response(int status)
 void Response::_construct_autoindex(const std::string& filename, const std::string &pseudo_root)
 {
 	std::stringstream size;
-	std::cout << C_G_CYAN << "in autoindex " << pseudo_root << " " << filename << C_RES << std::endl;
+	// std::cout << C_G_CYAN << "in autoindex " << pseudo_root << " " << filename << C_RES << std::endl;
 
 	Autoindex autoindex(ls(filename.c_str()));
 	std::pair<std::string, size_t> res = autoindex.to_html(pseudo_root);

@@ -780,7 +780,7 @@ void Conf::_test_validity_block(void) const
 	std::vector<Server_block>::const_iterator ite = _serv_vector.end();
 	for (; it != ite; it++)
 	{
-		if (it->port < 0 || it->port > 9999)
+		if (it->port < 0 || it->port > 65535)
 			throw EXECP_("port not valid");
 		if (it->address == "")
 			throw EXECP_("address not valid");

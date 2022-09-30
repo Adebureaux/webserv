@@ -129,8 +129,9 @@ int Cluster::_init_socket(const Server_block& config) const
 int main(int ac, char **argv, char **envp)
 {
 	(void)envp;
-
-	std::string pwd = getcwd(NULL, BUFFER_SIZE);
+	char	cwd[BUFFER_SIZE];
+	getcwd(cwd, BUFFER_SIZE);
+	std::string pwd(cwd);
 	pwd.append("/");
 	File conf = File(ac >= 2 ? File(pwd + argv[1]) : File("webserv.conf"));
 
