@@ -60,7 +60,7 @@ Message::Message(Client *c) :
 
 Message::~Message() {};
 
-File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false)
+File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false), redirect(false)
 {
 	if (!path.empty() && *(path.end() - 1) != '/')
 		uri = path + '/' + name;
@@ -88,7 +88,10 @@ void File::set_infos()
 		if (S_ISDIR(infos.st_mode))
 		{
 			if (*uri.rbegin() != '/')
+			{
+				redirect = true;
 				valid = false;
+			}
 			type = DIRECTORY;
 		}
 		else if (S_ISREG(infos.st_mode) || S_ISLNK(infos.st_mode))
@@ -116,6 +119,7 @@ File::File(const File &src)
 	mime_type = src.mime_type;
 	permissions = src.permissions;
 	not_found = src.not_found;
+	redirect = src.redirect;
 };
 File::File(void)
 {
@@ -131,6 +135,7 @@ File::File(void)
 	time_stamp_str = "";
 	permissions = 0;
 	not_found = false;
+	redirect = false;
 };
 
 File &File::operator=(const File &src)
@@ -148,6 +153,7 @@ File &File::operator=(const File &src)
 	mime_type = src.mime_type;
 	permissions = src.permissions;
 	not_found = src.not_found;
+	redirect = src.redirect;
 	return *this;
 };
 

@@ -27,6 +27,7 @@ Response& Response::operator=(const Response& rhs)
 	_response = rhs._response;
 	_header = rhs._header;
 	_body = rhs._body;
+	_redirect = rhs._redirect;
 	return (*this);
 }
 
@@ -48,8 +49,9 @@ void Response::create(const Request& request, config_map& config)
 	}
 	_load_errors(it->second);
 	_find_location(request, it->second);
+	// Check for HTTP version before ! For trigger HTTP version not supported. Ask Aymeric where to find this information
 	if (!request.is_valid())
-		_construct_response(400);
+		_construct_response(request, 400);
 	else if (request.get_method() == GET)
 		create_get(request);
 	else if (request.get_method() == POST)
@@ -63,6 +65,7 @@ void Response::clear(void)
 	_response.clear();
 	_header.clear();
 	_body.clear();
+	_redirect.clear();
 	_file = File();
 	_location = NULL;
 }
@@ -84,24 +87,23 @@ void Response::create_get(const Request& request)
 		// std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
 		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
 		
-		// // this below to setup auto redirect to / ending path
-		// if (!_file.valid && _file.type == DIRECTORY)
-		// 	_construct_response(301);
-
-		if (!_location->get_method)
-			_construct_response(405);
+		// Redirect should check location redirect
+		if (_file.redirect)
+			_construct_response(request, 301);
+		else if (!_location->get_method)
+			_construct_response(request, 405);
 		else if (!_file.not_found && !(_file.permissions & R))
-			_construct_response(403);
+			_construct_response(request, 403);
 		else if (_file.valid && _file.type == FILE_TYPE)
-			_construct_response(200);
+			_construct_response(request, 200);
 		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
 			_construct_autoindex(_file.path, request.get_request_target());
 		else
-			_construct_response(404);
+			_construct_response(request, 404);
 	}
 	else
 	{
-		_construct_response(404);
+		_construct_response(request, 404);
 		std::cout << C_G_BLUE << "No Location Found" << C_RES << std::endl;
 	}
 }
@@ -211,10 +213,13 @@ void Response::_generate_response(int status)
 	_response.append(_body);
 }
 
-void Response::_construct_response(int status)
+void Response::_construct_response(const Request& request, int status)
 {
 	std::stringstream size;
 
+	_header_field("Server", "webserv/1.0 (Ubuntu)");
+	if (!request.get_connection().empty())
+		_header_field("Connection", request.get_connection());
 	if (status < 300)
 	{
 		size << _file.content.size();
@@ -224,11 +229,10 @@ void Response::_construct_response(int status)
 	}
 	else if (status < 400)
 	{
-		size << _file.content.size();
-		_header_field("content-Type", _file.mime_type);
-		_header_field("content-Length", size.str());
-		// _header_field("location", "http://hello.com:1234/img/"); --> Redirect properly
-		_body.append(_file.content);
+		_setup_redirection(request);
+		_header_field("Content-Type", "text/html");
+		_header_field("Content-Length", "178"); // 178 ?
+		_header_field("location", _redirect);
 	}
 	else
 	{
@@ -288,4 +292,9 @@ std::string Response::_parse_host(std::string host)
 	if (pos != std::string::npos)
 		host = host.substr(0, pos);
 	return (host);
+}
+
+void Response::_setup_redirection(const Request& request)
+{
+	_redirect = std::string("http://") + request.get_host() + std::string("/") + request.get_request_target() + "/";
 }

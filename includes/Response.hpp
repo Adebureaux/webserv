@@ -25,17 +25,19 @@ class Response
 	void	_find_location(const Request& request, Server_block& config);
 	location_map::iterator _find_longest_location(Server_block& config, std::string path) const;
 	void	_generate_response(int status);
-	void	_construct_response(int status);
+	void	_construct_response(const Request& request, int status);
 	void	_init_start_lines(void) const;
 	void 	_load_errors(Server_block& config);
 	void	_construct_autoindex(const std::string& filename, const std::string &pseudo_root);
 	void	_header_field(const std::string& header, const std::string& field);
 	std::string	_merge_path(const std::string& root, std::string path);
 	std::string	 _parse_host(std::string host);
+	void _setup_redirection(const Request& request);
 
 	private:
 	Location					*_location;
 	File						_file;
+	std::string					_redirect;
 	std::string					_response;
 	std::string					_header;
 	std::string					_body;

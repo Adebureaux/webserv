@@ -80,6 +80,7 @@ class File
 	std::string			mime_type;
 	char				permissions:3;
 	bool				not_found;
+	bool				redirect;
 
 	File(void);
 	File(std::string target, std::string folder);
@@ -99,7 +100,6 @@ class File
 		const std::string& mime_type;
 	};
 	static const entry types[MIME_TYPE_NUMBER];
-	bool _autoindex;
 };
 
 File get_file_infos(std::string target, std::string path, int folder_fd);
