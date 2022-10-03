@@ -115,3 +115,30 @@ RFC 7231             HTTP/1.1 Semantics and Content            June 2014
 	   generate a representation for the 505 response that describes why
 	   that version is not supported and what other protocols are supported
 	   by that server.
+
+
+2 types de requete POST sont possibles,
+Content-Type: multipart/form-data; -> body est envoye par chuncks delimites par une boundary definie dans la requete initiale ainsi que par Content-Length
+Content-Type: application/x-www-form-urlencoded -> body est envoye d'un coup dont la taille est definie dans la requete initiale par Content-Length
+		
+	   ---------- REQUEST ----------
+	   POST / HTTP/1.1
+	   Host: localhost:8080
+	   User-Agent: curl/7.68.0
+	   Accept: */*
+	   Content-Length: 1499
+	   Content-Type: multipart/form-data; boundary=------------------------a0f9f9e58263bc7e
+	   Expect: 100-continue
+
+	   ---------- END REQUEST ----------
+
+	   ---------- REQUEST ----------
+		POST / HTTP/1.1
+		Host: localhost:8080
+		User-Agent: curl/7.68.0
+		Accept: */*
+		Content-Length: 1273
+		Content-Type: application/x-www-form-urlencoded
+		Expect: 100-continue
+
+		---------- END REQUEST ----------
