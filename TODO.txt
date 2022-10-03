@@ -15,3 +15,103 @@ Problemes:
 
 ROMAIN:
 1. replace access function calls with stat
+
+
+POST TODO
+Requirements for clients:
+
+ o  A client MUST NOT generate a 100-continue expectation in a request
+	that does not include a message body.
+
+ o  A client that will wait for a 100 (Continue) response before
+	sending the request message body MUST send an Expect header field
+	containing a 100-continue expectation.
+
+
+
+Fielding & Reschke           Standards Track                   [Page 34]
+
+RFC 7231             HTTP/1.1 Semantics and Content            June 2014
+
+
+ o  A client that sends a 100-continue expectation is not required to
+	wait for any specific length of time; such a client MAY proceed to
+	send the message body even if it has not yet received a response.
+	Furthermore, since 100 (Continue) responses cannot be sent through
+	an HTTP/1.0 intermediary, such a client SHOULD NOT wait for an
+	indefinite period before sending the message body.
+
+ o  A client that receives a 417 (Expectation Failed) status code in
+	response to a request containing a 100-continue expectation SHOULD
+	repeat that request without a 100-continue expectation, since the
+	417 response merely indicates that the response chain does not
+	support expectations (e.g., it passes through an HTTP/1.0 server).
+
+ Requirements for servers:
+
+ o  A server that receives a 100-continue expectation in an HTTP/1.0
+	request MUST ignore that expectation.
+
+ o  A server MAY omit sending a 100 (Continue) response if it has
+	already received some or all of the message body for the
+	corresponding request, or if the framing indicates that there is
+	no message body.
+
+ o  A server that sends a 100 (Continue) response MUST ultimately send
+	a final status code, once the message body is received and
+	processed, unless the connection is closed prematurely.
+
+ o  A server that responds with a final status code before reading the
+	entire message body SHOULD indicate in that response whether it
+	intends to close the connection or continue reading and discarding
+	the request message (see Section 6.6 of [RFC7230]).
+
+	6.5.10.  411 Length Required
+
+	   The 411 (Length Required) status code indicates that the server
+	   refuses to accept the request without a defined Content-Length
+	   (Section 3.3.2 of [RFC7230]).  The client MAY repeat the request if
+	   it adds a valid Content-Length header field containing the length of
+	   the message body in the request message.
+
+	6.5.11.  413 Payload Too Large
+
+	   The 413 (Payload Too Large) status code indicates that the server is
+	   refusing to process a request because the request payload is larger
+	   than the server is willing or able to process.  The server MAY close
+	   the connection to prevent the client from continuing the request.
+
+	   If the condition is temporary, the server SHOULD generate a
+	   Retry-After header field to indicate that it is temporary and after
+	   what time the client MAY try again.
+
+	6.5.15.  426 Upgrade Required
+
+	  The 426 (Upgrade Required) status code indicates that the server
+	  refuses to perform the request using the current protocol but might
+	  be willing to do so after the client upgrades to a different
+	  protocol.  The server MUST send an Upgrade header field in a 426
+	  response to indicate the required protocol(s) (Section 6.7 of
+	  [RFC7230]).
+
+	  Example:
+
+	    HTTP/1.1 426 Upgrade Required
+	    Upgrade: HTTP/3.0
+	    Connection: Upgrade
+	    Content-Length: 53
+	    Content-Type: text/plain
+
+	    This service requires use of the HTTP/3.0 protocol.
+
+	6.6.6.  505 HTTP Version Not Supported
+
+	   The 505 (HTTP Version Not Supported) status code indicates that the
+	   server does not support, or refuses to support, the major version of
+	   HTTP that was used in the request message.  The server is indicating
+	   that it is unable or unwilling to complete the request using the same
+	   major version as the client, as described in Section 2.6 of
+	   [RFC7230], other than with this error message.  The server SHOULD
+	   generate a representation for the 505 response that describes why
+	   that version is not supported and what other protocols are supported
+	   by that server.

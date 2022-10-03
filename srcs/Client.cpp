@@ -20,25 +20,40 @@ Client::~Client()
 		std::cout << C_G_MAGENTA << "Destruct client " << _fd << C_RES << std::endl;
 	disconnect();
 	_clients->erase(this);
-	
+
 	//remove all messages
 };
 
 ssize_t Client::_receive(void)
 {
-	static char buffer[BUFFER_SIZE];
-	ssize_t rd;
+	ssize_t received = 0;
 
-	std::memset(buffer, 0, BUFFER_SIZE);
-	rd = recv(_fd, buffer, BUFFER_SIZE, 0);
-
-	if (rd > 0)
+	for(;;)
 	{
-		_request.raw_data.append(buffer);
-		if (_request.raw_data.find("\r\n\r\n") != std::string::npos)
-			_request.state = READY;
+		char buffer[BUFFER_SIZE + 1] = { 0 };
+		int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
+		if (ret == 0 || ret < 0)
+			break;
+		if (ret > 0)
+		{
+			std::cout << ret << std::endl;
+
+			_request.raw_data.append(buffer);
+			received += ret;
+		}
+		if (ret < BUFFER_SIZE)
+			break;
 	}
-	return (rd);
+	// std::cout << "COUCOU\n";
+	if (_request.raw_data.find("\r\n\r\n") != std::string::npos)
+		_request.state = READY;
+	// static char buffer[BUFFER_SIZE];
+	// ssize_t rd;
+	//
+	// std::memset(buffer, 0, BUFFER_SIZE);
+	// rd = recv(_fd, buffer, BUFFER_SIZE, 0);
+	// _request.raw_data.append(buffer);
+	return (received);
 }
 
 void Client::_addEventListener(uint32_t revents)
