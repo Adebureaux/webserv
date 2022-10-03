@@ -110,6 +110,16 @@ void Response::create_get(const Request& request)
 
 void Response::create_post(const Request& request, Server_block& config)
 {
+	//A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
+	// or 204 (No content) if the DELETE action has been completed but the response does not have a message body.
+	if (_location)
+	{
+		// Nothing actualy
+	}
+	else
+	{
+		_construct_response(request, 202);
+	}
 	(void)request;
 	(void)config;
 }
@@ -163,6 +173,8 @@ void Response::_init_start_lines(void) const
 {
 	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\n"));
 	start_lines.insert(std::make_pair(200, "HTTP/1.1 200 OK\n"));
+	start_lines.insert(std::make_pair(202, "HTTP/1.1 202 Accepted\n"));
+	start_lines.insert(std::make_pair(204, "HTTP/1.1 204 No content\n"));
 	start_lines.insert(std::make_pair(301, "HTTP/1.1 301 Moved Permanently\n"));
 	start_lines.insert(std::make_pair(400, "HTTP/1.1 400 Bad Request\n"));
 	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\n"));
@@ -216,18 +228,26 @@ void Response::_construct_response(const Request& request, int status)
 	_header_field("Server", "webserv/1.0 (Ubuntu)");
 	if (!request.get_connection().empty())
 		_header_field("Connection", request.get_connection());
-	if (status < 300)
+	if (status == 200)
 	{
 		size << _file.content.size();
 		_header_field("Content-Type", _file.mime_type);
 		_header_field("Content-Length", size.str());
 		_body.append(_file.content);
 	}
+	else if (status == 202)
+	{
+		// Nothing actualy
+	}
+	else if (status == 204)
+	{
+		// Nothing actualy
+	}
 	else if (status < 400)
 	{
 		_setup_redirection(request);
-		_header_field("Content-Type", "text/html");
-		_header_field("Content-Length", "0"); // 178 ?
+		// _header_field("Content-Type", "text/html");
+		// _header_field("Content-Length", "0"); // 178 ?
 		_header_field("Location", _redirect);
 	}
 	else
