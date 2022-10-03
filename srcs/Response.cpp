@@ -88,7 +88,7 @@ void Response::create_get(const Request& request)
 		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
 		
 		// Redirect should check location redirect
-		if (_file.redirect)
+		if (_file.redirect || !_location->redirect.empty())
 			_construct_response(request, 301);
 		else if (!_location->get_method)
 			_construct_response(request, 405);
@@ -193,10 +193,6 @@ void Response::_load_errors(Server_block& config)
 			}
 		}
 	}
-	// for (std::map<int, std::string>::iterator it = config.error_pages.begin(); it != config.error_pages.end(); it++)
-	// {
-
-	// }
 	_errors.insert(std::make_pair(400, ERROR_HTML_400));
 	_errors.insert(std::make_pair(403, ERROR_HTML_403));
 	_errors.insert(std::make_pair(404, ERROR_HTML_404));
@@ -231,8 +227,8 @@ void Response::_construct_response(const Request& request, int status)
 	{
 		_setup_redirection(request);
 		_header_field("Content-Type", "text/html");
-		_header_field("Content-Length", "178"); // 178 ?
-		_header_field("location", _redirect);
+		_header_field("Content-Length", "0"); // 178 ?
+		_header_field("Location", _redirect);
 	}
 	else
 	{
@@ -296,5 +292,9 @@ std::string Response::_parse_host(std::string host)
 
 void Response::_setup_redirection(const Request& request)
 {
-	_redirect = std::string("http://") + request.get_host() + std::string("/") + request.get_request_target() + "/";
+	_redirect = std::string("http://");
+	if (_file.type == DIRECTORY && !_file.valid)
+		_redirect += request.get_host() + std::string("/") + request.get_request_target() + "/";
+	else
+		_redirect += _location->redirect;
 }
