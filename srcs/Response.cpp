@@ -292,9 +292,8 @@ std::string Response::_parse_host(std::string host)
 
 void Response::_setup_redirection(const Request& request)
 {
-	_redirect = std::string("http://");
 	if (_file.type == DIRECTORY && !_file.valid)
-		_redirect += request.get_host() + std::string("/") + request.get_request_target() + "/";
+		_redirect = std::string("http://") + request.get_host() + std::string("/") + request.get_request_target() + "/";
 	else
-		_redirect += _location->redirect;
+		_redirect = _location->redirect;
 }
