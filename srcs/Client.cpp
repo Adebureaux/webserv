@@ -44,15 +44,9 @@ ssize_t Client::_receive(void)
 		if (ret < BUFFER_SIZE)
 			break;
 	}
-	// std::cout << "COUCOU\n";
+	// must check wether or not there is a body to be received (req header Must contain Expect: 100-continue and a content-length)
 	if (_request.raw_data.find("\r\n\r\n") != std::string::npos)
 		_request.state = READY;
-	// static char buffer[BUFFER_SIZE];
-	// ssize_t rd;
-	//
-	// std::memset(buffer, 0, BUFFER_SIZE);
-	// rd = recv(_fd, buffer, BUFFER_SIZE, 0);
-	// _request.raw_data.append(buffer);
 	return (received);
 }
 
