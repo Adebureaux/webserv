@@ -86,7 +86,7 @@ void Response::create_get(const Request& request)
 	{
 		// std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
 		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
-		
+
 		// Redirect should check location redirect
 		if (_file.redirect || !_location->redirect.empty())
 			_construct_response(request, 301);
@@ -112,14 +112,14 @@ void Response::create_post(const Request& request, Server_block& config)
 {
 	//A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
 	// or 204 (No content) if the DELETE action has been completed but the response does not have a message body.
-	if (_location)
-	{
-		// Nothing actualy
-	}
-	else
-	{
-		_construct_response(request, 202);
-	}
+	// if (_location)
+	// {
+	// 	// Nothing actualy
+	// }
+	// else
+	// {
+		_generate_response(100);
+	// }
 	(void)request;
 	(void)config;
 }
@@ -215,10 +215,18 @@ void Response::_load_errors(Server_block& config)
 
 void Response::_generate_response(int status)
 {
-	_response = start_lines[status];
-	_response.append(_header);
-	_response.append("\r\n");
-	_response.append(_body);
+	if (status == 100)
+	{
+		_response = start_lines[status];
+		// _response.append("\r\n");
+	}
+	else
+	{
+		_response = start_lines[status];
+		_response.append(_header);
+		_response.append("\r\n");
+		_response.append(_body);
+	}
 }
 
 void Response::_construct_response(const Request& request, int status)

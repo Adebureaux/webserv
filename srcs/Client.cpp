@@ -36,7 +36,7 @@ ssize_t Client::_receive(void)
 			break;
 		if (ret > 0)
 		{
-			std::cout << ret << std::endl;
+			// std::cout << ret << std::endl;
 
 			_request.raw_data.append(buffer);
 			received += ret;
@@ -108,7 +108,7 @@ int Client::respond(void)
 		std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
 	}
 	_response.clear();
-	if (_request.info.get_connection() != "keep-alive")
-		throw std::exception();
+	// if (_request.info.get_connection() != "keep-alive") // should also check if we didnt just send a 100 continue response
+		// throw std::exception();
 	return (0);
 };

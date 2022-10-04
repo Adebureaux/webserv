@@ -130,7 +130,7 @@ curl -F file=@DOCS.md http://localhost:8080
 		   User-Agent: curl/7.68.0
 		   Accept: */*
 		   Content-Length: 1499
-		   Content-Type: multipart/form-data; boundary=------------------------a0f9f9e58263bc7e
+		   Content-Type: multipart/form-data; boundary=------------------------09ce338d16d7b1a8
 		   Expect: 100-continue
 
 		   ---------- END REQUEST ----------
@@ -147,3 +147,40 @@ curl -d @DOCS.md http://localhost:8080
 		Expect: 100-continue
 
 		---------- END REQUEST ----------
+
+	after a 100 continue response the client sends this:
+
+		---------- REQUEST ----------
+		--------------------------09ce338d16d7b1a8
+		Content-Disposition: form-data; name="file"; filename="DOCS.md"
+		Content-Type: application/octet-stream
+
+		@content@sgsdkjghksdjhgkjsdhgjk
+
+		--------------------------09ce338d16d7b1a8--
+
+		-----------------------------
+
+
+curl -d "param1=value1&param2=value2"  http://localhost:1234/html/
+same as curl -X POST http://localhost:1234/html/?param1=value1&param2=value2
+
+---------- REQUEST ----------
+POST /html/ HTTP/1.1
+Host: localhost:1234
+User-Agent: curl/7.68.0
+Accept: */*
+Content-Length: 27
+Content-Type: application/x-www-form-urlencoded
+
+param1=value1&param2=value2
+-----------------------------
+
+if ("Expect: 100-continue" in request header in _receive() AND Header valid)
+	append what we can to raw_data
+	if (location is correct AND method is authorized)
+		send 100 Continue
+		set request as INCOMPLETE
+		save boundary string
+	else
+		send ERROR message
