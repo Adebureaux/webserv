@@ -11,6 +11,7 @@ Conf::Conf(const std::string& raw_Conf)
 		_test_validity_block();
 		_create_ret_map();
 		_is_valid = true;
+		std::cout << C_G_RED << &(_raw_str[_head]) << C_RES << std::endl; 
 	}
 	catch(const std::exception& e)
 	{
