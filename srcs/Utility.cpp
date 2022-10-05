@@ -53,6 +53,7 @@ Server_block &Server_block::operator=(const Server_block &cpy)
 Message::Message(Client *c) :
 	client(c),
 	state(INCOMPLETE),
+	continue100(INCOMPLETE),
 	raw_data(""), // ! PLACEHOLDER
 	ptr(NULL),
 	info("DEFAULT"),

@@ -13,12 +13,12 @@ class Response
 	Response(const Response &rhs);
 	Response& operator=(const Response& rhs);
 	~Response();
-	void		create(const Request& request, config_map& config);
+	void		create(Message& request, config_map& config);
 	void		clear(void);
 	const void*	send(void) const;
 	size_t		get_size(void) const;
 	void		create_get(const Request& request);
-	void		create_post(const Request& request, Server_block& config);
+	void		create_post(Message& request, Server_block& config);
 	void		create_delete(const Request& request, Server_block& config);
 
 	private:

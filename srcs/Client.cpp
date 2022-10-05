@@ -30,9 +30,12 @@ static bool	initMultipartRequest(Message &req)
 	if (pos != std::string::npos)
 	{
 		req.multipart = true;
+		std::cout << "\tMULTIPART REQUEST DETECTED\n\n";
 		pos = req.raw_data.find("; boundary=", pos); //11
 		if (pos != std::string::npos)
 		{
+			std::cout << "\tBOUNDARY REQUEST DETECTED\n\n";
+
 			req.boundary = req.raw_data.substr(pos + 11, req.raw_data.find_first_of("\r\n", pos + 11) - (pos + 11));
 			req.boundary.insert(0, "--");
 			req.boundary_end = req.boundary;
@@ -46,10 +49,12 @@ static bool	initMultipartRequest(Message &req)
 };
 
 
+
 ssize_t Client::_receive(void)
 {
 	ssize_t received = 0;
-
+	bool newRequest = _request.raw_data.empty();
+	std::cout << (newRequest ? "\tNEW" : "\t") <<"\tREQUEST RECEIVED\n";
 	for(;;)
 	{
 		char buffer[BUFFER_SIZE + 1] = { 0 };
@@ -66,16 +71,25 @@ ssize_t Client::_receive(void)
 		if (ret < BUFFER_SIZE)
 			break;
 	}
-	if (!_request.multipart && initMultipartRequest(_request))
+	// the request is new
+	// 		we check if Expect
+	//			expect 100 continue
+
+	if (newRequest)
 	{
-		std::cout << "raw_data:" << _request.raw_data << "|"<<std::endl;
-		std::cout << "BOUNDARY:" << _request.boundary << "|"<<std::endl;
-		_request.continue = READY;
+		if (_request.raw_data.find("Expect: 100-continue") != std::string::npos)
+			_request.continue100 = READY;
+		(void)initMultipartRequest(_request);
+		// std::cout << "raw_data:" << _request.raw_data << "|"<<std::endl;
+		// std::cout << "BOUNDARY:" << _request.boundary << "|"<<std::endl;
 	}
 	// must check wether or not there is a body to be received (req header Must contain Expect: 100-continue and a content-length)
 	if ((_request.raw_data.find("\r\n\r\n") != std::string::npos && !_request.multipart)
 	|| (_request.multipart && _request.raw_data.find(_request.boundary_end) != std::string::npos))
+	{
 		_request.state = READY;
+		_request.continue100 = DONE;
+	}
 	else
 		_request.state = INCOMPLETE;
 	return (received);
@@ -119,12 +133,12 @@ void Client::handleEvent(uint32_t revents)
 
 void Client::handle_request(void)
 {
-	if (DEBUG)
-	{
-		std::cout << C_G_YELLOW << "---------- REQUEST ----------" << std::endl;
-		std::cout << _request.raw_data << std::endl;
-		std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
-	}
+	// if (DEBUG)
+	// {
+	// 	std::cout << C_G_YELLOW << "---------- REQUEST ----------" << std::endl;
+	// 	std::cout << _request.raw_data << std::endl;
+	// 	std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
+	// }
 	_request.info = Request(_request.raw_data);
 };
 

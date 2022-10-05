@@ -33,7 +33,7 @@ Response& Response::operator=(const Response& rhs)
 
 Response::~Response() {}
 
-void Response::create(const message& request, config_map& config)
+void Response::create(Message& request, config_map& config)
 {
 	config_map::iterator it = config.find(_parse_host(request.info.get_host()));
 	if (it == config.end())
@@ -50,9 +50,9 @@ void Response::create(const message& request, config_map& config)
 	_load_errors(it->second);
 	_find_location(request.info, it->second);
 	// Check for HTTP version before ! For trigger HTTP version not supported. Ask Aymeric where to find this information
-	if (!request.info.is_valid())
-		_construct_response(request.info, 400);
-	else if (request.info.get_method() == GET)
+	// if (!request.multipart && !request.info.is_valid())
+	// 	_construct_response(request.info, 400);
+	if (request.info.get_method() == GET)
 		create_get(request.info);
 	else if (request.info.get_method() == POST)
 		create_post(request, it->second);
@@ -108,19 +108,30 @@ void Response::create_get(const Request& request)
 	}
 }
 
-void Response::create_post(const Request& request, Server_block& config)
+void Response::create_post(Message& request, Server_block& config)
 {
-	//A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
+	// A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
 	// or 204 (No content) if the DELETE action has been completed but the response does not have a message body.
 	// if (_location)
 	// {
-	// 	// Nothing actualy
+		// Nothing actualy
 	// }
 	// else
+	std::cout << "\t\tCOUCOU\n\n" << request.raw_data;
 	// {
+	if (request.continue100 == READY && request.state == INCOMPLETE)
+	{
+		request.continue100 = DONE;
+		request.state = INCOMPLETE;
 		_generate_response(100);
-	// }
-	(void)request;
+	}
+	else if (request.continue100 == DONE && request.multipart && request.state == READY)
+	{
+		_generate_response(201);
+
+		// _generate_response(handleMultipartRequest(request, config, _location));
+	}
+	// (void)request;
 	(void)config;
 }
 
@@ -173,6 +184,7 @@ void Response::_init_start_lines(void) const
 {
 	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\n"));
 	start_lines.insert(std::make_pair(200, "HTTP/1.1 200 OK\n"));
+	start_lines.insert(std::make_pair(201, "HTTP/1.1 201 Created\n"));
 	start_lines.insert(std::make_pair(202, "HTTP/1.1 202 Accepted\n"));
 	start_lines.insert(std::make_pair(204, "HTTP/1.1 204 No content\n"));
 	start_lines.insert(std::make_pair(301, "HTTP/1.1 301 Moved Permanently\n"));

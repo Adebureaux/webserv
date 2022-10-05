@@ -47,7 +47,7 @@ class Message
 	public:
 	Client			*client;
 	t_state			state;
-	t_state			continue;
+	t_state			continue100;
 	std::string		raw_data;
 	Message			*ptr; // response || request
 	Request			info;
