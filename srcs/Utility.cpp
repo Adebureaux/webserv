@@ -55,7 +55,8 @@ Message::Message(Client *c) :
 	state(INCOMPLETE),
 	raw_data(""), // ! PLACEHOLDER
 	ptr(NULL),
-	info("DEFAULT")
+	info("DEFAULT"),
+	multipart(false)
 {};
 
 Message::~Message() {};

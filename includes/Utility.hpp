@@ -47,10 +47,13 @@ class Message
 	public:
 	Client			*client;
 	t_state			state;
+	t_state			continue;
 	std::string		raw_data;
 	Message			*ptr; // response || request
 	Request			info;
-
+	std::string		boundary;
+	std::string		boundary_end;
+	bool			multipart;
 	Message(Client *c);
 	~Message();
 };

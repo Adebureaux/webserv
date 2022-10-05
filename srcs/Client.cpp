@@ -24,6 +24,28 @@ Client::~Client()
 	//remove all messages
 };
 
+static bool	initMultipartRequest(Message &req)
+{
+	size_t pos = req.raw_data.find("Content-Type: multipart/"); // 24
+	if (pos != std::string::npos)
+	{
+		req.multipart = true;
+		pos = req.raw_data.find("; boundary=", pos); //11
+		if (pos != std::string::npos)
+		{
+			req.boundary = req.raw_data.substr(pos + 11, req.raw_data.find_first_of("\r\n", pos + 11) - (pos + 11));
+			req.boundary.insert(0, "--");
+			req.boundary_end = req.boundary;
+			req.boundary_end.append("--");
+
+		}
+		else return (req.multipart = false); // request should be invalidated
+	}
+	else return (req.multipart = false);
+	return true;
+};
+
+
 ssize_t Client::_receive(void)
 {
 	ssize_t received = 0;
@@ -44,9 +66,18 @@ ssize_t Client::_receive(void)
 		if (ret < BUFFER_SIZE)
 			break;
 	}
+	if (!_request.multipart && initMultipartRequest(_request))
+	{
+		std::cout << "raw_data:" << _request.raw_data << "|"<<std::endl;
+		std::cout << "BOUNDARY:" << _request.boundary << "|"<<std::endl;
+		_request.continue = READY;
+	}
 	// must check wether or not there is a body to be received (req header Must contain Expect: 100-continue and a content-length)
-	if (_request.raw_data.find("\r\n\r\n") != std::string::npos)
+	if ((_request.raw_data.find("\r\n\r\n") != std::string::npos && !_request.multipart)
+	|| (_request.multipart && _request.raw_data.find(_request.boundary_end) != std::string::npos))
 		_request.state = READY;
+	else
+		_request.state = INCOMPLETE;
 	return (received);
 }
 
@@ -99,7 +130,7 @@ void Client::handle_request(void)
 
 int Client::respond(void)
 {
-	_response.create(_request.info, *_config);
+	_response.create(_request, *_config);
 	send(_fd, _response.send(), _response.get_size(), 0);
 	if (DEBUG)
 	{

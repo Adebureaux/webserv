@@ -33,9 +33,9 @@ Response& Response::operator=(const Response& rhs)
 
 Response::~Response() {}
 
-void Response::create(const Request& request, config_map& config)
+void Response::create(const message& request, config_map& config)
 {
-	config_map::iterator it = config.find(_parse_host(request.get_host()));
+	config_map::iterator it = config.find(_parse_host(request.info.get_host()));
 	if (it == config.end())
 	{
 		for (config_map::iterator itr = config.begin(); itr != config.end(); itr++)
@@ -48,16 +48,16 @@ void Response::create(const Request& request, config_map& config)
 		}
 	}
 	_load_errors(it->second);
-	_find_location(request, it->second);
+	_find_location(request.info, it->second);
 	// Check for HTTP version before ! For trigger HTTP version not supported. Ask Aymeric where to find this information
-	if (!request.is_valid())
-		_construct_response(request, 400);
-	else if (request.get_method() == GET)
-		create_get(request);
-	else if (request.get_method() == POST)
+	if (!request.info.is_valid())
+		_construct_response(request.info, 400);
+	else if (request.info.get_method() == GET)
+		create_get(request.info);
+	else if (request.info.get_method() == POST)
 		create_post(request, it->second);
-	else if (request.get_method() == DELETE)
-		create_delete(request, it->second);
+	else if (request.info.get_method() == DELETE)
+		create_delete(request.info, it->second);
 }
 
 void Response::clear(void)
@@ -236,7 +236,9 @@ void Response::_construct_response(const Request& request, int status)
 	_header_field("Server", "webserv/1.0 (Ubuntu)");
 	if (!request.get_connection().empty())
 		_header_field("Connection", request.get_connection());
-	if (status == 200)
+	if (status == 100)
+		;
+	else if (status == 200)
 	{
 		size << _file.content.size();
 		_header_field("Content-Type", _file.mime_type);
