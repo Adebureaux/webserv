@@ -89,7 +89,7 @@ void Response::create_get(const Request& request)
 		
 		// Redirect should check location redirect
 		if (_file.redirect || !_location->redirect.empty())
-			_construct_response(request, 301);
+			_construct_response(request, 302);
 		else if (!_location->get_method)
 			_construct_response(request, 405);
 		else if (!_file.not_found && !(_file.permissions & R))
@@ -176,6 +176,7 @@ void Response::_init_start_lines(void) const
 	start_lines.insert(std::make_pair(202, "HTTP/1.1 202 Accepted\n"));
 	start_lines.insert(std::make_pair(204, "HTTP/1.1 204 No content\n"));
 	start_lines.insert(std::make_pair(301, "HTTP/1.1 301 Moved Permanently\n"));
+	start_lines.insert(std::make_pair(302, "HTTP/1.1 302 Found\n"));
 	start_lines.insert(std::make_pair(400, "HTTP/1.1 400 Bad Request\n"));
 	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\n"));
 	start_lines.insert(std::make_pair(404, "HTTP/1.1 404 Not Found\n"));
@@ -241,7 +242,7 @@ void Response::_construct_response(const Request& request, int status)
 		if (!_redirect.empty())
 			_header_field("Location", _redirect);
 		else
-			_construct_error(404);
+			_construct_error(500);
 	}
 	else
 		_construct_error(status);
@@ -292,6 +293,7 @@ std::string	Response::_merge_path(const std::string& root, std::string path)
 	// std::cout << C_G_CYAN << "path_len = " << path_len << " " << path << C_RES << std::endl;
 	// std::cout << C_G_CYAN << "loc_len = " << loc_len << " " << _location->uri << C_RES << std::endl;
 
+
 	if (_location->uri != "/")
 		path = path.substr(_location->uri.size());
 	if (path != "/")
@@ -311,8 +313,24 @@ std::string Response::_parse_host(std::string host)
 void Response::_setup_redirection(const Request& request)
 {
 	if (_file.type == DIRECTORY && !_file.valid)
-		_redirect = std::string("http://") + request.get_host() + std::string("/") + request.get_request_target() + "/";
+	{
+		_redirect = std::string("http://") + request.get_host() + "/" + request.get_request_target() + "/";
+		return;
+	}
+	if (_location->redirect == _location->uri)
+		return;
+	if (!_location->redirect.find("http"))
+	{
+		if (_redirect != _location->redirect)
+			_redirect = _location->redirect;
+	}
 	else
-		_redirect = "http://localhost:1234" + request.get_request_target() == "/" ? request.get_request_target() : "";
-	//else if (!_location->redirect.find("http"))
+		_redirect = std::string("http://") + request.get_host() + "/" +  _location->redirect;
+	// _redirect += _merge_path(_location->redirect, request.get_request_target());
+	// Augustin : ici gerer l'object demande dans la redir !! 
+	// Je deteste aymeric c'est un vrai con
+	// _redirect += _merge_path(_location->uri, request.get_request_target());
+	std::cout << C_G_RED << request.get_request_target() << C_RES << std::endl;
+	std::cout << C_G_RED << _location->redirect << " | " << _location->uri << " | " << _redirect << C_RES << std::endl;
+
 }
