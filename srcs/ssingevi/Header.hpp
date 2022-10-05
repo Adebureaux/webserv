@@ -1,43 +1,68 @@
 #pragma once
+
 #include <set>
 #include <map>
 #include <vector>
-#include <ctime>
 #include <string>
 #include <string>
 #include <cerrno>
 #include <cstring>
 #include <cstdarg>
+#include <cstring>
 #include <cstdlib>
 #include <csignal>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
-#include <fcntl.h>
-#include <dirent.h>
 #include <exception>
-#include <algorithm>
 #include <stdexcept>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
-#include <sys/sysmacros.h>
-#include "Errors_html.hpp"
 
-#define DEBUG true
+// Augustin
+class Location {
+	public:
+	Location();
+	Location(const Location &cpy);
+	~Location();
+	Location &operator=(const Location &cpy);
 
+	bool							get_method;
+	bool							post_method;
+	bool							delete_method;
+	std::string						redirect;
+	std::string						root;
+	bool							autoindex;
+	std::string						default_file;
+	std::string						CGI;
+	std::pair<bool, std::string>	upload;
+};
+
+class Server_block {
+	public:
+	Server_block();
+	Server_block(const Server_block &cpy);
+	~Server_block();
+	Server_block &operator=(const Server_block &cpy);
+
+	int										port;			// Mandatory
+	std::string								address;		// Mandatory
+	std::string								server_names;	// Optional
+	bool									main; 			// Le premier serveur pour un host:port sera le serveur par défaut pour cet host:port (ce qui signifie qu’il répondra à toutes les requêtes qui n’appartiennent pas à un autre serveur).
+	std::map<int, std::string>				error_pages;	// Optional
+	std::string								root;
+	size_t									body_size;		// Optional ? (setup default value)
+	std::vector<Location>					locations;		// Optional
+};
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
-#define MIME_TYPE_NUMBER 349
-#define ERROR_NUMBER 6
-
 // End Augustin
 
 // Aymeric
+
 #define GET						 0
 #define POST					 1
 #define DELETE					 2
@@ -53,14 +78,6 @@
 #define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
 #define CATCH_VAR(X)			_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
 // End Aymeric
-
-// Romain
-typedef enum e_state { ERROR = -1 , WAITING, INCOMPLETE, READY, DONE } t_state;
-typedef enum e_file_type { FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN } file_type;
-#define R 1
-#define W 2
-#define X 4
-// End Romain
 
 /*
 ** color letters

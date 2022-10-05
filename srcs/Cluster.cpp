@@ -7,57 +7,40 @@ void signal_handler(int sig) {
 		run = false;
 }
 
-Cluster::Cluster() {
+Cluster::Cluster(server_map& config)
+{
+	int fd;
+
 	if ((_epoll_fd = epoll_create(true)) == -1)
 		std::cerr << C_B_RED << "Cannot create epoll" << C_RES << std::endl;
 	std::signal(SIGINT, signal_handler);
+	for (server_map::const_iterator it = config.begin(); it != config.end(); it++)
+	{
+		config_map::const_iterator it_m = it->second.begin();
+		fd = _init_socket(it_m->second);
+		_add_server(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR);
+		for (; it_m != it->second.end(); it_m++)
+			_servers[fd][it_m->second.server_names] = it_m->second;
+	}
+	config.clear();
 }
 
 Cluster::~Cluster()
 {
-	for (std::map<int, Client>::iterator it = _client_map.begin(); it != _client_map.end(); it++)
+	for (server_map::iterator it = _servers.begin(); it != _servers.end(); it++)
 		close(it->first);
-	_client_map.clear();
-}
-
-void Cluster::parse(const std::string& file)
-{
-	int fd;
-	(void)file;
-	// Should parse the .conf here
-
-	// Example below, hard coded part (should use file later)
-	_server_number = 2;
-	t_server_block conf[_server_number];
-
-	// SERVER 1
-	conf[0].port = 8080;
-	conf[0].address = "0.0.0.0";
-	conf[0].server_names = "webserv.fr";
-	conf[0].main = true;
-	conf[0].body_size = 1000;
-	t_location loc;
-	loc.get_method = true;
-	loc.post_method = true;
-	loc.delete_method = true;
-	loc.root = "/html";
-	loc.Autoindex = true;
-	loc.default_file = "index.html";
-	loc.upload = true;
-	conf[0].locations.push_back(loc);
-
-
-	// SERVER 2
-	conf[1].address = "127.0.0.1";
-	conf[1].port = 9090;
-	conf[1].server_names = "weebserv.fr";
-
-	for (int i = 0; i < _server_number; i++)
+	close(_epoll_fd);
+	if (_clients.empty())
+		return;
+	while (1)
 	{
-		fd = _init_socket(conf[i]);
-		_epoll_add(fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
-		_servers[fd][conf[i].server_names] = conf[i];
-		// IMPORTANT : Here we have to check if a server_block have the same port than an other, then add other configurations to the second map
+		std::set<Client*>::iterator it = _clients.begin();
+		if (it != _clients.end())
+		{
+			Client *ptr = *it;
+			delete ptr;
+		}
+		else break;
 	}
 }
 
@@ -69,104 +52,53 @@ void Cluster::event_loop(void)
 	while (run)
 	{
 		epoll_ret = epoll_wait(_epoll_fd, events, MAX_EVENTS, TIMEOUT_VALUE);
-		if (epoll_ret == 0)
-			std::cerr << C_G_MAGENTA << "Waiting for new connection ..." << C_RES << std::endl;
-		else if (epoll_ret == -1) {
-			if (errno == EINTR) {
-				std::cerr << std::endl << C_G_MAGENTA << "Closing websev..." << C_RES << std::endl;
+		if (!epoll_ret)
+			std::cout << C_G_MAGENTA << "Waiting for new connection ..." << C_RES << std::endl;
+		else if (epoll_ret == -1)
+		{
+			if (errno == EINTR)
+			{
+				std::cout << std::endl << C_G_MAGENTA << "Closing websev..." << C_RES << std::endl;
 				continue;
 			}
-			std::cerr << C_B_RED << "epoll_wait failed" << C_RES << std::endl;
 			break;
 		}
 		for (int i = 0; i < epoll_ret; i++)
 		{
 			server_map::iterator it = _servers.find(events[i].data.fd);
-			if (it != _servers.end()) // if event from server (aka should be a new client trying to connect)
+			if (it != _servers.end())
 			{
-				// Client *client = new Client(_epoll_fd, it, &_clients);
-				// _clients.insert(client);
-				_accept_new_client(it);
+				Client *client = new Client(_epoll_fd, it->first, &it->second, &_clients);
+				_clients.insert(client);
 			}
 			else
 			{
-				_handle_event(_client_map.find(events[i].data.fd)->second, events[i].events);
-				// try
-				// {
-				// 	((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
-				// }
-				// catch (const std::exception& e)
-				// {
-				// 	// (void)e;
-				// 	std::cout << std::endl << e.what() << std::endl;
-				// 	_clients.erase((Client*)(events[i].data.ptr));
-				// 	delete (Client*)(events[i].data.ptr);
-				// }
+				try
+				{
+					((Client*)(events[i].data.ptr))->handleEvent(events[i].events);
+				}
+				catch (const std::exception& e)
+				{
+					(void)e;
+					delete (Client*)(events[i].data.ptr);
+					_clients.erase((Client*)(events[i].data.ptr));
+				}
 			}
 		}
 	}
 }
 
-void Cluster::_handle_event(Client& client, uint32_t revents)
-{
-	if (revents & (EPOLLERR | EPOLLHUP))
-	{
-		_disconnect(client.get_fd());// must close collection and destroy client as well as its ref in the clients collection
-		return;
-	}
-	if (revents & EPOLLIN)
-	{
-		if (client._receive() <= 0)
-		{
-			_disconnect(client.get_fd()); // must close connection and destroy client
-			return;
-		}
-	}
-	if (revents & EPOLLOUT && client.get_request_state() == READY)
-	{
-		client.handle_request();
-		if (!client.respond())
-			_disconnect(client.get_fd());
-	}
-
-}
-
-void Cluster::_disconnect(int fd)
-{
-	std::cerr << "\033[1;35mRemove client " << fd << "\033[0m" << std::endl;
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0)
-		std::cerr << "error\n";
-	close(fd);
-	// _client_map.erase(fd);
-}
-
-void Cluster::_accept_new_client(server_map::iterator& server)
-{
-	int client_fd;
-	sockaddr_in addr;
-	socklen_t addr_len = sizeof(addr);
-
-	memset(&addr, 0, sizeof(addr));
-	if ((client_fd = accept(server->first, (sockaddr*)&addr, &addr_len)) < 0)
-		std::cerr << C_B_RED << "Cannot accept new client" << C_RES << std::endl;
-	_epoll_add(client_fd, EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
-	_client_map.insert(std::make_pair(client_fd, Client(client_fd, server)));
-	std::cerr << C_G_MAGENTA << "Create client " << client_fd << " " << inet_ntoa(addr.sin_addr) << ":" <<  ntohs(addr.sin_port) << C_RES << std::endl;
-}
-
-
-void Cluster::_epoll_add(int fd, uint32_t revents)
+void Cluster::_add_server(int fd, uint32_t revents) const
 {
 	epoll_event event;
 
 	std::memset(&event, 0, sizeof(event));
 	event.data.fd = fd;
 	event.events = revents;
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event) < 0)
-		std::cerr << C_B_RED << "Cannot add fd " << fd << " to epoll" << C_RES << std::endl;
+	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &event);
 }
 
-int Cluster::_init_socket(t_server_block config)
+int Cluster::_init_socket(const Server_block& config) const
 {
 	int fd;
 	int opt = 1;
@@ -182,22 +114,43 @@ int Cluster::_init_socket(t_server_block config)
 	addr.sin_port = htons(config.port);
 	addr.sin_addr.s_addr = inet_addr(config.address.c_str());
 	if (bind(fd, (sockaddr*)&addr, addr_len) == -1)
-		std::cerr << C_B_RED << "Cannot bind " << config.address << ":" << config.port << C_RES << std::endl;
-	if (listen(fd, SOMAXCONN) == -1)
-		std::cerr << C_B_RED << "Cannot listen " << config.address << ":" << config.port << C_RES << std::endl;
-	std::cerr << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
+	{
+		std::cerr << C_B_RED << "Address " << config.address << ":" << config.port << " already in use" << C_RES << std::endl;
+		run = false;
+	}
+	else
+	{
+		listen(fd, SOMAXCONN);
+		std::cout << C_G_MAGENTA << "Server " << fd << " listening " << config.address << ":" <<  config.port << C_RES << std::endl;
+	}
 	return (fd);
 }
 
 int main(int ac, char **argv, char **envp)
 {
-	(void)ac;
-	(void)argv;
 	(void)envp;
-	// Parse .conf file in cluster.config structure
-	Cluster cluster;
+	File conf = File(ac >= 2 ? File(argv[1]) : File("webserv.conf"));
 
-	cluster.parse("config.conf");
+	if (!conf.valid || conf.type != FILE_TYPE)
+	{
+		std::cerr << C_G_RED << "Configuration file is not valid" << C_RES << std::endl;
+		return (1);
+	}
+	conf.set_content();
+	conf.set_mime_type();
+	if (conf.mime_type != "webserv/conf")
+	{
+		std::cerr << C_G_RED << "Configuration file extension should be .conf" << C_RES << std::endl;
+		return (1);
+	}
+
+	Conf config(conf.content);
+	if (!config.is_valid())
+	{
+		std::cerr << C_G_RED << "Configuration file is not valid" << C_RES << std::endl;
+		return (1);
+	}
+	Cluster cluster(config.get_conf_map());
 	cluster.event_loop();
 	return (0);
 }

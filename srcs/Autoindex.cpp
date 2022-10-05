@@ -1,6 +1,6 @@
 #include "Autoindex.hpp"
 
-const char* Autoindex::_html_start = "<!doctype html><html><header><style>body {padding: 5vh;} a {vertical-align:middle;} img {position:relative;vertical-align: middle;width: 10px; margin-right:20px;}</style></header><body>";
+const char* Autoindex::_html_start = "<!doctype html><html><header><style>body {padding: 5vh;} a {vertical-align:middle;} img {position:relative;vertical-align: middle;height: 15px; margin-right:20px;}</style></header><body>";
 const char* Autoindex::_html_end = "</body></html>";
 const char* Autoindex::_html_a_start = "<a type=\"text/html\" href=\"";
 const char* Autoindex::_html_a_end = "</a>";
@@ -13,17 +13,63 @@ const char* Autoindex::_nth = "</th>";
 const char* Autoindex::_tr = "<tr>";
 const char* Autoindex::_ntr = "</tr>";
 
-std::string Autoindex::_create_link(File file)
+std::string Autoindex::_create_href(File file, std::string pseudo_root)
+{
+	// (void)file;
+	// (void)pseudo_root;
+	std::stringstream output;
+	if (pseudo_root.size() != 1 && *pseudo_root.begin() != '/')
+		pseudo_root.insert(0, "/");
+	// std::cout << pseudo_root << std::endl;
+	if (pseudo_root.empty())
+		output << "/";
+	if (file.name == ".")
+		output << pseudo_root;
+	else if (file.name == "..")
+	{
+		std::string::iterator it = pseudo_root.end();
+		std::string new_root;
+		it--;
+		if (pseudo_root.size() > 1 && *it == '/')
+		{
+			it--;
+			while (it != pseudo_root.begin() && *it != '/')
+				it--;
+			new_root.insert(new_root.begin(), pseudo_root.begin(), it);
+		}
+		output << new_root;
+		// if (new_root.size())
+			output << "/";
+	}
+	// else if (pseudo_root != "/")
+	// 	output << file.name;
+	else
+	{
+		output << pseudo_root << file.name;
+		if (file.type == DIRECTORY)
+			output << "/";
+	}
+
+	// std::cout << output.str() << std::endl;
+
+	return output.str();
+};
+
+std::string Autoindex::_create_link(File file, const std::string &pseudo_root)
 {
 	std::stringstream output;
+	// std::cout << C_G_BLUE << "AUTOINDEX URI = |"
+	// << file.name << "| path = |" << file.path
+	// << "| uri = |" << file.uri << "| pseudo_root |"  << pseudo_root << "|" << C_RES << std::endl;
+
 	output
 	<< _tr
 		<< _td
 			<< (file.type == DIRECTORY ? _html_folder_icon : _html_file_icon)
 		<< _ntd
 		<< _td
-			<< _html_a_start << "/"
-			<< file.uri << "\">"
+			<< _html_a_start
+			<< _create_href(file, pseudo_root) << "\">"
 			<< file.name
 			<< _html_a_end
 		<< _ntd
@@ -37,6 +83,7 @@ std::string Autoindex::_create_link(File file)
 			<< file.time_stamp_str
 		<< _ntd
 	<< _ntr;
+	// std::cout << output.str() << std::endl;
 	return output.str();
 };
 
@@ -65,28 +112,38 @@ void Autoindex::ls(char const *root)
 	files = filelist;
 };
 
-std::pair<std::string, size_t> Autoindex::to_html(void)
+bool FileCompare(const File &a, const File &b)
+{
+	if (a.type == DIRECTORY && b.type == DIRECTORY && a.name < b.name)
+		return true;
+	else if (a.type == DIRECTORY && b.type == DIRECTORY && a.name > b.name)
+		return false;
+	else if (a.type == DIRECTORY && b.type != DIRECTORY)
+		return true;
+	else if (b.type == DIRECTORY && a.type != DIRECTORY)
+		return false;
+	else if (b.type != DIRECTORY && a.type != DIRECTORY && a.name < b.name)
+		return true;
+	return false;
+};
+
+std::pair<std::string, size_t> Autoindex::to_html(const std::string &pseudo_root)
 {
 	std::stringstream output;
 	std::string html;
+	std::vector<File>::iterator it = files.begin();
+	std::sort(files.begin(), files.end(), &FileCompare);
+	// it->
 	output << _html_start << "<table style=\"width:100%; text-align:left; vertical-align: middle;\">";
 	output << _th << "" << _nth << _th << "name" << _nth << _th << "size (bytes)" << _nth << _th << "Last Modified" << _nth;
-	for (std::vector<File>::iterator it = files.begin(); it != files.end(); it++) {
-		output << _create_link(*it);
+	for (; it != files.end(); it++) {
+		// printFileInfos(*it);
+		output << _create_link(*it, pseudo_root);
 	}
 	output << "</table>";
 	output << _html_end;
 	html = output.str();
 	return std::make_pair(html, html.size());
-};
-
-void printFileInfos(const File &info)
-{
-	std::cout << info.uri << " is valid: "<< info.valid << "\t";
-	std::cout << "last modification: "<< info.time_stamp_str << "\t";
-	std::cout << " - "<< info.time_stamp_raw << "\t";
-	std::cout << "type: "<< (info.type == DIRECTORY ? "DIR \t" : "File\t");
-	std::cout << "IO_size: " << info.IO_read_block << "\t"<< "size: "<< info.size << "\n";
 };
 
 // int main(int argc, char const *argv[]) {

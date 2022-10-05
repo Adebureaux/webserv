@@ -3,22 +3,29 @@
 #include "Utility.hpp"
 #include "Response.hpp"
 
-class Client 
+typedef std::map<std::string, Server_block> config_map;
+typedef std::map<int, config_map> server_map;
+
+class Client
 {
 	public:
-	Client(int fd, server_map::iterator& servers);
-	~Client();
-
+	Client(int epoll, int server_fd, config_map *config, std::set<Client*> *clients);
+	virtual ~Client();
+	void disconnect(void);
+	void handleEvent(uint32_t revents);
 	void handle_request(void);
 	int respond(void);
-	int get_fd(void);
-	int get_request_state(void);
-
-	ssize_t _receive(void);
 
 	private:
-	int					_fd;
-	server_map::iterator& _servers;
-	Message				_request;
-	Response			_response;
+	ssize_t _receive(void);
+	void _addEventListener(uint32_t revents);
+
+	private:
+	int						_fd;
+	int						_epoll_fd;
+	config_map				*_config;
+	std::set<Client*>		*_clients;
+	sockaddr_in				_address;
+	Message					_request;
+	Response				_response;
 };

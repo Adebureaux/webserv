@@ -7,6 +7,8 @@ Request::Request(const std::string& raw_request)
 	{
 
 		http_message();
+		if (_var_map["REQUEST_TARGET"].empty())
+			_var_map["REQUEST_TARGET"] = "/";
 		_is_valid = true;
 	}
 	catch(const std::exception& e)
@@ -35,7 +37,7 @@ Request &Request::operator=(const Request &src)
 	return (*this);
 }
 
-Request::~Request(){}
+Request::~Request() {}
 
 bool Request::is_valid() const
 {
@@ -480,7 +482,8 @@ void Request::dec_octet()
 {
 	try
 	{
-		_or("naaaa", &Request::DIGIT, "rn", '1', '9', &Request::DIGIT,"cnn", '1', &Request::DIGIT, &Request::DIGIT, "crn", '2', '0', '4', &Request::DIGIT, "Rr", "25", '0', '5');
+		_or("aaaan", "Rr", "25", '0', '5',  "crn", '2', '0', '4', &Request::DIGIT, "cnn", '1', &Request::DIGIT, &Request::DIGIT, "rn", '1', '9', &Request::DIGIT, &Request::DIGIT);
+		// _or("naaaa", &Request::DIGIT, "rn", '1', '9', &Request::DIGIT,"cnn", '1', &Request::DIGIT, &Request::DIGIT, "crn", '2', '0', '4', &Request::DIGIT, "Rr", "25", '0', '5');
 	}
 	catch(const std::exception& e)
 	{
