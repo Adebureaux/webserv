@@ -29,11 +29,12 @@
 #define DEBUG true
 
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 1024
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
 #define MIME_TYPE_NUMBER 349
 #define ERROR_NUMBER 6
+#define CRLF "\r\n\r\n"
 
 // End Augustin
 
@@ -55,7 +56,7 @@
 // End Aymeric
 
 // Romain
-typedef enum e_state { ERROR = -1 , WAITING, INCOMPLETE, READY, DONE } t_state;
+typedef enum e_state { ERROR = -1 , UNDEFINED, INCOMPLETE, READY, DONE } t_state;
 typedef enum e_file_type { FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN } file_type;
 #define R 1
 #define W 2

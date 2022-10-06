@@ -24,77 +24,6 @@ Client::~Client()
 	//remove all messages
 };
 
-static bool	initMultipartRequest(Message &req)
-{
-	size_t pos = req.raw_data.find("Content-Type: multipart/"); // 24
-	if (pos != std::string::npos)
-	{
-		req.multipart = true;
-		std::cout << "\tMULTIPART REQUEST DETECTED\n\n";
-		pos = req.raw_data.find("; boundary=", pos); //11
-		if (pos != std::string::npos)
-		{
-			std::cout << "\tBOUNDARY REQUEST DETECTED\n\n";
-
-			req.boundary = req.raw_data.substr(pos + 11, req.raw_data.find_first_of("\r\n", pos + 11) - (pos + 11));
-			req.boundary.insert(0, "--");
-			req.boundary_end = req.boundary;
-			req.boundary_end.append("--");
-
-		}
-		else return (req.multipart = false); // request should be invalidated
-	}
-	else return (req.multipart = false);
-	return true;
-};
-
-
-
-ssize_t Client::_receive(void)
-{
-	ssize_t received = 0;
-	bool newRequest = _request.raw_data.empty();
-	std::cout << (newRequest ? "\tNEW" : "\t") <<"\tREQUEST RECEIVED\n";
-	for(;;)
-	{
-		char buffer[BUFFER_SIZE + 1] = { 0 };
-		int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
-		if (ret == 0 || ret < 0)
-			break;
-		if (ret > 0)
-		{
-			// std::cout << ret << std::endl;
-
-			_request.raw_data.append(buffer);
-			received += ret;
-		}
-		if (ret < BUFFER_SIZE)
-			break;
-	}
-	// the request is new
-	// 		we check if Expect
-	//			expect 100 continue
-
-	if (newRequest)
-	{
-		if (_request.raw_data.find("Expect: 100-continue") != std::string::npos)
-			_request.continue100 = READY;
-		(void)initMultipartRequest(_request);
-		// std::cout << "raw_data:" << _request.raw_data << "|"<<std::endl;
-		// std::cout << "BOUNDARY:" << _request.boundary << "|"<<std::endl;
-	}
-	// must check wether or not there is a body to be received (req header Must contain Expect: 100-continue and a content-length)
-	if ((_request.raw_data.find("\r\n\r\n") != std::string::npos && !_request.multipart)
-	|| (_request.multipart && _request.raw_data.find(_request.boundary_end) != std::string::npos))
-	{
-		_request.state = READY;
-		_request.continue100 = DONE;
-	}
-	else
-		_request.state = INCOMPLETE;
-	return (received);
-}
-
 void Client::_addEventListener(uint32_t revents)
 {
 	epoll_event event;
@@ -103,7 +32,7 @@ void Client::_addEventListener(uint32_t revents)
 	event.data.ptr = this;
 	event.events = revents;
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _fd, &event) < 0)
-		throw std::exception();
+	throw std::exception();
 
 }
 
@@ -112,6 +41,70 @@ void Client::disconnect(void)
 	epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _fd, NULL);
 	close(_fd);
 };
+
+
+static void	initMultipartRequest(Message &req)
+{
+	size_t pos = req.raw_data.find("Content-Type: multipart/"); // 24
+	if (pos != std::string::npos)
+	{
+		req.multipart = true;
+		// std::cout << "\tMULTIPART REQUEST DETECTED\n\n";
+		pos = req.raw_data.find("; boundary=", pos); //11
+		if (pos != std::string::npos)
+		{
+			// std::cout << "\tBOUNDARY REQUEST DETECTED\n\n";
+
+			req.boundary = req.raw_data.substr(pos + 11, req.raw_data.find_first_of("\r\n", pos + 11) - (pos + 11));
+			req.boundary.insert(0, "--");
+			req.boundary_end = req.boundary;
+			req.boundary_end.append("--");
+
+		}
+		else req.multipart = false; // request should be invalidated
+	}
+	else req.multipart = false;
+};
+
+ssize_t Client::_receive(void)
+{
+	std::cout << (newRequest ? "\tNEW" : "\t") <<"\tREQUEST RECEIVED\n";
+	char buffer[BUFFER_SIZE + 1] = { 0 };
+	size_t pos1, pos2 = 0;
+	int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
+
+	if (ret > 0)
+		_request.raw_data.append(buffer);
+	if ((pos1 = _request.raw_data.find(CRLF) != std::string::npos)) // le header de la requete est complet
+	{
+		if (_request.raw_data.find("POST") != std::string::npos)
+		{
+			if (_request.continue100 == UNDEFINED) // si on a pas deja envoye un 100 continue
+			{
+				if (_request.raw_data.find("Expect: 100-continue") != std::string::npos)
+					_request.state = _request.continue100 = READY;
+			}
+			else if (_request.continue100 == DONE)
+			{
+				if (!_request.multipart) // si les boundary n'ont pas encore definie
+					initMultipartRequest(_request); // on les definie
+				if
+			}
+		}
+		else _request.state = READY;
+	}
+	else
+		_request.state = INCOMPLETE;
+
+	if ((_request.raw_data.find(CRLF) != std::string::npos && !_request.multipart)
+	|| (_request.multipart && _request.raw_data.find(_request.boundary_end) != std::string::npos))
+	{
+		_request.state = READY;
+		_request.continue100 = DONE;
+	}
+
+	return (ret);
+}
 
 void Client::handleEvent(uint32_t revents)
 {
@@ -122,11 +115,16 @@ void Client::handleEvent(uint32_t revents)
 		if (_receive() <= 0)
 			throw std::exception();
 	}
-	if (revents & EPOLLOUT && _request.state == READY)
+	if (revents & EPOLLOUT && (_request.state == READY || _request.continue100 == READY))
 	{
 		handle_request();
 		respond();
-		_request.raw_data.clear();
+		if (_request.continue100 == READY)
+		{
+			_request.continue100 = DONE;
+		}
+		else
+			_request.raw_data.clear();
 		_request.state = INCOMPLETE;
 	}
 };
