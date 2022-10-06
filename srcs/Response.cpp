@@ -326,10 +326,8 @@ void Response::_setup_redirection(const Request& request)
 	}
 	else
 		_redirect = std::string("http://") + request.get_host() + "/" +  _location->redirect;
-	_redirect += _merge_path("", request.get_request_target());
-	// Augustin : ici gerer l'object demande dans la redir !! 
-	// _redirect += _merge_path(_location->uri, request.get_request_target());
-	std::cout << C_G_RED << _merge_path("", request.get_request_target()) << C_RES << std::endl;
-	std::cout << C_G_RED << _location->redirect << " | " << _location->uri << " | " << _redirect << C_RES << std::endl;
+	_redirect = _merge_path(_redirect, request.get_request_target());
+	// std::cout << C_G_RED << _merge_path("", request.get_request_target()) << C_RES << std::endl;
+	// std::cout << C_G_RED << _location->redirect << " | " << _location->uri << " | " << _redirect << C_RES << std::endl;
 
 }
