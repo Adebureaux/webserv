@@ -87,10 +87,17 @@ void Client::handleEvent(uint32_t revents)
 	{
 		if (_receive() <= 0)
 			throw std::exception();
-		// if (_request.state == READY)
-		// {
-		//
-		// }
+		std::cout << " YO" << _request.info.get_method() <<"\n";
+
+		if (_request.state == READY)
+		{
+			// std::cout << " YO" << _request.info.get_method() <<"\n";
+			if (_request.info.get_method() == POST)
+			{
+				PostParser req(_request.info.get_message_body(), _request.info.get_header_var_map());
+				// if (req.valid)
+			}
+		}
 	}
 	if (revents & EPOLLOUT && (_request.state == READY || _request.continue100 == READY))
 	{

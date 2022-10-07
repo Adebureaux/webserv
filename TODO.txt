@@ -150,7 +150,35 @@ curl -d @DOCS.md http://localhost:8080
 
 	after a 100 continue response the client sends this:
 
-		---------- REQUEST ----------
+		09ce338d16d7b1a8
+		--09ce338d16d7b1a8
+		Content-Disposition: form-data; name="file"; filename="DOCS.md"
+		Content-Type: application/octet-stream
+
+		@content@sgsdkjghksdjhgkjsdhgjk
+
+		--------------------------09ce338d16d7b1a8
+		--------------------------09ce338d16d7b1a8
+		Content-Disposition: form-data; name="file"; filename="DOCS.md"
+		Content-Type: application/octet-stream
+
+		@content@sgsdkjghksdjhgkjsdhgjk
+
+		--------------------------09ce338d16d7b1a8
+		--------------------------09ce338d16d7b1a8
+		Content-Disposition: form-data; name="file"; filename="DOCS.md"
+		Content-Type: application/octet-stream
+
+		@content@sgsdkjghksdjhgkjsdhgjk
+
+		--------------------------09ce338d16d7b1a8
+		--------------------------09ce338d16d7b1a8
+		Content-Disposition: form-data; name="file"; filename="DOCS.md"
+		Content-Type: application/octet-stream
+
+		@content@sgsdkjghksdjhgkjsdhgjk
+
+		--------------------------09ce338d16d7b1a8
 		--------------------------09ce338d16d7b1a8
 		Content-Disposition: form-data; name="file"; filename="DOCS.md"
 		Content-Type: application/octet-stream
@@ -159,7 +187,9 @@ curl -d @DOCS.md http://localhost:8080
 
 		--------------------------09ce338d16d7b1a8--
 
-		-----------------------------
+
+
+
 
 
 curl -d "param1=value1&param2=value2"  http://localhost:1234/html/
@@ -184,3 +214,5 @@ if ("Expect: 100-continue" in request header in _receive() AND Header valid)
 		save boundary string
 	else
 		send ERROR message
+
+peut etre faire des comparaisons sur des toUPPER

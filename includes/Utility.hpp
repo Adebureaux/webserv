@@ -55,11 +55,64 @@ class Message
 	std::string		boundary_end;
 	bool			multipart;
 	bool			hasbody;
-	
+
 	Message(Client *c);
 	~Message();
 };
 
+class PostParser
+{
+public:
+	std::string							current_body;
+	std::map<std::string, std::string>	fields;
+	std::string							res;
+	std::string							boundary;
+	std::string							boundary_end;
+	bool								multipart;
+	t_state								continue_100;
+	bool								valid;
+	PostParser(std::string msg_body, std::map<std::string, std::string> fields_map) :
+	current_body(msg_body), fields(fields_map), multipart(false), continue_100(UNDEFINED), valid(false)
+	{
+		_set_is_multipart();
+		_set_continue_100();
+		// _dostuff();
+	};
+	// PostParser(const PostParser &src) {};
+	// PostParser &operator=(const PostParser &src) {};
+	~PostParser() {};
+	void _set_continue_100()
+	{
+		if (multipart == true && valid)
+		{
+			std::map<std::string, std::string>::iterator it = fields.find("Expect");
+			if (it != fields.end() && it->second == "100-continue")
+			continue_100 = READY;
+		}
+		else throw EXECP_("CESTPERDU\n");
+	};
+	void _set_is_multipart()
+	{
+		std::map<std::string, std::string>::iterator it = fields.find("Content-type");
+		if (it != fields.end() && it->second.find("multipart/") != std::string::npos)
+		{
+			multipart = true;
+			// std::cout << "\tMULTIPART REQUEST DETECTED\n\n";
+			size_t pos = it->second.find("; boundary="); //11
+			if (pos != std::string::npos)
+			{
+				// std::cout << "\tBOUNDARY REQUEST DETECTED\n\n";
+
+				boundary = it->second.substr(pos + 11, it->second.size());
+				boundary.insert(0, "--");
+				boundary_end = boundary;
+				boundary_end.append("--");
+				valid = true;
+			}
+			else throw EXECP_("RIEN NE VA PLUS, faites vos jeux\r\n");
+		}
+	};
+};
 
 class File
 {
