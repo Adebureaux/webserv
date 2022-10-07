@@ -89,7 +89,7 @@ void Response::create_get(const Request& request)
 
 		// Redirect should check location redirect
 		if (_file.redirect || !_location->redirect.empty())
-			_construct_response(request, 301);
+			_construct_response(request, 302);
 		else if (!_location->get_method)
 			_construct_response(request, 405);
 		else if (!_file.not_found && !(_file.permissions & R))
@@ -110,35 +110,24 @@ void Response::create_get(const Request& request)
 
 void Response::create_post(Message& request, Server_block& config)
 {
-	// A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
-	// or 204 (No content) if the DELETE action has been completed but the response does not have a message body.
-	// if (_location)
-	// {
-		// Nothing actualy
-	// }
-	// else
-	// std::cout << "\t\tCOUCOU\n\n" << request.raw_data;
-	// {
-	if (request.continue100 == READY && request.state == INCOMPLETE)
-	{
-		request.continue100 = DONE;
-		request.state = INCOMPLETE;
-		_generate_response(100);
-	}
-	else if (request.continue100 == DONE && request.multipart && request.state == READY)
-	{
-		_generate_response(201);
-
-		// _generate_response(handleMultipartRequest(request, config, _location));
-	}
-	// (void)request;
+	(void)request;
 	(void)config;
 }
 
 void Response::create_delete(const Request& request, Server_block& config)
 {
-	(void)request;
 	(void)config;
+	//A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
+	// or 204 (No content) if the DELETE action has been completed but the response does not have a message body.
+	if (_location)
+	{
+		_file.content = "{success: true}";
+		_construct_response(request, 200);
+	}
+	else if (request.continue100 == DONE && request.multipart && request.state == READY)
+	{
+		_construct_response(request, 204);
+	}
 }
 
 void Response::_find_location(const Request& request, Server_block& config)
@@ -188,6 +177,7 @@ void Response::_init_start_lines(void) const
 	start_lines.insert(std::make_pair(202, "HTTP/1.1 202 Accepted\n"));
 	start_lines.insert(std::make_pair(204, "HTTP/1.1 204 No content\n"));
 	start_lines.insert(std::make_pair(301, "HTTP/1.1 301 Moved Permanently\n"));
+	start_lines.insert(std::make_pair(302, "HTTP/1.1 302 Found\n"));
 	start_lines.insert(std::make_pair(400, "HTTP/1.1 400 Bad Request\n"));
 	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\n"));
 	start_lines.insert(std::make_pair(404, "HTTP/1.1 404 Not Found\n"));
@@ -257,28 +247,16 @@ void Response::_construct_response(const Request& request, int status)
 		_header_field("Content-Length", size.str());
 		_body.append(_file.content);
 	}
-	else if (status == 202)
-	{
-		// Nothing actualy
-	}
-	else if (status == 204)
-	{
-		// Nothing actualy
-	}
 	else if (status < 400)
 	{
 		_setup_redirection(request);
-		// _header_field("Content-Type", "text/html");
-		// _header_field("Content-Length", "0"); // 178 ?
-		_header_field("Location", _redirect);
+		if (!_redirect.empty())
+			_header_field("Location", _redirect);
+		else
+			_construct_error(500);
 	}
 	else
-	{
-		size << _errors[status].size();
-		_header_field("Content-Type", "text/html");
-		_header_field("Content-Length", size.str());
-		_body.append(_errors[status]);
-	}
+		_construct_error(status);
 	_generate_response(status);
 }
 
@@ -295,6 +273,16 @@ void Response::_construct_autoindex(const std::string& filename, const std::stri
 	_header_field("Content-Length", size.str());
 	_body.append(res.first);
 	_generate_response(200);
+}
+
+void Response::_construct_error(int status)
+{
+	std::stringstream size;
+
+	size << _errors[status].size();
+	_header_field("Content-Type", "text/html");
+	_header_field("Content-Length", size.str());
+	_body.append(_errors[status]);
 }
 
 void Response::_header_field(const std::string& header, const std::string& field)
@@ -316,6 +304,7 @@ std::string	Response::_merge_path(const std::string& root, std::string path)
 	// std::cout << C_G_CYAN << "path_len = " << path_len << " " << path << C_RES << std::endl;
 	// std::cout << C_G_CYAN << "loc_len = " << loc_len << " " << _location->uri << C_RES << std::endl;
 
+
 	if (_location->uri != "/")
 		path = path.substr(_location->uri.size());
 	if (path != "/")
@@ -335,7 +324,24 @@ std::string Response::_parse_host(std::string host)
 void Response::_setup_redirection(const Request& request)
 {
 	if (_file.type == DIRECTORY && !_file.valid)
-		_redirect = std::string("http://") + request.get_host() + std::string("/") + request.get_request_target() + "/";
+	{
+		_redirect = std::string("http://") + request.get_host() + "/" + request.get_request_target() + "/";
+		return;
+	}
+	if (_location->redirect == _location->uri)
+		return;
+	if (!_location->redirect.find("http"))
+	{
+		if (_redirect != _location->redirect)
+			_redirect = _location->redirect;
+	}
 	else
-		_redirect = _location->redirect;
+		_redirect = std::string("http://") + request.get_host() + "/" +  _location->redirect;
+	// _redirect += _merge_path(_location->redirect, request.get_request_target());
+	// Augustin : ici gerer l'object demande dans la redir !!
+	// Je deteste aymeric c'est un vrai con
+	// _redirect += _merge_path(_location->uri, request.get_request_target());
+	std::cout << C_G_RED << request.get_request_target() << C_RES << std::endl;
+	std::cout << C_G_RED << _location->redirect << " | " << _location->uri << " | " << _redirect << C_RES << std::endl;
+
 }

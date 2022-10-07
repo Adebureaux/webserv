@@ -28,6 +28,7 @@ class Conf : public Parser
 	bool			_catch_method;
 	std::string		_error_msg;
 	bool			_is_valid;
+	bool			_execp_block;
 	server_map _ret;
 
 
@@ -93,4 +94,12 @@ class Conf : public Parser
 	void dec_octet();
 	void body_size(void);
 	void body_size_value(void);
+	void file();
+	void directory();
+	void file_no_path();
+	void relative_directory();
+	void relative_path();
+	void url();
+	void location_redir(void);
+	void port_url(void);
 };
