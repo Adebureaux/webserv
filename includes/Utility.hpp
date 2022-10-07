@@ -54,6 +54,8 @@ class Message
 	std::string		boundary;
 	std::string		boundary_end;
 	bool			multipart;
+	bool			hasbody;
+	
 	Message(Client *c);
 	~Message();
 };

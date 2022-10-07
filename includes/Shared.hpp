@@ -29,12 +29,12 @@
 #define DEBUG true
 
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 10024
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
 #define MIME_TYPE_NUMBER 349
 #define ERROR_NUMBER 6
-#define CRLF "\r\n\r\n"
+#define __CRLF "\r\n\r\n"
 
 // End Augustin
 

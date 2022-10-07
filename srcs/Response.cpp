@@ -117,7 +117,7 @@ void Response::create_post(Message& request, Server_block& config)
 		// Nothing actualy
 	// }
 	// else
-	std::cout << "\t\tCOUCOU\n\n" << request.raw_data;
+	// std::cout << "\t\tCOUCOU\n\n" << request.raw_data;
 	// {
 	if (request.continue100 == READY && request.state == INCOMPLETE)
 	{
