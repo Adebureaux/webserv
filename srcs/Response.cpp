@@ -124,10 +124,10 @@ void Response::create_delete(const Request& request, Server_block& config)
 		_file.content = "{success: true}";
 		_construct_response(request, 200);
 	}
-	else if (request.continue100 == DONE && request.multipart && request.state == READY)
-	{
-		_construct_response(request, 204);
-	}
+	// else if (request.continue100 == DONE && request.multipart && request.state == READY)
+	// {
+	// 	_construct_response(request, 204);
+	// }
 }
 
 void Response::_find_location(const Request& request, Server_block& config)
