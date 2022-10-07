@@ -254,7 +254,7 @@ void Response::_construct_response(const Request& request, int status)
 			_header_field("Location", _redirect);
 		else
 			_construct_error(500);
-	}s
+	}
 	else
 		_construct_error(status);
 	_generate_response(status);
