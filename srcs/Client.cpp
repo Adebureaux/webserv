@@ -72,9 +72,9 @@ ssize_t Client::_receive(void)
 	int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
 	if (ret > 0)
 		_request.raw_data.append(buffer);
-	std::cout << C_G_BLUE << _request.raw_data << C_RES << std::endl << "===============================================" << std::endl;
+	std::cerr <<_request.raw_data;
 
-	if (_request.raw_data.size() > 4 && _request.raw_data.find(__CRLF, _request.raw_data.size() - 4) != std::string::npos)
+	if (_request.raw_data.find(__DOUBLE_CRLF) != std::string::npos)
 		_request.state = READY;
 	return (ret);
 }
@@ -99,16 +99,11 @@ void Client::handleEvent(uint32_t revents)
 			}
 		}
 	}
-	if (revents & EPOLLOUT && (_request.state == READY || _request.continue100 == READY))
+	if (revents & EPOLLOUT && (_request.state == READY))
 	{
 		handle_request();
 		respond();
-		if (_request.continue100 == READY)
-		{
-			_request.continue100 = DONE;
-		}
-		else
-			_request.raw_data.clear();
+		_request.raw_data.clear();
 		_request.state = INCOMPLETE;
 	}
 };

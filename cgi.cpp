@@ -64,8 +64,8 @@ std::string readToString(int fd)
 void cgi(const char *script_path) {
 	int out[2], error[2], pid, status;
 
-	pipe(out);
-	pipe(error);
+	pipe(out);// non, fichier
+	pipe(error); // non, fichier
 	if ((pid = fork()) == -1)
 		std::cout << "error: fork()\n";
 	if (pid == 0)

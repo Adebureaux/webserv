@@ -41,20 +41,17 @@ class Server_block {
 	location_map							locations;		// Mandatory
 };
 
+class PostParser;
 
 class Message
 {
 	public:
 	Client			*client;
 	t_state			state;
-	t_state			continue100;
 	std::string		raw_data;
 	Message			*ptr; // response || request
 	Request			info;
-	std::string		boundary;
-	std::string		boundary_end;
-	bool			multipart;
-	bool			hasbody;
+	// PostParser		post;
 
 	Message(Client *c);
 	~Message();
@@ -71,15 +68,35 @@ public:
 	bool								multipart;
 	t_state								continue_100;
 	bool								valid;
+	size_t								content_size;
 	PostParser(std::string msg_body, std::map<std::string, std::string> fields_map) :
-	current_body(msg_body), fields(fields_map), multipart(false), continue_100(UNDEFINED), valid(false)
+	current_body(msg_body), fields(fields_map), multipart(false), continue_100(UNDEFINED), valid(false), content_size(std::atoi(fields["Content-size"].c_str()))
 	{
 		_set_is_multipart();
 		_set_continue_100();
 		// _dostuff();
 	};
-	// PostParser(const PostParser &src) {};
-	// PostParser &operator=(const PostParser &src) {};
+	PostParser &operator=(const PostParser &src)
+	{
+		current_body = src.current_body;
+		fields = src.fields;
+		res = src.res;
+		boundary = src.boundary;
+		boundary_end = src.boundary_end;
+		multipart = src.multipart;
+		continue_100 = src.continue_100;
+		valid = src.valid;
+		content_size = src.content_size;
+		return *this;
+	};
+
+	PostParser(const PostParser &src)
+	{
+		*this = src;
+	};
+
+
+
 	~PostParser() {};
 	void _set_continue_100()
 	{
