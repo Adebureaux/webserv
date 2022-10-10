@@ -67,7 +67,7 @@ class Message
 	bool								isCGI;
 	bool								isUpload;
 	// PostParser		post;
-
+	void reset(void);
 	Message(Client *c);
 	~Message();
 };

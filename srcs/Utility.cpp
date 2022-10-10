@@ -70,6 +70,24 @@ Message::Message(Client *c) :
 	isUpload(false)
 {};
 
+void Message::reset(void)
+{
+	raw_data.clear();
+	state = INCOMPLETE;
+	header_parsed = false,
+	header_end = 0;
+	response_override = 0;
+	continue_100 = UNDEFINED;
+	indicated_content_size = 0;
+	current_content_size = 0;
+	multipart = false;
+	boundary.clear();
+	boundary_end.clear();
+	post_options_set = false;
+	isCGI = false;
+	isUpload = false;
+};
+
 Message::~Message() {};
 
 File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false), redirect(false)

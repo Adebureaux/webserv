@@ -158,8 +158,7 @@ void Client::handleEvent(uint32_t revents)
 	{
 		// handle_request();
 		respond();
-		_request.raw_data.clear();
-		_request.state = INCOMPLETE;
+		_request.reset(); // should not reset everything if we just sent a 100 continue
 	}
 };
 
