@@ -74,10 +74,61 @@ ssize_t Client::_receive(void)
 		_request.raw_data.append(buffer);
 	std::cerr <<_request.raw_data;
 
-	if (_request.raw_data.find(__DOUBLE_CRLF) != std::string::npos)
+	if (_request.header_end || (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF)) != std::string::npos)
 		_request.state = READY;
 	return (ret);
 }
+// doit checker si content-size est present
+// doit checker si
+static void setPostOptions(Message &req)
+{
+	req.post_options_set = true;
+	std::pair<bool, std::string> res = req.info.get_var_by_name("Content-size");
+	if (res.first)
+	{
+		req.indicated_content_size = std::atoi(res.second.c_str()); // must check later if this value doesnt exceed max_body_size (conf)
+		// should also check if second is a valid number
+		req.header_size = req.header_end + 5; // (header + double clrf)
+		if (req.header_size < req.raw_data.size())
+			req.current_content_size = req.raw_data.size() - req.header_size;
+		res = req.info.get_var_by_name("Content-type");
+
+		// MULTIPART REQUEST
+		// if (res.first && res.second.find("/x-www-form-urlencoded") != std::string::npos || res.second.find("/form-data") != std::string::npos)
+		// 	req.isCGI = true;
+		if (res.first && res.second.find("multipart/") != std::string::npos)
+		{
+			size_t pos = res.second.find("; boundary=");
+			if (pos != std::string::npos)
+			{
+				req.multipart = true;
+				req.boundary = res.second.substr(pos + 11, res.second.size());
+				req.boundary.insert(0, "--");
+				req.boundary_end = req.boundary;
+				req.boundary_end.append("--");
+			}
+			else
+			{
+				req.info._is_valid = false;
+				req.response_override = 400;
+				return ;
+			} // info: should have a defined boundary for multipart request
+		}
+ 		// should only be there if the request header size is equal to whole request size at this point
+		// MULTISTEP REQUEST (expect a 100 continue before sending the request body)
+		if ((res = req.info.get_var_by_name("Expect")).first && res.second == "100-continue")
+		{
+			req.continue_100 = READY;
+			req.response_override = 100;
+		}
+		if (req.continue_100 && !req.multipart)
+		{
+			req.info._is_valid = false;
+			req.response_override = 400;
+			return ;
+		}
+	}
+};
 
 void Client::handleEvent(uint32_t revents)
 {
@@ -87,21 +138,25 @@ void Client::handleEvent(uint32_t revents)
 	{
 		if (_receive() <= 0)
 			throw std::exception();
-		std::cout << " YO" << _request.info.get_method() <<"\n";
-
 		if (_request.state == READY)
 		{
-			// std::cout << " YO" << _request.info.get_method() <<"\n";
-			if (_request.info.get_method() == POST)
+			if (!_request.header_parsed)
 			{
-				PostParser req(_request.info.get_message_body(), _request.info.get_header_var_map());
-				// if (req.valid)
+				_request.info = Request(_request.raw_data);
+				_request.header_parsed = true;
+			}
+			if (_request.info.is_valid() && _request.info.get_method() == POST)
+			{
+				if (!_request.post_options_set)
+					setPostOptions(_request);
+				if (_request.info.is_valid() && _request.continue_100 != READY && _request.current_content_size < _request.indicated_content_size)
+					_request.state = INCOMPLETE;
 			}
 		}
 	}
 	if (revents & EPOLLOUT && (_request.state == READY))
 	{
-		handle_request();
+		// handle_request();
 		respond();
 		_request.raw_data.clear();
 		_request.state = INCOMPLETE;

@@ -33,6 +33,26 @@ Response& Response::operator=(const Response& rhs)
 
 Response::~Response() {}
 
+void Response::clear(void)
+{
+	_response.clear();
+	_header.clear();
+	_body.clear();
+	_redirect.clear();
+	_file = File();
+	_location = NULL;
+}
+
+const void* Response::send(void) const
+{
+	return (_response.c_str());
+}
+
+size_t Response::get_size(void) const
+{
+	return (_response.size());
+}
+
 void Response::create(Message& request, config_map& config)
 {
 	config_map::iterator it = config.find(_parse_host(request.info.get_host()));
@@ -58,26 +78,6 @@ void Response::create(Message& request, config_map& config)
 		create_post(request, it->second);
 	else if (request.info.get_method() == DELETE)
 		create_delete(request.info, it->second);
-}
-
-void Response::clear(void)
-{
-	_response.clear();
-	_header.clear();
-	_body.clear();
-	_redirect.clear();
-	_file = File();
-	_location = NULL;
-}
-
-const void* Response::send(void) const
-{
-	return (_response.c_str());
-}
-
-size_t Response::get_size(void) const
-{
-	return (_response.size());
 }
 
 void Response::create_get(const Request& request)
@@ -110,8 +110,35 @@ void Response::create_get(const Request& request)
 
 void Response::create_post(Message& request, Server_block& config)
 {
-	(void)request;
+	// (void)request;
 	(void)config;
+	if (_location)
+	{
+		// std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
+		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
+
+		// Redirect should check location redirect
+		if (_file.redirect || !_location->redirect.empty())
+			_construct_response(request.info, 302);
+		else if (!_location->get_method)
+			_construct_response(request.info, 405);
+		else if (!_file.not_found && !(_file.permissions & R))
+			_construct_response(request.info, 403);
+		else if (request.continue_100 == READY)
+		{
+			_construct_response(request.info, 100);
+			request.continue_100 = DONE;
+		}
+		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
+			_construct_autoindex(_file.path, request.info.get_request_target());
+		else
+			_construct_response(request.info, 404);
+	}
+	else
+	{
+		_construct_response(request.info, 404);
+		std::cout << C_G_BLUE << "No Location Found" << C_RES << std::endl;
+	}
 }
 
 void Response::create_delete(const Request& request, Server_block& config)

@@ -55,7 +55,19 @@ Message::Message(Client *c) :
 	state(INCOMPLETE),
 	raw_data(""), // ! PLACEHOLDER
 	ptr(NULL),
-	info("DEFAULT")
+	header_parsed(false),
+	info("DEFAULT"),
+	header_end(0),
+	response_override(0),
+	continue_100(UNDEFINED),
+	indicated_content_size(0),
+	current_content_size(0),
+	multipart(false),
+	boundary(""),
+	boundary_end(""),
+	post_options_set(false),
+	isCGI(false),
+	isUpload(false)
 {};
 
 Message::~Message() {};

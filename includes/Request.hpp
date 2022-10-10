@@ -22,6 +22,7 @@ class Request : public Parser
 	std::map<std::string, std::string>	get_var_map() const;
 	std::map<std::string, std::string>	get_header_var_map() const;
 	bool								is_valid() const;
+	bool								_is_valid;
 
 	private:
 
@@ -31,7 +32,6 @@ class Request : public Parser
 	std::map<std::string, std::string>	_header_var_map;
 	std::map<std::string, std::string>	_var_map;
 	std::string 						_error_msg;
-	bool								_is_valid;
 
 	/*
 	fct_pointer_tag

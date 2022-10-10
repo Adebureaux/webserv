@@ -50,7 +50,22 @@ class Message
 	t_state			state;
 	std::string		raw_data;
 	Message			*ptr; // response || request
+	bool			header_parsed;
 	Request			info;
+	size_t								header_end;
+	unsigned short						response_override;
+
+	// -------- for POST requests --------
+	t_state								continue_100;
+	size_t								header_size;
+	size_t								indicated_content_size;
+	size_t								current_content_size;
+	bool								multipart;
+	std::string							boundary;
+	std::string							boundary_end;
+	bool								post_options_set;
+	bool								isCGI;
+	bool								isUpload;
 	// PostParser		post;
 
 	Message(Client *c);
@@ -69,13 +84,21 @@ public:
 	t_state								continue_100;
 	bool								valid;
 	size_t								content_size;
+
+
 	PostParser(std::string msg_body, std::map<std::string, std::string> fields_map) :
-	current_body(msg_body), fields(fields_map), multipart(false), continue_100(UNDEFINED), valid(false), content_size(std::atoi(fields["Content-size"].c_str()))
+	current_body(msg_body),
+	fields(fields_map),
+	multipart(false),
+	continue_100(UNDEFINED),
+	valid(false),
+	content_size(std::atoi(fields["Content-size"].c_str()))
 	{
 		_set_is_multipart();
 		_set_continue_100();
 		// _dostuff();
 	};
+
 	PostParser &operator=(const PostParser &src)
 	{
 		current_body = src.current_body;
@@ -95,9 +118,9 @@ public:
 		*this = src;
 	};
 
-
-
 	~PostParser() {};
+
+
 	void _set_continue_100()
 	{
 		if (multipart == true && valid)
