@@ -129,10 +129,14 @@ void Response::create_post(Message& request, Server_block& config)
 			_construct_response(request.info, 100);
 			request.continue_100 = DONE;
 		}
-		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-			_construct_autoindex(_file.path, request.info.get_request_target());
+		else if (request.continue_100 == DONE)
+		{
+			_construct_response(request.info, 201);
+		}
+		// else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
+		// 	_construct_autoindex(_file.path, request.info.get_request_target());
 		else
-			_construct_response(request.info, 404);
+			_construct_response(request.info, 200);
 	}
 	else
 	{

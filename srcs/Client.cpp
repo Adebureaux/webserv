@@ -1,4 +1,10 @@
 #include "Client.hpp"
+#include <sys/stat.h>
+
+#include <sys/types.h>
+
+#include <sys/sysmacros.h>
+
 
 Client::Client(int epoll, int server_fd, config_map *config, std::set<Client*> *clients) : _epoll_fd(epoll), _config(config), _clients(clients), _request(this)
 {
@@ -6,9 +12,7 @@ Client::Client(int epoll, int server_fd, config_map *config, std::set<Client*> *
 
 	std::memset(&_address, 0, addr_len);
 	if ((_fd = accept(server_fd, (sockaddr*)&_address, &addr_len)) < 0)
-	{
 		throw std::exception();
-	}
 	if (DEBUG)
 		std::cout << C_G_MAGENTA << "Add client " << _fd << " on server " << server_fd << C_RES <<std::endl;
 	_addEventListener(EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET);
@@ -20,8 +24,6 @@ Client::~Client()
 		std::cout << C_G_MAGENTA << "Destruct client " << _fd << C_RES << std::endl;
 	disconnect();
 	_clients->erase(this);
-
-	//remove all messages
 };
 
 void Client::_addEventListener(uint32_t revents)
@@ -32,9 +34,8 @@ void Client::_addEventListener(uint32_t revents)
 	event.data.ptr = this;
 	event.events = revents;
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _fd, &event) < 0)
-	throw std::exception();
-
-}
+		throw std::exception();
+};
 
 void Client::disconnect(void)
 {
@@ -42,32 +43,11 @@ void Client::disconnect(void)
 	close(_fd);
 };
 
-
-// static void	initMultipartRequest(Message &req)
-// {
-// 	size_t pos = req.raw_data.find("Content-Type: multipart/"); // 24
-// 	if (pos != std::string::npos)
-// 	{
-// 		req.multipart = true;
-// 		// std::cout << "\tMULTIPART REQUEST DETECTED\n\n";
-// 		pos = req.raw_data.find("; boundary=", pos); //11
-// 		if (pos != std::string::npos)
-// 		{
-// 			// std::cout << "\tBOUNDARY REQUEST DETECTED\n\n";
-//
-// 			req.boundary = req.raw_data.substr(pos + 11, req.raw_data.find_first_of("\r\n", pos + 11) - (pos + 11));
-// 			req.boundary.insert(0, "--");
-// 			req.boundary_end = req.boundary;
-// 			req.boundary_end.append("--");
-//
-// 		}
-// 		else req.multipart = false; // request should be invalidated
-// 	}
-// 	else req.multipart = false;
-// };
-
 ssize_t Client::_receive(void)
 {
+	// struct stat infos;
+	// fstat(_fd, &infos);
+	// std::cout << C_G_CYAN << "stat on client fd: "<< infos.st_blksize << C_RES << std::endl;
 	char buffer[BUFFER_SIZE + 1] = { 0 };
 	int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
 	if (ret > 0)
@@ -77,21 +57,23 @@ ssize_t Client::_receive(void)
 	if (_request.header_end || (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF)) != std::string::npos)
 		_request.state = READY;
 	return (ret);
-}
-// doit checker si content-size est present
-// doit checker si
+};
+
 static void setPostOptions(Message &req)
 {
+	// std::cout << C_G_BLUE << "setPostOptions()\n";
 	req.post_options_set = true;
-	std::pair<bool, std::string> res = req.info.get_var_by_name("Content-size");
+	std::pair<bool, std::string> res = req.info.get_header_var_by_name("Content-Length");
 	if (res.first)
 	{
 		req.indicated_content_size = std::atoi(res.second.c_str()); // must check later if this value doesnt exceed max_body_size (conf)
+
 		// should also check if second is a valid number
 		req.header_size = req.header_end + 5; // (header + double clrf)
 		if (req.header_size < req.raw_data.size())
-			req.current_content_size = req.raw_data.size() - req.header_size;
-		res = req.info.get_var_by_name("Content-type");
+			req.current_content_size = req.raw_data.size() - req.header_size + 1;
+		std::cout << C_G_BLUE << "setPostOptions() current content size: " << req.current_content_size << std::endl;
+		res = req.info.get_header_var_by_name("Content-Type");
 
 		// MULTIPART REQUEST
 		// if (res.first && res.second.find("/x-www-form-urlencoded") != std::string::npos || res.second.find("/form-data") != std::string::npos)
@@ -116,7 +98,7 @@ static void setPostOptions(Message &req)
 		}
  		// should only be there if the request header size is equal to whole request size at this point
 		// MULTISTEP REQUEST (expect a 100 continue before sending the request body)
-		if ((res = req.info.get_var_by_name("Expect")).first && res.second == "100-continue")
+		if ((res = req.info.get_header_var_by_name("Expect")).first && res.second == "100-continue")
 		{
 			req.continue_100 = READY;
 			req.response_override = 100;
@@ -156,7 +138,6 @@ void Client::handleEvent(uint32_t revents)
 	}
 	if (revents & EPOLLOUT && (_request.state == READY))
 	{
-		// handle_request();
 		respond();
 		_request.reset(); // should not reset everything if we just sent a 100 continue
 	}
@@ -164,28 +145,19 @@ void Client::handleEvent(uint32_t revents)
 
 void Client::handle_request(void)
 {
-	// if (DEBUG)
-	// {
-	// 	std::cout << C_G_YELLOW << "---------- REQUEST ----------" << std::endl;
-	// 	std::cout << _request.raw_data << std::endl;
-	// 	std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
-	// }
 	_request.info = Request(_request.raw_data);
-	// expect 100 ?
-	// si non -> multipart ?
-	// si non -> body size ?
 };
 
 int Client::respond(void)
 {
 	_response.create(_request, *_config);
 	send(_fd, _response.send(), _response.get_size(), 0);
-	if (DEBUG)
-	{
-		std::cout << C_G_GREEN << "---------- RESPONSE ---------" << std::endl;
-		std::cout << (const char*)_response.send() << std::endl;
-		std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
-	}
+	// if (DEBUG)
+	// {
+	// 	std::cout << C_G_GREEN << "---------- RESPONSE ---------" << std::endl;
+	// 	std::cout << (const char*)_response.status << std::endl;
+	// 	std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
+	// }
 	_response.clear();
 	// if (_request.info.get_connection() != "keep-alive") // should also check if we didnt just send a 100 continue response
 		// throw std::exception();
