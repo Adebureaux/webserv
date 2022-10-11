@@ -13,7 +13,7 @@ Multipart::Multipart(const std::string& raw_multipart, const std::string& bounda
 		_error_msg = e.what();
 		_files.clear();
 	}
-	
+
 }
 
 Multipart::Multipart(const std::string& boundary)
@@ -286,6 +286,8 @@ void Multipart::obs_fold()
 void Multipart::message_body(void)
 {
 	size_t new_head = _raw_str.find(_boundary, _head);
+	if (new_head == std::string::npos)
+		throw EXECP_("request not valid");
 	_files[_current_header_field] += std::string(_raw_str.begin()+ _head,_raw_str.begin() + new_head);
 	_head = new_head;
 	_or("nn", &Multipart::is_boundary, &Multipart::is_boundary_end);
@@ -317,7 +319,7 @@ void Multipart::set_new_multipart(std::string const &new_str)
 		_error_msg = e.what();
 		_files.clear();
 	}
-	
+
 }
 
 void Multipart::set_boundary(std::string const &boundary)

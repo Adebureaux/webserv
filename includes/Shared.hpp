@@ -29,7 +29,7 @@
 #define DEBUG true
 
 
-#define BUFFER_SIZE 10024
+#define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
 #define MIME_TYPE_NUMBER 349
