@@ -137,7 +137,7 @@ void Response::create_post(Message& request, Server_block& config)
 		}
 		else if (request.continue_100 == DONE || request.current_content_size == request.indicated_content_size) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
 		{
-			_construct_response(request.info, 201);
+			_construct_response(request.info, 201); // should specify to client to close the connection or that we'll keep it alive
 		}
 		// else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
 		// 	_construct_autoindex(_file.path, request.info.get_request_target());
