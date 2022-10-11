@@ -52,7 +52,7 @@ ssize_t Client::_receive(void)
 	int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
 	if (ret > 0)
 		_request.raw_data.append(buffer);
-	std::cerr <<_request.raw_data;
+	// std::cerr <<_request.raw_data;
 
 	if (_request.header_end || (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF)) != std::string::npos)
 		_request.state = READY;
@@ -125,8 +125,8 @@ void Client::handleEvent(uint32_t revents)
 	if (revents & EPOLLOUT && (_request.state == READY))
 	{
 		respond();
-		std::cout << "--- POST REQUEST ---\n"
-		<<	"state:" << _request.state << "\t multipart ? " << _request.multipart <<"\t current_content_size:" << _request.current_content_size << C_RES << std::endl;
+		// std::cout << "--- POST REQUEST ---\n"
+		// <<	"state:" << _request.state << "\t multipart ? " << _request.multipart <<"\t current_content_size:" << _request.current_content_size << C_RES << std::endl;
 		if (_request.continue_100 == READY)
 			_request.continue_100 = DONE;
 		else _request.reset(); // should not reset everything if we just sent a 100 continue

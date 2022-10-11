@@ -87,6 +87,9 @@ void Response::create_get(const Request& request)
 		// std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
 		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
 
+		std::cout << C_G_RED << _file.valid << C_RES << std::endl;
+		std::cout << C_G_RED << _file.type << C_RES << std::endl;
+		std::cout << C_G_RED << _file.uri << C_RES << std::endl;
 		// Redirect should check location redirect
 		if (_file.redirect || !_location->redirect.empty())
 			_construct_response(request, 302);
@@ -170,16 +173,24 @@ void Response::_find_location(const Request& request, Server_block& config)
 	{
 		_location = &it->second;
 		std::string path = _merge_path(_location->root, requested.path);
+
+		// if (!_location->default_file.empty())
+		// 	_file = File(_location->default_file, path);
+		// if (!_file.valid && !requested.name.empty())
+		// 	_file = File(requested.name, path);
+
+
 		if (requested.name.empty())
 		{
-			File file(_location->default_file, path);
+			std::cout << C_G_RED << path << C_RES << std::endl; 
+			File file(_location->default_file, path);	// We try default file
 			if (file.valid && file.type == FILE_TYPE)
-				_file = file;
+				_file = file;							// We found a default file
 			else
-				_file = File(path);
+				_file = File(path);						// We use path for autoindex
 		}
 		else
-			_file = File(requested.name, path);
+			_file = File(requested.name, path);			// We found specific requested file
 		_file.set_content();
 		_file.set_mime_type();
 	}
