@@ -12,6 +12,7 @@ static std::map<int, std::string> start_lines;
 
 Response::Response() :  _location(NULL), _file()
 {
+	create_file("TEST.txt", "ici\nla\nbjr\n");
 	_init_start_lines();
 }
 

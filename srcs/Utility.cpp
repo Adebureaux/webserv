@@ -189,6 +189,7 @@ File &File::operator=(const File &src)
 
 File::~File() {};
 
+
 void File::set_permissions(void)
 {
 	if (!access(uri.c_str(), R_OK))
@@ -277,6 +278,17 @@ std::string find_path(const std::string& uri)
 	if (pos == std::string::npos)
 		return ("");
 	return (uri.substr(0, pos + 1));
+}
+
+File create_file(const std::string& filename, const std::string& content)
+{
+	std::ofstream offile(filename.c_str());
+	File file(filename);
+
+	offile << content;
+	file.set_mime_type();
+	file.set_content();
+	return (file);
 }
 
 const File::entry File::types[MIME_TYPE_NUMBER] = {

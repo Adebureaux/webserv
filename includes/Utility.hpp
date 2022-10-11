@@ -199,9 +199,9 @@ class File
 	};
 	static const entry types[MIME_TYPE_NUMBER];
 };
-
 File get_file_infos(std::string target, std::string path, int folder_fd);
 void printFileInfos(const File &info);
 std::vector<File> ls(char const *root);
 std::string find_path(const std::string& uri);
 std::string find_basename(const std::string& uri);
+File create_file(const std::string& filename, const std::string& content);
