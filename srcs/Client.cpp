@@ -72,7 +72,7 @@ static void setPostOptions(Message &req)
 		req.header_size = req.header_end + 5; // (header + double clrf)
 		if (req.header_size < req.raw_data.size())
 			req.current_content_size = req.raw_data.size() - req.header_size + 1;
-		std::cout << C_G_BLUE << "setPostOptions() current content size: " << req.current_content_size << std::endl;
+		std::cout << C_G_CYAN << "setPostOptions() current content size: " << req.current_content_size << std::endl;
 		res = req.info.get_header_var_by_name("Content-Type");
 
 		// MULTIPART REQUEST
@@ -120,32 +120,37 @@ void Client::handleEvent(uint32_t revents)
 	{
 		if (_receive() <= 0)
 			throw std::exception();
-		if (_request.state == READY)
-		{
-			if (!_request.header_parsed)
-			{
-				_request.info = Request(_request.raw_data);
-				_request.header_parsed = true;
-			}
-			if (_request.info.is_valid() && _request.info.get_method() == POST)
-			{
-				if (!_request.post_options_set)
-					setPostOptions(_request);
-				if (_request.info.is_valid() && _request.continue_100 != READY && _request.current_content_size < _request.indicated_content_size)
-					_request.state = INCOMPLETE;
-			}
-		}
+		handle_request();
 	}
 	if (revents & EPOLLOUT && (_request.state == READY))
 	{
 		respond();
-		_request.reset(); // should not reset everything if we just sent a 100 continue
+		std::cout << "--- POST REQUEST ---\n"
+		<<	"state:" << _request.state << "\t multipart ? " << _request.multipart <<"\t current_content_size:" << _request.current_content_size << C_RES << std::endl;
+		if (_request.continue_100 == READY)
+			_request.continue_100 = DONE;
+		else _request.reset(); // should not reset everything if we just sent a 100 continue
 	}
 };
 
 void Client::handle_request(void)
 {
-	_request.info = Request(_request.raw_data);
+	if (_request.state == READY)
+	{
+		if (!_request.header_parsed)
+		{
+			_request.info = Request(_request.raw_data);
+			_request.header_parsed = true;
+		}
+		if (_request.info.is_valid() && _request.info.get_method() == POST)
+		{
+			if (!_request.post_options_set)
+				setPostOptions(_request);
+			if (_request.info.is_valid() && _request.continue_100 != READY && _request.current_content_size < _request.indicated_content_size)
+				_request.state = INCOMPLETE;
+
+		}
+	}
 };
 
 int Client::respond(void)
