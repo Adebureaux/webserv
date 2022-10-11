@@ -33,7 +33,7 @@
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
 #define MIME_TYPE_NUMBER 349
-#define ERROR_NUMBER 6
+#define ERROR_NUMBER 7
 #define __DOUBLE_CRLF "\r\n\r\n"
 
 // End Augustin

@@ -15,7 +15,7 @@ Client::Client(int epoll, int server_fd, config_map *config, std::set<Client*> *
 		throw std::exception();
 	if (DEBUG)
 		std::cout << C_G_MAGENTA << "Add client " << _fd << " on server " << server_fd << C_RES <<std::endl;
-	_addEventListener(EPOLLOUT | EPOLLIN | EPOLLERR);
+	_addEventListener(EPOLLOUT | EPOLLIN | EPOLLERR | EPOLLRDHUP);
 };
 
 Client::~Client()
@@ -51,12 +51,16 @@ ssize_t Client::_receive(void)
 	char buffer[BUFFER_SIZE + 1] = { 0 };
 	int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
 	if (ret > 0)
+	{
 		_request.raw_data.append(buffer);
-	std::cerr << "received:" << ret <<std::endl;
-	// if (_request.header_end)
+		std::cerr << "received:" << ret <<std::endl;
+		// if (_request.header_end)
 		_request.current_content_size += ret;
-	if (_request.header_end || (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF)) != std::string::npos)
-		_request.state = READY;
+		if (_request.header_end || (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF)) != std::string::npos)
+			_request.state = READY;
+	}
+	else _request.state = INCOMPLETE;
+
 	return (ret);
 };
 
@@ -72,9 +76,9 @@ static void setPostOptions(Message &req)
 		// should also check if second is a valid number
 		req.header_size = req.header_end + 5; // (header + double clrf)
 		// if (req.header_size <= req.raw_data.size())
-			req.current_content_size -= req.raw_data.size();
-		std::cout << C_G_CYAN << "setPostOptions() current content size: " << req.current_content_size << C_RES << std::endl;
-		std::cout << C_G_CYAN << "setPostOptions() header size: " << req.header_size << C_RES << std::endl;
+		req.current_content_size -= req.header_size - 1;
+		// std::cout << C_G_CYAN << "setPostOptions() current content size: " << req.current_content_size << C_RES << std::endl;
+		// std::cout << C_G_CYAN << "setPostOptions() header size: " << req.header_size << C_RES << std::endl;
 		res = req.info.get_header_var_by_name("Content-Type");
 
 		// MULTIPART REQUEST
@@ -116,22 +120,35 @@ static void setPostOptions(Message &req)
 
 void Client::handleEvent(uint32_t revents)
 {
-	if (revents & (EPOLLERR | EPOLLHUP))
+	if (revents & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 		throw std::exception();
 	if (revents & EPOLLIN)
 	{
-		if (_receive() < 0)
+		long long ret = 0;
+		if ((ret = _receive()) < 0)
 			throw std::exception();
-		handle_request();
+		else if (ret == 0)
+			;
+		else handle_request();
 	}
-	if (revents & EPOLLOUT && (_request.state == READY || (_request.state == INCOMPLETE && _request.continue_100 == READY) || _request.response_override))
+	if (revents & EPOLLOUT && (_request.state == READY || (_request.state == INCOMPLETE && _request.continue_100 == READY)))
 	{
+
 		respond();
-		// std::cout << "--- POST REQUEST ---\n"
-		// <<	"state:" << _request.state << "\t multipart ? " << _request.multipart <<"\t current_content_size:" << _request.current_content_size << C_RES << std::endl;
+		std::cout << "--- REQUEST ---\n" << C_G_RED
+		<< _request.indicated_content_size << "\t" << _request.current_content_size << C_RES<< std::endl;
 		if (_request.continue_100 == READY)
+		{
 			_request.continue_100 = DONE;
-		else _request.reset(); // should not reset everything if we just sent a 100 continue
+		}
+		else if (_request.state != INCOMPLETE)
+		{
+			if (_request.info.get_connection() != "Keep-Alive") // should also check if we didnt just send a 100 continue response
+				throw std::exception();
+			_request.reset();
+		}  // should not reset everything if we just sent a 100 continue
+
+
 	}
 };
 
@@ -149,7 +166,7 @@ void Client::handle_request(void)
 			if (!_request.post_options_set)
 				setPostOptions(_request);
 			// _request.current_content_size = (_request.raw_data.size() - _request.header_size) + 1;
-			if (_request.info.is_valid() && _request.continue_100 != READY && _request.current_content_size < _request.indicated_content_size)
+			if (_request.info.is_valid() && _request.current_content_size < _request.indicated_content_size)
 				_request.state = INCOMPLETE;
 
 		}
@@ -157,7 +174,7 @@ void Client::handle_request(void)
 	if (_request.indicated_content_size && _request.current_content_size >= _request.indicated_content_size)
 		_request.state = READY;
 
-	// std::cout << "HELLO FROM handle_request, state: " << (_request.state == READY ? "READY\n" : "INCOMPLETE\n") << _request.indicated_content_size << "\t" <<  _request.current_content_size << std::endl;
+	std::cout << "HELLO FROM handle_request, state: " << (_request.state == READY ? "READY\n" : "INCOMPLETE\n") << _request.indicated_content_size << "\t" <<  _request.current_content_size << std::endl;
 
 };
 
@@ -172,7 +189,6 @@ int Client::respond(void)
 	// 	std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
 	// }
 	_response.clear();
-	// if (_request.info.get_connection() != "keep-alive") // should also check if we didnt just send a 100 continue response
-		// throw std::exception();
+
 	return (0);
 };

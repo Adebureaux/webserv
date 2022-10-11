@@ -580,6 +580,7 @@ void Request::http_version()
 	_head += 5;
 	old_head = _head;
 	_and("scs", 1, STAR_NO_MAX, &Request::DIGIT, '.', 1, STAR_NO_MAX, &Request::DIGIT);
+	std::cout << C_G_RED << &_raw_str[old_head] << C_RES<< std::endl;
 	CATCH_VAR("HTTP_VERSION");
 }
 

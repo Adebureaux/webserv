@@ -71,9 +71,14 @@ void Response::create(Message& request, config_map& config)
 	_load_errors(it->second);
 	_find_location(request.info, it->second);
 	// Check for HTTP version before ! For trigger HTTP version not supported. Ask Aymeric where to find this information
+	if (request.info.get_var_by_name("HTTP_VERSION").second != "1.1")
+	{
+		_construct_error(505);
+		_generate_response(505);
+	}
 	// if (!request.multipart && !request.info.is_valid())
 	// 	_construct_response(request.info, 400);
-	if (request.info.get_method() == GET)
+	else if (request.info.get_method() == GET)
 		create_get(request.info);
 	else if (request.info.get_method() == POST)
 		create_post(request, it->second);
@@ -121,16 +126,16 @@ void Response::create_post(Message& request, Server_block& config)
 		// Redirect should check location redirect
 		if (_file.redirect || !_location->redirect.empty())
 			_construct_response(request.info, 302);
-		else if (!_location->get_method)
+		else if (!_location->post_method)
 			_construct_response(request.info, 405);
 		else if (!_file.not_found && !(_file.permissions & R))
 			_construct_response(request.info, 403);
-		else if (request.continue_100 == READY)
+		else if (request.continue_100 == READY) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
 		{
 			_construct_response(request.info, 100);
 			request.continue_100 = DONE;
 		}
-		else if (request.continue_100 == DONE)
+		else if (request.continue_100 == DONE || request.current_content_size == request.indicated_content_size) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
 		{
 			_construct_response(request.info, 201);
 		}
@@ -216,12 +221,14 @@ void Response::_init_start_lines(void) const
 	start_lines.insert(std::make_pair(405, "HTTP/1.1 405 Method Not Allowed\n"));
 	start_lines.insert(std::make_pair(500, "HTTP/1.1 500 Internal Server Error\n"));
 	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\n"));
+	start_lines.insert(std::make_pair(505, "HTTP/1.1 505 HTTP Version not supported\n"));
+
 }
 
 
 void Response::_load_errors(Server_block& config)
 {
-	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 500, 501 };
+	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 500, 501 , 505};
 	//std::map<int, std::string>::iterator it = config.error_pages.begin();
 	std::map<int, std::string>::iterator find;
 	// std::cout << C_G_BLUE << "Number of error files to load " << config.error_pages.size() << std::endl;
@@ -245,11 +252,12 @@ void Response::_load_errors(Server_block& config)
 	_errors.insert(std::make_pair(405, ERROR_HTML_405));
 	_errors.insert(std::make_pair(500, ERROR_HTML_500));
 	_errors.insert(std::make_pair(501, ERROR_HTML_501));
+	_errors.insert(std::make_pair(505, ERROR_HTML_505));
 }
 
 void Response::_generate_response(int status)
 {
-	if (status == 100)
+	if (status == 100 || status == 201)
 	{
 		_response = start_lines[status];
 		// _response.append("\r\n");
@@ -270,9 +278,7 @@ void Response::_construct_response(const Request& request, int status)
 	_header_field("Server", "webserv/1.0 (Ubuntu)");
 	if (!request.get_connection().empty())
 		_header_field("Connection", request.get_connection());
-	if (status == 100)
-		;
-	else if (status == 200)
+	if (status == 200)
 	{
 		size << _file.content.size();
 		_header_field("Content-Type", _file.mime_type);
@@ -287,7 +293,7 @@ void Response::_construct_response(const Request& request, int status)
 		else
 			_construct_error(500);
 	}
-	else
+	else if (!(status == 100 || status == 201))
 		_construct_error(status);
 	_generate_response(status);
 }
