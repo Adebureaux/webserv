@@ -55,6 +55,7 @@ ssize_t Client::_receive(void)
 		_request.raw_data.append(buffer, ret);
 		std::cerr << "received:" << ret <<std::endl;
 		// if (_request.header_end)
+		std::cout << C_G_MAGENTA << _request.raw_data << C_RES<< std::endl;
 		_request.current_content_size += ret;
 		if (_request.header_end || (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF)) != std::string::npos)
 			_request.state = READY;

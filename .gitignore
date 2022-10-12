@@ -5,3 +5,5 @@ a.out
 *.gch
 .vscode
 *.out
+uploads
+uploads/*

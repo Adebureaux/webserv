@@ -146,30 +146,31 @@ void Response::create_post(Message& request, Server_block& config)
 		}
 		else if (request.current_content_size == request.indicated_content_size) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
 		{ // checker si cest bien une multipart ndabord
-			// if (_location.upload.first)
-			// {
-				std::cout << "\nHELLELLELOOOOOOOO\n"  << "\n";
-			try
+			if (_location->upload.first) // si upload autorise
 			{
-				Multipart multipass(std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end()), request.boundary);
-				std::map<std::string, std::string> multipart_map = multipass.get_files();
-				
-					std::cout << C_G_GREEN << "\nHELLELLELOOOOOOOO--\n" << multipart_map.size() << C_RES<< "\n";
-
-				std::map<std::string, std::string>::iterator it = multipart_map.begin();
-				while (it != multipart_map.end())
+				try
 				{
-					std::cout << C_G_MAGENTA << it->second << C_RES << std::endl;
-					std::cout << C_G_GREEN << "\n------\n" << C_RES;
-					(void)create_filu(it->second, "test.png" );
-					it++;
+					Multipart multipass(std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end()), request.boundary);
+					std::map<std::string, File_Multipart> multipart_map = multipass.get_files();
+					std::map<std::string, File_Multipart>::iterator it = multipart_map.begin();
+					std::string path = _location->upload.second;
+					while (it != multipart_map.end())
+					{
+						std::string pathandfilename = path + it->second._filename; // should append filename instead
+						std::cout <<pathandfilename <<std::endl;
+						if (!create_filu(it->second._file, pathandfilename))
+							throw std::exception();
+						it++;
+					}
+					_construct_response(request.info, 201); // should specify to client to close the connection or that we'll keep it alive
+				}
+				catch (std::exception& e)
+				{
+					std::cout << e.what() <<std::endl;
+					// if (e.what() == std::string("Could not create file"))
+						_construct_error(500);
 				}
 			}
-			catch (std::exception& e)
-			{
-				std::cout << e.what() <<std::endl;
-			}
-
 
 			// 	if ()
 			// 	try
