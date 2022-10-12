@@ -52,7 +52,7 @@ ssize_t Client::_receive(void)
 	int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
 	if (ret > 0)
 	{
-		_request.raw_data.append(buffer);
+		_request.raw_data.append(buffer, ret);
 		std::cerr << "received:" << ret <<std::endl;
 		// if (_request.header_end)
 		_request.current_content_size += ret;
@@ -174,7 +174,7 @@ void Client::handle_request(void)
 	if (_request.indicated_content_size && _request.current_content_size >= _request.indicated_content_size)
 		_request.state = READY;
 
-	std::cout << "HELLO FROM handle_request, state: " << (_request.state == READY ? "READY\n" : "INCOMPLETE\n") << _request.indicated_content_size << "\t" <<  _request.current_content_size << std::endl;
+	// std::cout << "HELLO FROM handle_request, state: " << (_request.state == READY ? "READY\n" : "INCOMPLETE\n") << _request.indicated_content_size << "\t" <<  _request.current_content_size << std::endl;
 
 };
 

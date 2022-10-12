@@ -18,35 +18,35 @@ class File_Multipart
 		std::string _raw_str;
 };
 	
-bool	operator<(const File_Multipart& lhs, const File_Multipart& rhs)
-{
-	return (lhs.get_raw_str() < rhs.get_raw_str());
-}
+// bool	operator<(const File_Multipart& lhs, const File_Multipart& rhs)
+// {
+// 	return (lhs.get_raw_str() < rhs.get_raw_str());
+// }
 
-bool	operator<=(const File_Multipart& lhs, const File_Multipart& rhs)
-{
-	return (lhs.get_raw_str() <= rhs.get_raw_str());
-}
+// bool	operator<=(const File_Multipart& lhs, const File_Multipart& rhs)
+// {
+// 	return (lhs.get_raw_str() <= rhs.get_raw_str());
+// }
 
-bool	operator>(const File_Multipart& lhs, const File_Multipart& rhs)
-{
-	return (lhs.get_raw_str() > rhs.get_raw_str());
-}
+// bool	operator>(const File_Multipart& lhs, const File_Multipart& rhs)
+// {
+// 	return (lhs.get_raw_str() > rhs.get_raw_str());
+// }
 
-bool	operator>=(const File_Multipart& lhs, const File_Multipart& rhs)
-{
-	return (lhs.get_raw_str() >= rhs.get_raw_str());
-}
+// bool	operator>=(const File_Multipart& lhs, const File_Multipart& rhs)
+// {
+// 	return (lhs.get_raw_str() >= rhs.get_raw_str());
+// }
 
-bool	operator==(const File_Multipart& lhs, const File_Multipart& rhs)
-{
-	return (lhs.get_raw_str() == rhs.get_raw_str());
-}
+// bool	operator==(const File_Multipart& lhs, const File_Multipart& rhs)
+// {
+// 	return (lhs.get_raw_str() == rhs.get_raw_str());
+// }
 
-bool	operator!=(const File_Multipart& lhs, const File_Multipart& rhs)
-{
-	return (lhs.get_raw_str() != rhs.get_raw_str());
-}
+// bool	operator!=(const File_Multipart& lhs, const File_Multipart& rhs)
+// {
+// 	return (lhs.get_raw_str() != rhs.get_raw_str());
+// }
 
 class Multipart : public Parser
 {

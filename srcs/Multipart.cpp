@@ -5,7 +5,9 @@ Multipart::Multipart(const std::string& raw_multipart, const std::string& bounda
 {
 	try
 	{
+		// std::cout << __FUNCTION__ << raw_multipart << std::endl;
 		start_parsing();
+		std::cout << __FUNCTION__  << "	is_finish = " << _is_finish << std::endl << raw_multipart << std::endl;
 		_is_valid = true;
 	}
 	catch(const std::exception& e)
@@ -33,6 +35,7 @@ Multipart &Multipart::operator=(const Multipart &src)
 	_current_header_field = src._current_header_field;
 	_files = src._files;
 	_error_msg = src._error_msg;
+	return (*this);
 }
 
 Multipart::~Multipart(){}
@@ -161,7 +164,7 @@ void Multipart::start_parsing(void)
 {
 	try
 	{
-		_and("nSns", &Multipart::is_boundary, AND, STAR_NO_MIN, STAR_NO_MAX, "nn", &Multipart::header_field, &Multipart::CRLF, &Multipart::CRLF, &Multipart::message_body);
+		_and("nnSnn", &Multipart::is_boundary, &Multipart::CRLF, AND, STAR_NO_MIN, STAR_NO_MAX, "nn", &Multipart::header_field, &Multipart::CRLF, &Multipart::CRLF, &Multipart::message_body);
 	}
 	catch(const std::exception& e)
 	{
@@ -172,10 +175,12 @@ void Multipart::start_parsing(void)
 
 void Multipart::is_boundary_end(void)
 {
-	size_t old_head = _head;
+	// size_t old_head = _head;
 	try
 	{
 		_and("nR", &Multipart::is_boundary, "--");
+		std::cout << __FUNCTION__ << std::endl;
+		
 		_is_finish = true;
 	}
 	catch(const std::exception& e)
@@ -202,8 +207,21 @@ void Multipart::header_field()
 	try
 	{
 		_and("ncnnn", &Multipart::field_name, ':', &Multipart::OWS, &Multipart::field_value, &Multipart::OWS);
+		std::cout << __FUNCTION__ << std::endl;
 		// catch_var_header_field(old_head);
 		_current_header_field +=  std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head);
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+}
+
+void Multipart::field_name()
+{
+	try
+	{
+		token();
 	}
 	catch(const std::exception& e)
 	{
@@ -285,18 +303,25 @@ void Multipart::obs_fold()
 
 void Multipart::message_body(void)
 {
+	std::cout << __FUNCTION__ << std::endl;
 	size_t new_head = _raw_str.find(_boundary, _head);
 	if (new_head == std::string::npos)
 		throw EXECP_("request not valid");
-	_files[_current_header_field] += std::string(_raw_str.begin()+ _head,_raw_str.begin() + new_head);
+	// std::cout << C_G_CYAN << _current_header_field << C_RES << std::endl;
+	// std::cout << C_G_RED << std::string(_raw_str.begin()+ _head,_raw_str.begin() + new_head - 4) << C_RES << std::endl;
+	_files[_current_header_field] += std::string(_raw_str.begin()+ _head,_raw_str.begin() + new_head - 2);
+	// std::cout << C_G_CYAN << _files[_current_header_field]  << C_RES << std::endl;
 	_head = new_head;
-	_or("nn", &Multipart::is_boundary, &Multipart::is_boundary_end);
+	_current_header_field.clear();
+	_or("nn", &Multipart::is_boundary_end, &Multipart::is_boundary);
+	CRLF();
 	if (_head == _raw_str.size())
 		return;
-	else if( _is_finish)
+	if( _is_finish)
 		throw EXECP_("request not valid");
 	else
 	{
+		
 		_head = new_head;
 		start_parsing();
 	}
@@ -332,8 +357,8 @@ void Multipart::set_boundary(std::string const &boundary)
 
 std::map<std::string, std::string>		Multipart::get_files()
 {
-	if (!_is_finish)
-			throw EXECP_("POST not finish");
+	// if (!_is_finish)
+	// 		throw EXECP_("POST not finish");
 	return (_files);
 }
 
@@ -342,7 +367,7 @@ File_Multipart::File_Multipart(const std::string& raw_str)
 : _raw_str(raw_str)
 {
 	size_t pos = _raw_str.find("filename=\"");
-	if (pos = std::string::npos)
+	if (pos == std::string::npos)
 		throw EXECP_("request not valid");
 	pos += 10;
 	for (size_t i = pos; i < _raw_str.size(); i++)
@@ -351,7 +376,7 @@ File_Multipart::File_Multipart(const std::string& raw_str)
 			_filename = std::string(_raw_str.begin()+ pos,_raw_str.begin() + i);
 	}
 	pos = _raw_str.find("Content-Type: ");
-	if (pos = std::string::npos)
+	if (pos == std::string::npos)
 		throw EXECP_("request not valid");
 	for (size_t i = pos; i < _raw_str.size(); i++)
 	{
@@ -372,6 +397,7 @@ File_Multipart &File_Multipart::operator=(const File_Multipart &src)
 	_filename = src._filename;
 	_content_type = src._content_type;
 	_raw_str = src._raw_str;
+	return (*this);
 }
 
 File_Multipart::~File_Multipart()

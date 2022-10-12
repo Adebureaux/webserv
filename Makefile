@@ -28,6 +28,7 @@ HEADER							=	\
 									Response.hpp	\
 									Shared.hpp		\
 									Utility.hpp		\
+									Multipart.hpp		\
 
 # *** SRCS ******************************************************************* #
 
@@ -42,6 +43,7 @@ SRCS_LIST				=	\
 							Utility.cpp		\
 							Conf.cpp		\
 							Autoindex.cpp	\
+							Multipart.cpp	\
 
 SRCS					=	$(addprefix $(SRCS_DIR), $(SRCS_LIST))
 
