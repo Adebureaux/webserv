@@ -336,3 +336,58 @@ std::map<std::string, std::string>		Multipart::get_files()
 			throw EXECP_("POST not finish");
 	return (_files);
 }
+
+
+File_Multipart::File_Multipart(const std::string& raw_str)
+: _raw_str(raw_str)
+{
+	size_t pos = _raw_str.find("filename=\"");
+	if (pos = std::string::npos)
+		throw EXECP_("request not valid");
+	pos += 10;
+	for (size_t i = pos; i < _raw_str.size(); i++)
+	{
+		if (_raw_str[i] == '\"')
+			_filename = std::string(_raw_str.begin()+ pos,_raw_str.begin() + i);
+	}
+	pos = _raw_str.find("Content-Type: ");
+	if (pos = std::string::npos)
+		throw EXECP_("request not valid");
+	for (size_t i = pos; i < _raw_str.size(); i++)
+	{
+		if (_raw_str[i] == '\n')
+		{
+			_content_type = std::string(_raw_str.begin()+ pos,_raw_str.begin() + i - 1);
+			break;
+		}
+	}
+}
+
+File_Multipart::File_Multipart(const File_Multipart &cpy)
+{
+	*this = cpy;
+}
+File_Multipart &File_Multipart::operator=(const File_Multipart &src)
+{
+	_filename = src._filename;
+	_content_type = src._content_type;
+	_raw_str = src._raw_str;
+}
+
+File_Multipart::~File_Multipart()
+{}
+
+const std::string &File_Multipart::get_filename(void) const
+{
+	return (_filename);
+}
+
+const std::string &File_Multipart::get_content_type(void) const
+{
+	return(_content_type);
+}
+
+const std::string &File_Multipart::get_raw_str(void) const
+{
+	return(_raw_str);
+}

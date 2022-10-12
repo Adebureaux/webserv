@@ -1,9 +1,57 @@
 #pragma once
 #include "Parser.hpp"
 
+class File_Multipart
+{
+	public:
+		File_Multipart(const std::string& raw_str);
+		File_Multipart(const File_Multipart &cpy);
+		File_Multipart &operator=(const File_Multipart &src);
+		~File_Multipart();
+		const std::string &get_filename(void) const;
+		const std::string &get_content_type(void) const;
+		const std::string &get_raw_str(void) const;
+
+	private:
+		std::string _filename;
+		std::string _content_type;
+		std::string _raw_str;
+};
+	
+bool	operator<(const File_Multipart& lhs, const File_Multipart& rhs)
+{
+	return (lhs.get_raw_str() < rhs.get_raw_str());
+}
+
+bool	operator<=(const File_Multipart& lhs, const File_Multipart& rhs)
+{
+	return (lhs.get_raw_str() <= rhs.get_raw_str());
+}
+
+bool	operator>(const File_Multipart& lhs, const File_Multipart& rhs)
+{
+	return (lhs.get_raw_str() > rhs.get_raw_str());
+}
+
+bool	operator>=(const File_Multipart& lhs, const File_Multipart& rhs)
+{
+	return (lhs.get_raw_str() >= rhs.get_raw_str());
+}
+
+bool	operator==(const File_Multipart& lhs, const File_Multipart& rhs)
+{
+	return (lhs.get_raw_str() == rhs.get_raw_str());
+}
+
+bool	operator!=(const File_Multipart& lhs, const File_Multipart& rhs)
+{
+	return (lhs.get_raw_str() != rhs.get_raw_str());
+}
+
 class Multipart : public Parser
 {
 	public:
+	
 	Multipart(const std::string& raw_multipart, const std::string& boundary);
 	Multipart(const std::string& boundary);
 	Multipart(const Multipart &cpy);
@@ -41,3 +89,4 @@ class Multipart : public Parser
 
 
 };
+
