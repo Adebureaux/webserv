@@ -1,0 +1,12 @@
+POST /echo/post/json HTTP/1.1
+Host: hello.com
+Authorization: Bearer mt0dgHmLJMVQhvjpNXDyA83vA_PxH23Y
+Content-Type: application/json
+Content-Length: 80
+
+{
+  "Id": 12345,
+  "Customer": "John Smith",
+  "Quantity": 1,
+  "Price": 10.00
+}

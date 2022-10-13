@@ -3,11 +3,34 @@
 host="127.0.0.1"
 port="8080"
 
-python3 telnet.py $host $port request/g_host_ok
-python3 telnet.py $host $port request/g_simple_ok
-python3 telnet.py $host $port request/g_target_ko
+if [ $(python3 telnet.py $host $port request/g_host_200) == 200 ]
+then echo "g_host_200 success !"
+else echo "g_host_200 failed returned "$(python3 telnet.py $host $port request/g_host_200)
+fi
 
-python3 telnet.py $host $port request/p_version_ko
+if [ $(python3 telnet.py $host $port request/g_simple_200) == 200 ]
+then echo "g_simple_200 success !"
+else echo "g_simple_200 failed returned "$(python3 telnet.py $host $port request/g_simple_200)
+fi
+
+if [ $(python3 telnet.py $host $port request/g_target_404) == 404 ]
+then echo "g_target_404 success !"
+else echo "g_target_404 failed returned "$(python3 telnet.py $host $port request/g_target_404)
+fi
+
+# Not sur of this one
+if [ $(python3 telnet.py $host $port request/p_json_404) == 404 ]
+then echo "p_json_404 success !"
+else echo "p_json_404 failed : returned "$(python3 telnet.py $host $port request/p_json_404)
+fi
+
+if [ $(python3 telnet.py $host $port request/p_version_505) == 505 ]
+then echo "p_version_505 success !"
+else echo "p_version_505 failed : returned "$(python3 telnet.py $host $port request/p_version_505)
+fi
 
 # This one send 505 HTTP Version not supported /!\
-python3 telnet.py $host $port request/u_request_ko
+if [ $(python3 telnet.py $host $port request/u_request_400) == 400 ]
+then echo "u_request_400 success !"
+else echo "u_request_400 failed : returned "$(python3 telnet.py $host $port request/u_request_400)
+fi
