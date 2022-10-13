@@ -41,6 +41,7 @@ class Server_block {
 	location_map							locations;		// Mandatory
 };
 
+class PostParser;
 
 class Message
 {
@@ -49,12 +50,109 @@ class Message
 	t_state			state;
 	std::string		raw_data;
 	Message			*ptr; // response || request
+	bool			header_parsed;
 	Request			info;
+	size_t								header_end;
+	unsigned short						response_override;
 
+	// -------- for POST requests --------
+	t_state								continue_100;
+	size_t								header_size;
+	size_t								indicated_content_size;
+	size_t								current_content_size;
+	bool								multipart;
+	std::string							boundary;
+	std::string							boundary_end;
+	bool								post_options_set;
+	bool								isCGI;
+	bool								isUpload;
+	// PostParser		post;
+	void reset(void);
 	Message(Client *c);
 	~Message();
 };
 
+class PostParser
+{
+public:
+	std::string							current_body;
+	std::map<std::string, std::string>	fields;
+	std::string							res;
+	std::string							boundary;
+	std::string							boundary_end;
+	bool								multipart;
+	t_state								continue_100;
+	bool								valid;
+	size_t								content_size;
+
+
+	PostParser(std::string msg_body, std::map<std::string, std::string> fields_map) :
+	current_body(msg_body),
+	fields(fields_map),
+	multipart(false),
+	continue_100(UNDEFINED),
+	valid(false),
+	content_size(std::atoi(fields["Content-size"].c_str()))
+	{
+		_set_is_multipart();
+		_set_continue_100();
+		// _dostuff();
+	};
+
+	PostParser &operator=(const PostParser &src)
+	{
+		current_body = src.current_body;
+		fields = src.fields;
+		res = src.res;
+		boundary = src.boundary;
+		boundary_end = src.boundary_end;
+		multipart = src.multipart;
+		continue_100 = src.continue_100;
+		valid = src.valid;
+		content_size = src.content_size;
+		return *this;
+	};
+
+	PostParser(const PostParser &src)
+	{
+		*this = src;
+	};
+
+	~PostParser() {};
+
+
+	void _set_continue_100()
+	{
+		if (multipart == true && valid)
+		{
+			std::map<std::string, std::string>::iterator it = fields.find("Expect");
+			if (it != fields.end() && it->second == "100-continue")
+			continue_100 = READY;
+		}
+		else throw EXECP_("CESTPERDU\n");
+	};
+	void _set_is_multipart()
+	{
+		std::map<std::string, std::string>::iterator it = fields.find("Content-type");
+		if (it != fields.end() && it->second.find("multipart/") != std::string::npos)
+		{
+			multipart = true;
+			// std::cout << "\tMULTIPART REQUEST DETECTED\n\n";
+			size_t pos = it->second.find("; boundary="); //11
+			if (pos != std::string::npos)
+			{
+				// std::cout << "\tBOUNDARY REQUEST DETECTED\n\n";
+
+				boundary = it->second.substr(pos + 11, it->second.size());
+				boundary.insert(0, "--");
+				boundary_end = boundary;
+				boundary_end.append("--");
+				valid = true;
+			}
+			else throw EXECP_("RIEN NE VA PLUS, faites vos jeux\r\n");
+		}
+	};
+};
 
 class File
 {
@@ -101,9 +199,9 @@ class File
 	};
 	static const entry types[MIME_TYPE_NUMBER];
 };
-
 File get_file_infos(std::string target, std::string path, int folder_fd);
 void printFileInfos(const File &info);
 std::vector<File> ls(char const *root);
 std::string find_path(const std::string& uri);
 std::string find_basename(const std::string& uri);
+File create_file(const std::string& filename, const std::string& content);

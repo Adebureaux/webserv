@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
 Request::Request(const std::string& raw_request)
-: Parser(raw_request), _method(NO_METHOD), _head_msg_body(0), _header_var_map(), _var_map(), _error_msg(), _is_valid(false)
+: Parser(raw_request), _is_valid(false) ,_method(NO_METHOD), _head_msg_body(0), _header_var_map(), _var_map(), _error_msg()
 {
 	try
 	{
@@ -580,6 +580,7 @@ void Request::http_version()
 	_head += 5;
 	old_head = _head;
 	_and("scs", 1, STAR_NO_MAX, &Request::DIGIT, '.', 1, STAR_NO_MAX, &Request::DIGIT);
+	// std::cout << C_G_RED << &_raw_str[old_head] << C_RES<< std::endl;
 	CATCH_VAR("HTTP_VERSION");
 }
 
@@ -747,14 +748,14 @@ void		Request::set_raw_request(const std::string& raw_request)
 
 		http_message();
 		_is_valid = true;
-		std::cout << "http_message OK" << std::endl;
+		// std::cout << "http_message OK" << std::endl;
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "error req/" << e.what() << '\n';
+		// std::cout << "error req/" << e.what() << '\n';
 		_error_msg = e.what();
-		std::cout << "http_message KO" << std::endl;
-		std::cout << std::endl << "'"<< &_raw_str[_head] << "'" << std::endl;
+		// std::cout << "http_message KO" << std::endl;
+		// std::cout << std::endl << "'"<< &_raw_str[_head] << "'" << std::endl;
 	}
 }
 

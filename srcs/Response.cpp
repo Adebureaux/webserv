@@ -1,3 +1,4 @@
+#include "Multipart.hpp"
 #include "Response.hpp"
 
 // https://www.rfc-editor.org/rfc/rfc2616#section-6 --> reference
@@ -12,6 +13,7 @@ static std::map<int, std::string> start_lines;
 
 Response::Response() :  _location(NULL), _file()
 {
+	create_file("TEST.txt", "ici\nla\nbjr\n");
 	_init_start_lines();
 }
 
@@ -33,33 +35,6 @@ Response& Response::operator=(const Response& rhs)
 
 Response::~Response() {}
 
-void Response::create(const Request& request, config_map& config)
-{
-	config_map::iterator it = config.find(_parse_host(request.get_host()));
-	if (it == config.end())
-	{
-		for (config_map::iterator itr = config.begin(); itr != config.end(); itr++)
-		{
-			if (itr->second.main == true)
-			{
-				it = itr;
-				break;
-			}
-		}
-	}
-	_load_errors(it->second);
-	_find_location(request, it->second);
-	// Check for HTTP version before ! For trigger HTTP version not supported. Ask Aymeric where to find this information
-	if (!request.is_valid())
-		_construct_response(request, 400);
-	else if (request.get_method() == GET)
-		create_get(request);
-	else if (request.get_method() == POST)
-		create_post(request, it->second);
-	else if (request.get_method() == DELETE)
-		create_delete(request, it->second);
-}
-
 void Response::clear(void)
 {
 	_response.clear();
@@ -80,16 +55,48 @@ size_t Response::get_size(void) const
 	return (_response.size());
 }
 
-void Response::create_get(const Request& request)
+void Response::create(Message& request, config_map& config)
+{
+	config_map::iterator it = config.find(_parse_host(request.info.get_host()));
+	if (it == config.end())
+	{
+		for (config_map::iterator itr = config.begin(); itr != config.end(); itr++)
+		{
+			if (itr->second.main == true)
+			{
+				it = itr;
+				break;
+			}
+		}
+	}
+	_load_errors(it->second);
+	_find_location(request.info, it->second);
+	// Check for HTTP version before ! For trigger HTTP version not supported. Ask Aymeric where to find this information
+	if (request.info.get_var_by_name("HTTP_VERSION").second != "1.1")
+	{
+		_construct_error(505);
+		_generate_response(505);
+	}
+	// if (!request.multipart && !request.info.is_valid())
+	// 	_construct_response(request, 400);
+	else if (request.info.get_method() == GET)
+		create_get(request);
+	else if (request.info.get_method() == POST)
+		create_post(request, it->second);
+	else if (request.info.get_method() == DELETE)
+		create_delete(request, it->second);
+}
+
+void Response::create_get(const Message& request)
 {
 	if (_location)
 	{
 		// std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
 		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
-		
+
 		// Redirect should check location redirect
 		if (_file.redirect || !_location->redirect.empty())
-			_construct_response(request, 301);
+			_construct_response(request, 302);
 		else if (!_location->get_method)
 			_construct_response(request, 405);
 		else if (!_file.not_found && !(_file.permissions & R))
@@ -97,7 +104,7 @@ void Response::create_get(const Request& request)
 		else if (_file.valid && _file.type == FILE_TYPE)
 			_construct_response(request, 200);
 		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-			_construct_autoindex(_file.path, request.get_request_target());
+			_construct_autoindex(_file.path, request.info.get_request_target());
 		else
 			_construct_response(request, 404);
 	}
@@ -108,13 +115,79 @@ void Response::create_get(const Request& request)
 	}
 }
 
-void Response::create_post(const Request& request, Server_block& config)
+static bool create_filu(std::string const &content, std::string const &path)
 {
-	(void)request;
-	(void)config;
+	std::fstream fs;
+	fs.open(path.c_str(), std::fstream::out | std::fstream::trunc | std::fstream::binary);
+	if (!fs.is_open())
+		return false;
+	std::cout << "HELLO                     dasdasd  \n" ;
+	fs << content;
+	fs.close();
+	return true;
 }
 
-void Response::create_delete(const Request& request, Server_block& config)
+void Response::create_post(Message& request, Server_block& config)
+{
+	// (void)request;
+	(void)config;
+	if (_location)
+	{
+		// Redirect should check location redirect
+		if (_file.redirect || !_location->redirect.empty())
+			_construct_response(request, 302);
+		else if (!_location->post_method)
+			_construct_response(request, 405);
+		else if (!_file.not_found && !(_file.permissions & R))
+			_construct_response(request, 403);
+		else if (request.continue_100 == READY) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
+		{
+			_construct_response(request, 100);
+			request.continue_100 = DONE;
+		}
+		else if (request.current_content_size == request.indicated_content_size) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
+		{ // checker si cest bien une multipart ndabord
+			if (_location->upload.first) // si upload autorise
+			{
+				try
+				{
+					Multipart multipass(std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end()), request.boundary);
+					std::map<std::string, File_Multipart> multipart_map = multipass.get_files();
+					std::map<std::string, File_Multipart>::iterator it = multipart_map.begin();
+					std::string path = _location->upload.second;
+					while (it != multipart_map.end())
+					{
+
+						// # response Location = location + upload path
+						// # real upload Location = location root + upload path
+						std::string pathandfilename = _location->root + _location->upload.second + it->second._filename; // should append filename instead
+						std::cout <<pathandfilename <<std::endl;
+						if (!create_filu(it->second._file, pathandfilename))
+							throw std::exception();
+						it++;
+					}
+					_construct_response(request, 201); // should specify to client to close the connection or that we'll keep it alive
+				}
+				catch (std::exception& e)
+				{
+					std::cout << C_G_RED << e.what() << C_RES<<std::endl;
+					_construct_response(request, 500);
+				}
+			}
+			// _construct_response(request, 201); // should specify to client to close the connection or that we'll keep it alive
+
+		}
+		else
+			_construct_response(request, 200);
+	}
+	else
+	{
+		_construct_response(request, 404);
+		std::cout << C_G_BLUE << "No Location Found" << C_RES << std::endl;
+	}
+}
+
+void Response::create_delete(const Message& request, Server_block& config)
 {
 	(void)config;
 	//A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
@@ -124,16 +197,15 @@ void Response::create_delete(const Request& request, Server_block& config)
 		_file.content = "{success: true}";
 		_construct_response(request, 200);
 	}
-	else
-	{
-		_construct_response(request, 204);
-	}
+	// else if (request.continue100 == DONE && request.multipart && request.state == READY)
+	// {
+	// 	_construct_response(request, 204);
+	// }
 }
 
 void Response::_find_location(const Request& request, Server_block& config)
 {
 	File requested(request.get_request_target());
-	// std::cout << C_G_RED << "We request name = |" << requested.name << "| path = |" << requested.path << "| uri = |" << requested.uri << "|" << C_RES << std::endl;
 	location_map::iterator it = _find_longest_location(config, requested.path);
 	if (it != config.locations.end())
 	{
@@ -169,28 +241,13 @@ location_map::iterator Response::_find_longest_location(Server_block& config, st
 	return (it);
 }
 
-void Response::_init_start_lines(void) const
-{
-	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\n"));
-	start_lines.insert(std::make_pair(200, "HTTP/1.1 200 OK\n"));
-	start_lines.insert(std::make_pair(202, "HTTP/1.1 202 Accepted\n"));
-	start_lines.insert(std::make_pair(204, "HTTP/1.1 204 No content\n"));
-	start_lines.insert(std::make_pair(301, "HTTP/1.1 301 Moved Permanently\n"));
-	start_lines.insert(std::make_pair(400, "HTTP/1.1 400 Bad Request\n"));
-	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\n"));
-	start_lines.insert(std::make_pair(404, "HTTP/1.1 404 Not Found\n"));
-	start_lines.insert(std::make_pair(405, "HTTP/1.1 405 Method Not Allowed\n"));
-	start_lines.insert(std::make_pair(500, "HTTP/1.1 500 Internal Server Error\n"));
-	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\n"));
-}
+
 
 
 void Response::_load_errors(Server_block& config)
 {
-	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 500, 501 };
-	//std::map<int, std::string>::iterator it = config.error_pages.begin();
+	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 500, 501 , 505};
 	std::map<int, std::string>::iterator find;
-	// std::cout << C_G_BLUE << "Number of error files to load " << config.error_pages.size() << std::endl;
 	for (int i = 0; i < ERROR_NUMBER; i++)
 	{
 		find = config.error_pages.find(errorn[i]);
@@ -211,23 +268,32 @@ void Response::_load_errors(Server_block& config)
 	_errors.insert(std::make_pair(405, ERROR_HTML_405));
 	_errors.insert(std::make_pair(500, ERROR_HTML_500));
 	_errors.insert(std::make_pair(501, ERROR_HTML_501));
+	_errors.insert(std::make_pair(505, ERROR_HTML_505));
 }
 
 void Response::_generate_response(int status)
 {
-	_response = start_lines[status];
-	_response.append(_header);
-	_response.append("\r\n");
-	_response.append(_body);
+	if (status == 100)
+		_response = start_lines[status];
+	else
+	{
+		_response = start_lines[status];
+		_response.append(_header);
+		if (status != 201)
+		{
+			_response.append("\r\n");
+			_response.append(_body);
+		}
+	}
 }
 
-void Response::_construct_response(const Request& request, int status)
+void Response::_construct_response(const Message& request, int status)
 {
 	std::stringstream size;
 
 	_header_field("Server", "webserv/1.0 (Ubuntu)");
-	if (!request.get_connection().empty())
-		_header_field("Connection", request.get_connection());
+	if (!request.info.get_connection().empty())
+		_header_field("Connection", request.info.get_connection());
 	if (status == 200)
 	{
 		size << _file.content.size();
@@ -235,15 +301,25 @@ void Response::_construct_response(const Request& request, int status)
 		_header_field("Content-Length", size.str());
 		_body.append(_file.content);
 	}
+	else if (status == 201)
+	{
+		_header_field("Location",  _location->uri + _location->upload.second);
+		// std::stringstream msg;
+		// msg << "<a href=\"/" <<  _location->uri + _location->upload.second << "\" type=\"text/html\">Uploaded Ressource(s)</a><br>";
+		// _body.append(msg.str());
+		// size << _body.size();
+		// _header_field("Content-Length", size.str());
+
+	}
 	else if (status < 400)
 	{
-		_setup_redirection(request);
+		_setup_redirection(request.info);
 		if (!_redirect.empty())
 			_header_field("Location", _redirect);
 		else
-			_construct_error(404);
+			_construct_error(500);
 	}
-	else
+	else if (!(status == 100))
 		_construct_error(status);
 	_generate_response(status);
 }
@@ -251,11 +327,9 @@ void Response::_construct_response(const Request& request, int status)
 void Response::_construct_autoindex(const std::string& filename, const std::string &pseudo_root)
 {
 	std::stringstream size;
-	// std::cout << C_G_CYAN << "in autoindex " << pseudo_root << " " << filename << C_RES << std::endl;
 
 	Autoindex autoindex(ls(filename.c_str()));
 	std::pair<std::string, size_t> res = autoindex.to_html(pseudo_root);
-
 	_header_field("Content-Type", "text/html");
 	size << res.second;
 	_header_field("Content-Length", size.str());
@@ -284,14 +358,6 @@ void Response::_header_field(const std::string& header, const std::string& field
 std::string	Response::_merge_path(const std::string& root, std::string path)
 {
 	std::string new_path(root);
-	// std::string::difference_type root_len = std::count(root.begin(), root.end(), '/');
-	// std::string::difference_type path_len = std::count(path.begin(), path.end(), '/');
-	// std::string::difference_type loc_len = std::count(_location->uri.begin(), _location->uri.end(), '/');
-
-	// std::cout << C_G_CYAN << "root_len = " << root_len << " " << root << C_RES << std::endl;
-	// std::cout << C_G_CYAN << "path_len = " << path_len << " " << path << C_RES << std::endl;
-	// std::cout << C_G_CYAN << "loc_len = " << loc_len << " " << _location->uri << C_RES << std::endl;
-
 	if (_location->uri != "/")
 		path = path.substr(_location->uri.size());
 	if (path != "/")
@@ -311,8 +377,40 @@ std::string Response::_parse_host(std::string host)
 void Response::_setup_redirection(const Request& request)
 {
 	if (_file.type == DIRECTORY && !_file.valid)
-		_redirect = std::string("http://") + request.get_host() + std::string("/") + request.get_request_target() + "/";
+	{
+		_redirect = std::string("http://") + request.get_host() + "/" + request.get_request_target() + "/";
+		return;
+	}
+	if (_location->redirect == _location->uri)
+		return;
+	if (!_location->redirect.find("http"))
+	{
+		if (_redirect != _location->redirect)
+			_redirect = _location->redirect;
+	}
 	else
-		_redirect = "http://localhost:1234" + request.get_request_target() == "/" ? request.get_request_target() : "";
-	//else if (!_location->redirect.find("http"))
+		_redirect = std::string("http://") + request.get_host() + "/" +  _location->redirect;
+	_redirect = _merge_path(_redirect, request.get_request_target());
+	// std::cout << C_G_RED << _merge_path("", request.get_request_target()) << C_RES << std::endl;
+	// std::cout << C_G_RED << _location->redirect << " | " << _location->uri << " | " << _redirect << C_RES << std::endl;
+
+}
+
+void Response::_init_start_lines(void) const
+{
+	start_lines.insert(std::make_pair(100, "HTTP/1.1 100 Continue\n"));
+	start_lines.insert(std::make_pair(200, "HTTP/1.1 200 OK\n"));
+	start_lines.insert(std::make_pair(201, "HTTP/1.1 201 Created\n"));
+	start_lines.insert(std::make_pair(202, "HTTP/1.1 202 Accepted\n"));
+	start_lines.insert(std::make_pair(204, "HTTP/1.1 204 No content\n"));
+	start_lines.insert(std::make_pair(301, "HTTP/1.1 301 Moved Permanently\n"));
+	start_lines.insert(std::make_pair(302, "HTTP/1.1 302 Found\n"));
+	start_lines.insert(std::make_pair(400, "HTTP/1.1 400 Bad Request\n"));
+	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\n"));
+	start_lines.insert(std::make_pair(404, "HTTP/1.1 404 Not Found\n"));
+	start_lines.insert(std::make_pair(405, "HTTP/1.1 405 Method Not Allowed\n"));
+	start_lines.insert(std::make_pair(500, "HTTP/1.1 500 Internal Server Error\n"));
+	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\n"));
+	start_lines.insert(std::make_pair(505, "HTTP/1.1 505 HTTP Version not supported\n"));
+
 }

@@ -13,19 +13,19 @@ class Response
 	Response(const Response &rhs);
 	Response& operator=(const Response& rhs);
 	~Response();
-	void		create(const Request& request, config_map& config);
+	void		create(Message& request, config_map& config);
 	void		clear(void);
 	const void*	send(void) const;
 	size_t		get_size(void) const;
-	void		create_get(const Request& request);
-	void		create_post(const Request& request, Server_block& config);
-	void		create_delete(const Request& request, Server_block& config);
+	void		create_get(const Message& request);
+	void		create_post(Message& request, Server_block& config);
+	void		create_delete(const Message& request, Server_block& config);
 
 	private:
 	void	_find_location(const Request& request, Server_block& config);
 	location_map::iterator _find_longest_location(Server_block& config, std::string path) const;
 	void	_generate_response(int status);
-	void	_construct_response(const Request& request, int status);
+	void	_construct_response(const Message& request, int status);
 	void	_init_start_lines(void) const;
 	void 	_load_errors(Server_block& config);
 	void	_construct_autoindex(const std::string& filename, const std::string &pseudo_root);

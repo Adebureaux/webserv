@@ -55,8 +55,38 @@ Message::Message(Client *c) :
 	state(INCOMPLETE),
 	raw_data(""), // ! PLACEHOLDER
 	ptr(NULL),
-	info("DEFAULT")
+	header_parsed(false),
+	info("DEFAULT"),
+	header_end(0),
+	response_override(0),
+	continue_100(UNDEFINED),
+	indicated_content_size(0),
+	current_content_size(0),
+	multipart(false),
+	boundary(""),
+	boundary_end(""),
+	post_options_set(false),
+	isCGI(false),
+	isUpload(false)
 {};
+
+void Message::reset(void)
+{
+	raw_data.clear();
+	state = INCOMPLETE;
+	header_parsed = false,
+	header_end = 0;
+	response_override = 0;
+	continue_100 = UNDEFINED;
+	indicated_content_size = 0;
+	current_content_size = 0;
+	multipart = false;
+	boundary.clear();
+	boundary_end.clear();
+	post_options_set = false;
+	isCGI = false;
+	isUpload = false;
+};
 
 Message::~Message() {};
 
@@ -159,6 +189,7 @@ File &File::operator=(const File &src)
 
 File::~File() {};
 
+
 void File::set_permissions(void)
 {
 	if (!access(uri.c_str(), R_OK))
@@ -247,6 +278,17 @@ std::string find_path(const std::string& uri)
 	if (pos == std::string::npos)
 		return ("");
 	return (uri.substr(0, pos + 1));
+}
+
+File create_file(const std::string& filename, const std::string& content)
+{
+	std::ofstream offile(filename.c_str());
+	File file(filename);
+
+	offile << content;
+	file.set_mime_type();
+	file.set_content();
+	return (file);
 }
 
 const File::entry File::types[MIME_TYPE_NUMBER] = {

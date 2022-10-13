@@ -1,23 +1,26 @@
 #include "Conf.hpp"
 
 Conf::Conf(const std::string& raw_Conf)
-: Parser(raw_Conf), _current_location(), _current_server_block(), _serv_vector(), _current_error_code(), _catch_method(false), _error_msg(), _is_valid(false), _ret()
+: Parser(raw_Conf), _current_location(), _current_server_block(), _serv_vector(), _current_error_code(), _catch_method(false), _error_msg(), _is_valid(false),_execp_block(false), _ret()
 {
 	try
 	{
 		_remove_comment();
+		std::cout << __FUNCTION__ << std::endl;
 		conf();
-		// std::cout << __FUNCTION__ << std::endl;
+		if (_head != _raw_str.size())
+			throw EXECP_(_error_msg);
+		std::cout << "end conf" << std::endl;
 		_test_validity_block();
 		_create_ret_map();
 		_is_valid = true;
-		std::cout << C_G_RED << &(_raw_str[_head]) << C_RES << std::endl; 
 	}
 	catch(const std::exception& e)
 	{
 		_ret.clear();
 		_serv_vector.clear();
 		_error_msg = e.what();
+		std::cout << C_G_CYAN <<_error_msg << C_RES << std::endl;
 	}
 }
 
@@ -188,7 +191,9 @@ void Conf::CB(void)
 	}
 	catch(const std::exception& e)
 	{
+		std::cout << &_raw_str[_head] << std::endl;
 		throw EXECP;
+		
 	}
 }
 
@@ -196,7 +201,10 @@ void Conf::end_of_line(void)
 {
 	try
 	{
-		_and("nn", &Conf::OWS, &Conf::LF);
+		n_star_m_and(1, STAR_NO_MAX, "nn", &Conf::OWS, &Conf::LF);
+		// std::cout << C_G_RED << "------------" << C_RES << std::endl;
+		// std::cout << &_raw_str[_head] << std::endl;
+		// std::cout << C_G_RED << "------------" << C_RES << std::endl;
 		// std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
@@ -226,6 +234,8 @@ void Conf::conf(void)
 	try
 	{
 		n_star_m_and(1, STAR_NO_MAX, "nRcnsnnnsn", &Conf::OWS, "server", ':', &Conf::OWS, STAR_NO_MIN, 1, &Conf::LF, &Conf::OWS, &Conf::OB, &Conf::end_of_line, 1, STAR_NO_MAX, &Conf::server_block, &Conf::OWS);
+		if (_execp_block)
+			throw std::invalid_argument(_error_msg);
 		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
@@ -249,6 +259,9 @@ void Conf::server_block(void)
 	catch(const std::exception& e)
 	{
 		// std::cout << &_raw_str[_head] << std::endl;
+		_execp_block = false;
+		// std::cout << &_raw_str[_head] << std::endl;
+		_error_msg = "conf/" + std::string(__FUNCTION__) + '/' + e.what();
 		throw EXECP;
 	}
 	_serv_vector.push_back(_current_server_block);
@@ -260,6 +273,7 @@ void Conf::server_var(void)
 	try
 	{
 		_or("nnnnnnn", &Conf::host, &Conf::location_block ,&Conf::server_name ,&Conf::listen, &Conf::error_block, &Conf::body_size, &Conf::end_of_line);
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -294,7 +308,8 @@ void Conf::location_uri(void)
 	size_t old_head = _head;
 	try
 	{
-		path();
+		_or("cn", '/', &Conf::relative_directory);
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -328,6 +343,7 @@ void Conf::location_var(void)
 		// std::cout << __FUNCTION__ << std::endl;
 		n_star_m_and(STAR_NO_MIN, STAR_NO_MAX, "nn", &Conf::OWS, &Conf::location_catch_var);
 		// std::cout << &_raw_str[_head] << std::endl;
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -341,6 +357,7 @@ void Conf::location_catch_var(void)
 	{
 		 _or("nnnnnnn", &Conf::method, &Conf::autoindex, &Conf::index, &Conf::upload, &Conf::cgi, &Conf::redirect, &Conf::root);
 		//  std::cout << &_raw_str[_head] << std::endl;
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -405,6 +422,7 @@ void Conf::catch_method(void)
 		_is_str("DELETE");
 		_current_location.delete_method = true;
 	}
+	std::cout << __FUNCTION__ << std::endl;
 }
 
 void Conf::autoindex(void)
@@ -444,7 +462,7 @@ void Conf::index(void)
 	try
 	{
 		// std::cout << __FUNCTION__ << std::endl;
-		_and("Rnnn", "index:", &Conf::OWS, &Conf::path, &Conf::end_of_line);
+		_and("Rnnn", "index:", &Conf::OWS, &Conf::file_no_path, &Conf::end_of_line);
 		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
@@ -455,7 +473,7 @@ void Conf::index(void)
 	_is_str("index:");
 	OWS();
 	old_head = _head;
-	path();
+	file_no_path();
 	_current_location.default_file = std::string(_raw_str.begin() + old_head, _raw_str.begin() + _head);
 	end_of_line();
 }
@@ -467,7 +485,7 @@ void Conf::upload(void)
 	try
 	{
 		_and("Rnnn", "upload:", &Conf::OWS, &Conf::upload_value, &Conf::end_of_line);
-		// std::cout << __FUNCTION__ << std::endl;
+		std::cout << __FUNCTION__ << std::endl;
 		// std::cout << C_G_GREEN << "\"" << &_raw_str[_head] << "\"" << C_RES << std::endl;
 	}
 	catch(const std::exception& e)
@@ -486,9 +504,9 @@ void Conf::upload_value(void)
 		_is_str("on");
 		OWS();
 		size_t old_head = _head;
-		path();
+		directory();
 		_current_location.upload = std::pair<bool, std::string>(true, std::string(_raw_str.begin() + old_head,_raw_str.begin() + _head));
-
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -512,7 +530,8 @@ void Conf::cgi(void)
 	size_t old_head = _head;
 	try
 	{
-		_and("Rcnnn", "cgi", ':', &Conf::OWS, &Conf::path, &Conf::end_of_line);
+		_and("Rcnnn", "cgi", ':', &Conf::OWS, &Conf::file, &Conf::end_of_line);
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -522,7 +541,7 @@ void Conf::cgi(void)
 	_is_str("cgi:");
 	OWS();
 	old_head = _head;
-	path();
+	file();
 	_current_location.CGI = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head);
 	end_of_line();
 }
@@ -551,6 +570,7 @@ void Conf::server_name_value(void)
 	try
 	{
 		n_star_m(1, STAR_NO_MAX, &Conf::unreserved);
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -580,6 +600,7 @@ void Conf::port(void)
 	try
 	{
 		n_star_m(1, STAR_NO_MAX, &Conf::DIGIT);
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -596,7 +617,7 @@ void Conf::root(void)
 	try
 	{
 		// std::cout << "------------" << &_raw_str[_head] << std::endl;
-		_and("Rnnn", "root:", &Conf::OWS, &Conf::path, &Conf::end_of_line);
+		_and("Rnnn", "root:", &Conf::OWS, &Conf::directory, &Conf::end_of_line);
 		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
@@ -607,7 +628,7 @@ void Conf::root(void)
 	_is_str("root:");
 	OWS();
 	old_head = _head;
-	path();
+	directory();
 	_current_location.root = std::string(_raw_str.begin()+ old_head ,_raw_str.begin() + _head);
 	end_of_line();
 }
@@ -636,7 +657,8 @@ void Conf::error_var(void)
 	size_t old_head = _head;	
 	try
 	{
-		_and("nncnnn", &Conf::OWS, &Conf::error_code, ':', &Conf::OWS, &Conf::path, &Conf::end_of_line);
+		_and("nncnnn", &Conf::OWS, &Conf::error_code, ':', &Conf::OWS, &Conf::file, &Conf::end_of_line);
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -649,7 +671,7 @@ void Conf::error_var(void)
 	_is_char(':');
 	OWS();
 	old_head = _head;
-	path();
+	file();
 	_current_server_block.error_pages[_current_error_code] = std::string(_raw_str.begin()+ old_head ,_raw_str.begin() + _head);
 	_current_error_code = 0;
 	end_of_line();
@@ -726,6 +748,7 @@ void Conf::dec_octet()
 		// _and("Rr", "25", '0', '5');
 		_or("aaaan", "Rr", "25", '0', '5',  "crn", '2', '0', '4', &Conf::DIGIT, "cnn", '1', &Conf::DIGIT, &Conf::DIGIT, "rn", '1', '9', &Conf::DIGIT, &Conf::DIGIT);
 		// int nb = atoi(&_raw_str[old_head]);
+		std::cout << __FUNCTION__ << std::endl;
 		// std::cout << __FUNCTION__ << " "<< nb <<std::endl;
 	}
 	catch(const std::exception& e)
@@ -741,6 +764,7 @@ void Conf::path(void)
 	try
 	{
 		_and("sS",STAR_NO_MIN, STAR_NO_MAX, &Conf::unreserved, AND, STAR_NO_MIN, STAR_NO_MAX, "cs", '/', STAR_NO_MIN, STAR_NO_MAX, &Conf::unreserved);
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -748,12 +772,18 @@ void Conf::path(void)
 	}
 }
 
+//path redirect =  http://path || https://path
+
+// "https://" 1*unreserved 0*1port path
+
 void Conf::redirect(void)
 {
 	size_t old_head = _head;
 	try
 	{
-		_and("Rcnnn", "redirect", ':', &Conf::OWS, &Conf::path, &Conf::end_of_line);
+		_and("Rcnn", "redirect", ':', &Conf::OWS, &Conf::location_redir, &Conf::end_of_line);
+		// std::cout << __FUNCTION__ << std::endl;
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -763,9 +793,64 @@ void Conf::redirect(void)
 	_is_str("redirect:");
 	OWS();
 	old_head = _head;
-	path();
+	location_redir();
 	_current_location.redirect = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head);
 	end_of_line();
+	// std::cout << C_G_CYAN << __FUNCTION__ << C_RES<< std::endl;
+}
+
+void Conf::url(void)
+{
+	try
+	{
+		// std::cout << __FUNCTION__ << std::endl;
+		// std::cout << C_G_CYAN<< &_raw_str[_head] << C_RES<< std::endl;
+		_or("RR", "https://", "http://");
+		// std::cout << C_G_CYAN << __FUNCTION__ << C_RES<< std::endl;
+		// std::cout << &_raw_str[_head] << std::endl;
+		n_star_m(1, STAR_NO_MAX, &Conf::unreserved);
+		// file();
+		// std::cout << C_G_CYAN << /__FUNCTION__ << C_RES<< std::endl;
+		n_star_m(STAR_NO_MIN, 1, &Conf::port_url);
+		// std::cout << C_G_CYAN << __FUNCTION__ << C_RES<< std::endl;
+		path();
+		// std::cout << C_G_CYAN << __FUNCTION__ << C_RES<< std::endl;
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+}
+
+void Conf::port_url()
+{
+	try
+	{
+		_is_char(':');
+		n_star_m(1, STAR_NO_MAX, &Conf::DIGIT);
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+	
+}
+
+void Conf::location_redir(void)
+{
+	try
+	{
+		// std::cout << __FUNCTION__ << std::endl;
+		_or("nn", &Conf::relative_directory, &Conf::url);
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+	
 }
 
 void Conf::body_size(void)
@@ -788,6 +873,7 @@ void Conf::body_size_value(void)
 	try
 	{
 		n_star_m(1, STAR_NO_MAX, &Conf::DIGIT);
+		std::cout << __FUNCTION__ << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -859,6 +945,86 @@ std::string Conf::get_error_msg(void)
 	return(_error_msg);
 }
 
+
+void Conf::file()
+{
+	try
+	{
+
+		path();
+		if (_raw_str[_head - 1] == '/')
+			throw std::invalid_argument("invalid file path");
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+}
+
+void Conf::directory()
+{
+	try
+	{
+		path();
+		if (_raw_str[_head - 1] != '/')
+			throw std::invalid_argument("invalid directory path");
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+}
+
+void Conf::relative_directory()
+{
+	size_t old_head = _head;
+	try
+	{
+		path();
+		if (_raw_str[_head - 1] != '/' || _raw_str[old_head] == '/')
+		{
+			_head = old_head;
+			// std::cout << C_G_RED <<__FUNCTION__ << C_RES<<std::endl;
+			throw std::invalid_argument("invalid directory path");
+		}
+			// throw std::invalid_argument("invalid relative directory path");
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+}
+
+void Conf::file_no_path()
+{
+	try
+	{
+		n_star_m(1, STAR_NO_MAX, &Conf::unreserved);
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+}
+
+void Conf::relative_path(void)
+{
+	try
+	{
+		relative_directory();
+		file_no_path();
+		std::cout << __FUNCTION__ << std::endl;
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+	
+}
 // std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
 
 /*
@@ -868,3 +1034,4 @@ sefesfsef.port(gdrkgdrg) = std::map<>
 
 
 */
+

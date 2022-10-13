@@ -1,41 +1,87 @@
-NAME		= webserv
+# *** NAME - CC - FLAGS ****************************************************** #
 
-SRCS		=	srcs/Cluster.cpp\
-				srcs/Client.cpp\
-				srcs/Request.cpp\
-				srcs/Response.cpp\
-				srcs/Parser.cpp\
-				srcs/Utility.cpp\
-				srcs/Conf.cpp\
-				srcs/Autoindex.cpp
+NAME					=	webserv
 
-INCS		= -I includes
-OBJS		:= $(SRCS:.cpp=.o)
-DEPS 		:= $(OBJS:.o=.d)
-RM			= rm -f
-CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g3\
-# -fsanitize=address
-COMPILER	= c++
+CC						= 	clang++
 
-$(NAME): $(OBJS)
-	$(COMPILER) $(CXXFLAGS) $(OBJS) -o $(NAME)
+CFLAGS					= 	-Wall -Wextra -Werror -std=c++98 -g3 -I includes/
 
-%.o: %.cpp
-	$(COMPILER) $(CXXFLAGS) -MMD -MP $(INCS) -c $< -o $@
+RM						= rm -rf
 
-all: $(NAME)
+# *** PROJECT HEADER ********************************************************* #
+
+HDIR					=	$(addprefix -I, $(HEAD))
+
+HEAD					=	$(addprefix $(HEADER_DIR), $(HEADER))
+
+HEADER_DIR				=	\
+							./includes/
+
+HEADER							=	\
+									Autoindex.hpp	\
+									Client.hpp		\
+									Cluster.hpp		\
+									Conf.hpp		\
+									Errors_html.hpp	\
+									Parser.hpp		\
+									Request.hpp		\
+									Response.hpp	\
+									Shared.hpp		\
+									Utility.hpp		\
+									Multipart.hpp		\
+
+# *** SRCS ******************************************************************* #
+
+SRCS_DIR					=	./srcs/
+
+SRCS_LIST				=	\
+							Cluster.cpp		\
+							Client.cpp		\
+							Request.cpp		\
+							Response.cpp	\
+							Parser.cpp		\
+							Utility.cpp		\
+							Conf.cpp		\
+							Autoindex.cpp	\
+							Multipart.cpp	\
+
+SRCS					=	$(addprefix $(SRCS_DIR), $(SRCS_LIST))
+
+# *** OBJS ******************************************************************* #
+
+OBJS_DIR				=	./objs/
+
+
+OBJS_LIST				=	$(patsubst %.cpp, %.o, $(SRCS_LIST))
+
+OBJS					=	$(addprefix $(OBJS_DIR), $(OBJS_LIST))
+
+# *** DEPS ******************************************************************* #
+
+DEPS					=	$(OBJS:.o=.d)
+
+all: $(OBJS) $(SRCS) $(NAME)
+
+test: $(NAME)
+		./$(NAME)
+
+$(NAME): $(OBJS) $(SRCS)
+	 @ $(CC) $(CFLAGS) $(HDIR) $(OBJS) -o $@
+
+$(OBJS_DIR)%.o: $(SRCS_DIR)%.cpp
+	 @ mkdir -p $(dir $@)
+	 @ $(CC) $(CFLAGS) $(HDIR) -MMD -MP -c -o $@ $<
+
+-include $(DEPS)
 
 clean:
-	$(RM) $(OBJS) $(DEPS)
+	$(RM) $(OBJS_DIR)
 
 fclean: clean
 	$(RM) $(NAME)
 
 re: fclean all
 
-test: $(NAME)
-		./$(NAME)
+re_test: fclean test
 
--include $(DEPS)
-
-.PHONY: all clean fclean re -include test
+.PHONY: all clean fclean re re_test test
