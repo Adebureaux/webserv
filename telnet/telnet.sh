@@ -18,7 +18,7 @@ then echo "g_target_404 success !"
 else echo "g_target_404 failed returned "$(python3 telnet.py $host $port request/g_target_404)
 fi
 
-# Not sur of this one
+# Not sur for this one
 if [ $(python3 telnet.py $host $port request/p_json_404) == 404 ]
 then echo "p_json_404 success !"
 else echo "p_json_404 failed : returned "$(python3 telnet.py $host $port request/p_json_404)
