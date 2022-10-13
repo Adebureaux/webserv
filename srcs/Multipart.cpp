@@ -7,7 +7,7 @@ Multipart::Multipart(const std::string& raw_multipart, const std::string& bounda
 	{
 		// std::cout << __FUNCTION__ << raw_multipart << std::endl;
 		start_parsing();
-		std::cout << __FUNCTION__  << "	is_finish = " << _is_finish << std::endl << raw_multipart << std::endl;
+		// std::cout << __FUNCTION__  << "	is_finish = " << _is_finish << std::endl << raw_multipart << std::endl;
 		_is_valid = true;
 	}
 	catch(const std::exception& e)
@@ -179,8 +179,8 @@ void Multipart::is_boundary_end(void)
 	try
 	{
 		_and("nR", &Multipart::is_boundary, "--");
-		std::cout << __FUNCTION__ << std::endl;
-		
+		// std::cout << __FUNCTION__ << std::endl;
+
 		_is_finish = true;
 	}
 	catch(const std::exception& e)
@@ -207,7 +207,7 @@ void Multipart::header_field()
 	try
 	{
 		_and("ncnnn", &Multipart::field_name, ':', &Multipart::OWS, &Multipart::field_value, &Multipart::OWS);
-		std::cout << __FUNCTION__ << std::endl;
+		// std::cout << __FUNCTION__ << std::endl;
 		_current_header_field +=  std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head);
 	}
 	catch(const std::exception& e)
@@ -302,7 +302,7 @@ void Multipart::obs_fold()
 
 void Multipart::message_body(void)
 {
-	std::cout << __FUNCTION__ << std::endl;
+	// std::cout << __FUNCTION__ << std::endl;
 	size_t new_head = _raw_str.find(_boundary, _head);
 	if (new_head == std::string::npos)
 		throw EXECP_("request not valid");
@@ -319,7 +319,7 @@ void Multipart::message_body(void)
 		throw EXECP_("request not valid");
 	else
 	{
-		
+
 		_head = new_head;
 		start_parsing();
 	}

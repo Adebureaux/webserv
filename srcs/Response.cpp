@@ -1,5 +1,5 @@
-#include "Response.hpp"
 #include "Multipart.hpp"
+#include "Response.hpp"
 
 // https://www.rfc-editor.org/rfc/rfc2616#section-6 --> reference
     //    Response      = Status-Line               ; Section 6.1
@@ -78,16 +78,16 @@ void Response::create(Message& request, config_map& config)
 		_generate_response(505);
 	}
 	// if (!request.multipart && !request.info.is_valid())
-	// 	_construct_response(request.info, 400);
+	// 	_construct_response(request, 400);
 	else if (request.info.get_method() == GET)
-		create_get(request.info);
+		create_get(request);
 	else if (request.info.get_method() == POST)
 		create_post(request, it->second);
 	else if (request.info.get_method() == DELETE)
-		create_delete(request.info, it->second);
+		create_delete(request, it->second);
 }
 
-void Response::create_get(const Request& request)
+void Response::create_get(const Message& request)
 {
 	if (_location)
 	{
@@ -104,7 +104,7 @@ void Response::create_get(const Request& request)
 		else if (_file.valid && _file.type == FILE_TYPE)
 			_construct_response(request, 200);
 		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-			_construct_autoindex(_file.path, request.get_request_target());
+			_construct_autoindex(_file.path, request.info.get_request_target());
 		else
 			_construct_response(request, 404);
 	}
@@ -120,7 +120,8 @@ static bool create_filu(std::string const &content, std::string const &path)
 	std::fstream fs;
 	fs.open(path.c_str(), std::fstream::out | std::fstream::trunc | std::fstream::binary);
 	if (!fs.is_open())
-        return false;
+		return false;
+	std::cout << "HELLO                     dasdasd  \n" ;
 	fs << content;
 	fs.close();
 	return true;
@@ -134,14 +135,14 @@ void Response::create_post(Message& request, Server_block& config)
 	{
 		// Redirect should check location redirect
 		if (_file.redirect || !_location->redirect.empty())
-			_construct_response(request.info, 302);
+			_construct_response(request, 302);
 		else if (!_location->post_method)
-			_construct_response(request.info, 405);
+			_construct_response(request, 405);
 		else if (!_file.not_found && !(_file.permissions & R))
-			_construct_response(request.info, 403);
+			_construct_response(request, 403);
 		else if (request.continue_100 == READY) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
 		{
-			_construct_response(request.info, 100);
+			_construct_response(request, 100);
 			request.continue_100 = DONE;
 		}
 		else if (request.current_content_size == request.indicated_content_size) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
@@ -156,48 +157,37 @@ void Response::create_post(Message& request, Server_block& config)
 					std::string path = _location->upload.second;
 					while (it != multipart_map.end())
 					{
-						std::string pathandfilename = path + it->second._filename; // should append filename instead
+
+						// # response Location = location + upload path
+						// # real upload Location = location root + upload path
+						std::string pathandfilename = _location->root + _location->upload.second + it->second._filename; // should append filename instead
 						std::cout <<pathandfilename <<std::endl;
 						if (!create_filu(it->second._file, pathandfilename))
 							throw std::exception();
 						it++;
 					}
-					_construct_response(request.info, 201); // should specify to client to close the connection or that we'll keep it alive
+					_construct_response(request, 201); // should specify to client to close the connection or that we'll keep it alive
 				}
 				catch (std::exception& e)
 				{
-					std::cout << e.what() <<std::endl;
-					// if (e.what() == std::string("Could not create file"))
-						_construct_error(500);
+					std::cout << C_G_RED << e.what() << C_RES<<std::endl;
+					_construct_response(request, 500);
 				}
 			}
-
-			// 	if ()
-			// 	try
-			// 	{
-			// 		std::string path = _location.upload.second + ;
-			// 	}
-			// 	catch (std::exception& e)
-            // 	{
-			// 		;
-			// 	}
-			// }
-			// std::cout << C_G_CYAN <<request.raw_data << C_RES<< std::endl << std::endl;
-			// std::cout << C_G_RED << &request.raw_data[request.raw_data.find(request.boundary_end)] << C_RES<< std::endl;
-			_construct_response(request.info, 201); // should specify to client to close the connection or that we'll keep it alive
+			// _construct_response(request, 201); // should specify to client to close the connection or that we'll keep it alive
 
 		}
 		else
-			_construct_response(request.info, 200);
+			_construct_response(request, 200);
 	}
 	else
 	{
-		_construct_response(request.info, 404);
+		_construct_response(request, 404);
 		std::cout << C_G_BLUE << "No Location Found" << C_RES << std::endl;
 	}
 }
 
-void Response::create_delete(const Request& request, Server_block& config)
+void Response::create_delete(const Message& request, Server_block& config)
 {
 	(void)config;
 	//A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
@@ -283,24 +273,27 @@ void Response::_load_errors(Server_block& config)
 
 void Response::_generate_response(int status)
 {
-	if (status == 100 || status == 201)
+	if (status == 100)
 		_response = start_lines[status];
 	else
 	{
 		_response = start_lines[status];
 		_response.append(_header);
-		_response.append("\r\n");
-		_response.append(_body);
+		if (status != 201)
+		{
+			_response.append("\r\n");
+			_response.append(_body);
+		}
 	}
 }
 
-void Response::_construct_response(const Request& request, int status)
+void Response::_construct_response(const Message& request, int status)
 {
 	std::stringstream size;
 
 	_header_field("Server", "webserv/1.0 (Ubuntu)");
-	if (!request.get_connection().empty())
-		_header_field("Connection", request.get_connection());
+	if (!request.info.get_connection().empty())
+		_header_field("Connection", request.info.get_connection());
 	if (status == 200)
 	{
 		size << _file.content.size();
@@ -308,15 +301,25 @@ void Response::_construct_response(const Request& request, int status)
 		_header_field("Content-Length", size.str());
 		_body.append(_file.content);
 	}
+	else if (status == 201)
+	{
+		_header_field("Location",  _location->uri + _location->upload.second);
+		// std::stringstream msg;
+		// msg << "<a href=\"/" <<  _location->uri + _location->upload.second << "\" type=\"text/html\">Uploaded Ressource(s)</a><br>";
+		// _body.append(msg.str());
+		// size << _body.size();
+		// _header_field("Content-Length", size.str());
+
+	}
 	else if (status < 400)
 	{
-		_setup_redirection(request);
+		_setup_redirection(request.info);
 		if (!_redirect.empty())
 			_header_field("Location", _redirect);
 		else
 			_construct_error(500);
 	}
-	else if (!(status == 100 || status == 201))
+	else if (!(status == 100))
 		_construct_error(status);
 	_generate_response(status);
 }

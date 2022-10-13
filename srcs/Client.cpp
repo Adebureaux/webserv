@@ -53,9 +53,9 @@ ssize_t Client::_receive(void)
 	if (ret > 0)
 	{
 		_request.raw_data.append(buffer, ret);
-		std::cerr << "received:" << ret <<std::endl;
+		// std::cerr << "received:" << ret <<std::endl;
 		// if (_request.header_end)
-		std::cout << C_G_MAGENTA << _request.raw_data << C_RES<< std::endl;
+		// std::cout << C_G_MAGENTA << _request.raw_data << C_RES<< std::endl;
 		_request.current_content_size += ret;
 		if (_request.header_end || (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF)) != std::string::npos)
 			_request.state = READY;
@@ -136,8 +136,8 @@ void Client::handleEvent(uint32_t revents)
 	{
 
 		respond();
-		std::cout << "--- REQUEST ---\n" << C_G_RED
-		<< _request.indicated_content_size << "\t" << _request.current_content_size << C_RES<< std::endl;
+		// std::cout << "--- REQUEST ---\n" << C_G_RED
+		// << _request.indicated_content_size << "\t" << _request.current_content_size << C_RES<< std::endl;
 		if (_request.continue_100 == READY)
 		{
 			_request.continue_100 = DONE;

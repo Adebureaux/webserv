@@ -748,14 +748,14 @@ void		Request::set_raw_request(const std::string& raw_request)
 
 		http_message();
 		_is_valid = true;
-		std::cout << "http_message OK" << std::endl;
+		// std::cout << "http_message OK" << std::endl;
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "error req/" << e.what() << '\n';
+		// std::cout << "error req/" << e.what() << '\n';
 		_error_msg = e.what();
-		std::cout << "http_message KO" << std::endl;
-		std::cout << std::endl << "'"<< &_raw_str[_head] << "'" << std::endl;
+		// std::cout << "http_message KO" << std::endl;
+		// std::cout << std::endl << "'"<< &_raw_str[_head] << "'" << std::endl;
 	}
 }
 
