@@ -1,0 +1,4 @@
+GET / HTTP/1.1
+Host: hello.com
+pragma: no-cache
+content-encoding: gzip

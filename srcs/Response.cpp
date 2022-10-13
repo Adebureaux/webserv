@@ -70,14 +70,11 @@ void Response::create(Message& request, config_map& config)
 	}
 	_load_errors(it->second);
 	_find_location(request.info, it->second);
-	// Check for HTTP version before ! For trigger HTTP version not supported. Ask Aymeric where to find this information
+	// Should trigger 400 in case of invalid request
 	if (request.info.get_var_by_name("HTTP_VERSION").second != "1.1")
-	{
-		_construct_error(505);
-		_generate_response(505);
-	}
+		_construct_error(505, true);
 	// if (!request.multipart && !request.info.is_valid())
-	// 	_construct_response(request, 400);
+	// construct_error(400, true);
 	else if (request.info.get_method() == GET)
 		create_get(request);
 	else if (request.info.get_method() == POST)
@@ -316,10 +313,10 @@ void Response::_construct_response(const Message& request, int status)
 		if (!_redirect.empty())
 			_header_field("Location", _redirect);
 		else
-			_construct_error(500);
+			_construct_error(500, false);
 	}
 	else if (!(status == 100))
-		_construct_error(status);
+		_construct_error(status, false);
 	_generate_response(status);
 }
 
@@ -336,14 +333,16 @@ void Response::_construct_autoindex(const std::string& filename, const std::stri
 	_generate_response(200);
 }
 
-void Response::_construct_error(int status)
+void Response::_construct_error(int status, bool generate)
 {
 	std::stringstream size;
 
 	size << _errors[status].size();
 	_header_field("Content-Type", "text/html");
 	_header_field("Content-Length", size.str());
-	_body.append(_errors[status]);
+	_body.append(_errors[status]);\
+	if (generate)
+		_generate_response(status);
 }
 
 void Response::_header_field(const std::string& header, const std::string& field)
