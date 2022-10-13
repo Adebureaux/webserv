@@ -1,4 +1,4 @@
-# *** NAME - CC - FLAGS ****************************************************** #
+# *** COLORS - NAME - CC - FLAGS ****************************************************** #
 
 NAME					=	webserv
 
@@ -60,25 +60,34 @@ OBJS					=	$(addprefix $(OBJS_DIR), $(OBJS_LIST))
 
 DEPS					=	$(OBJS:.o=.d)
 
-all: $(OBJS) $(SRCS) $(NAME)
+yellow = /bin/echo -e "\x1b[33m\x1b[1m➜ $1\x1b[0m"
+green = /bin/echo -e "\x1b[32m\x1b[1m➜ $1\x1b[0m"
+
+all: build $(OBJS) $(SRCS) $(NAME)
+	@ $(call green, "Done building")
+
+build:
+	@ $(call yellow, "Building ...")
 
 test: $(NAME)
-		./$(NAME)
+	./$(NAME)
 
 $(NAME): $(OBJS) $(SRCS)
-	 @ $(CC) $(CFLAGS) $(HDIR) $(OBJS) -o $@
+	@ $(CC) $(CFLAGS) $(HDIR) $(OBJS) -o $@
 
 $(OBJS_DIR)%.o: $(SRCS_DIR)%.cpp
-	 @ mkdir -p $(dir $@)
-	 @ $(CC) $(CFLAGS) $(HDIR) -MMD -MP -c -o $@ $<
+	@ mkdir -p $(dir $@)
+	@ $(CC) $(CFLAGS) $(HDIR) -MMD -MP -c -o $@ $<
 
 -include $(DEPS)
 
 clean:
-	$(RM) $(OBJS_DIR)
+	@ $(call yellow, "Cleaning ...")
+	@ $(RM) $(OBJS_DIR)
+	@ $(call green, "Done cleaning")
 
 fclean: clean
-	$(RM) $(NAME)
+	@ $(RM) $(NAME)
 
 re: fclean all
 
