@@ -191,7 +191,6 @@ class File
 	void set_content(void);
 	void set_mime_type(void);
 
-	private:
 	struct entry
 	{
 		const std::string& ext;
@@ -204,4 +203,4 @@ void printFileInfos(const File &info);
 std::vector<File> ls(char const *root);
 std::string find_path(const std::string& uri);
 std::string find_basename(const std::string& uri);
-File create_file(const std::string& filename, const std::string& content);
+const std::string find_mime_type(const std::string& filename);

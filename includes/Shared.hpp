@@ -32,7 +32,7 @@
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 128
 #define TIMEOUT_VALUE 30000
-#define MIME_TYPE_NUMBER 349
+#define MIME_TYPE_NUMBER 350
 #define ERROR_NUMBER 8
 #define __DOUBLE_CRLF "\r\n\r\n"
 

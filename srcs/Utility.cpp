@@ -280,18 +280,27 @@ std::string find_path(const std::string& uri)
 	return (uri.substr(0, pos + 1));
 }
 
-File create_file(const std::string& filename, const std::string& content)
+const std::string find_mime_type(const std::string& filename)
 {
-	std::ofstream offile(filename.c_str());
-	File file(filename);
+	size_t pos = filename.rfind('.');
+	std::string ext;
 
-	offile << content;
-	file.set_mime_type();
-	file.set_content();
-	return (file);
+	if (pos != std::string::npos)
+	{
+		pos++;
+		ext = filename.substr(pos);
+		std::cout << ext << std::endl;
+		for (int i = 0; i < MIME_TYPE_NUMBER; i++)
+		{
+			if (ext == File::types[i].ext)
+				return (File::types[i].mime_type);
+		}
+	}
+	return ("text/plain");
 }
 
 const File::entry File::types[MIME_TYPE_NUMBER] = {
+	{"php", "text/php"},
 	{"conf", "webserv/conf"},
 	{"ico", "image/x-icon"},
 	{"*3gpp", "audio/3gpp"},
