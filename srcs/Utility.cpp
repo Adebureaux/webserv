@@ -57,7 +57,7 @@ Message::Message(Client *c) :
 	ptr(NULL),
 	header_parsed(false),
 	info("DEFAULT"),
-	header_end(0),
+	header_end(std::string::npos),
 	response_override(0),
 	continue_100(UNDEFINED),
 	indicated_content_size(0),

@@ -5,17 +5,17 @@ port="8080"
 
 if [ $(python3 telnet.py $host $port request/g_host_200) == 200 ]
 then echo "g_host_200 success !"
-else echo "g_host_200 failed returned "$(python3 telnet.py $host $port request/g_host_200)
+else echo "g_host_200 failed returned : "$(python3 telnet.py $host $port request/g_host_200)
 fi
 
 if [ $(python3 telnet.py $host $port request/g_simple_200) == 200 ]
 then echo "g_simple_200 success !"
-else echo "g_simple_200 failed returned "$(python3 telnet.py $host $port request/g_simple_200)
+else echo "g_simple_200 failed returned : "$(python3 telnet.py $host $port request/g_simple_200)
 fi
 
 if [ $(python3 telnet.py $host $port request/g_target_404) == 404 ]
 then echo "g_target_404 success !"
-else echo "g_target_404 failed returned "$(python3 telnet.py $host $port request/g_target_404)
+else echo "g_target_404 failed returned : "$(python3 telnet.py $host $port request/g_target_404)
 fi
 
 # Not sur for this one

@@ -71,10 +71,10 @@ void Response::create(Message& request, config_map& config)
 	_load_errors(it->second);
 	_find_location(request.info, it->second);
 	// Should trigger 400 in case of invalid request
-	if (request.info.get_var_by_name("HTTP_VERSION").second != "1.1")
+	if (!request.info.is_valid())
+		_construct_error(400, true);
+	else if (request.info.get_var_by_name("HTTP_VERSION").second != "1.1")
 		_construct_error(505, true);
-	// if (!request.multipart && !request.info.is_valid())
-	// construct_error(400, true);
 	else if (request.info.get_method() == GET)
 		create_get(request);
 	else if (request.info.get_method() == POST)

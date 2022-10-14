@@ -5,7 +5,6 @@ if len(sys.argv) != 4:
     print("Missing argument")
     sys.exit(-1)
 
-
 host = sys.argv[1]
 port = sys.argv[2]
 
