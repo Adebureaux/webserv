@@ -76,10 +76,7 @@ static void setPostOptions(Message &req)
 
 		// should also check if second is a valid number
 		req.header_size = req.header_end + 5; // (header + double clrf)
-		// if (req.header_size <= req.raw_data.size())
 		req.current_content_size -= req.header_size - 1;
-		// std::cout << C_G_CYAN << "setPostOptions() current content size: " << req.current_content_size << C_RES << std::endl;
-		// std::cout << C_G_CYAN << "setPostOptions() header size: " << req.header_size << C_RES << std::endl;
 		res = req.info.get_header_var_by_name("Content-Type");
 
 		// MULTIPART REQUEST
@@ -103,7 +100,6 @@ static void setPostOptions(Message &req)
 				return ;
 			} // info: should have a defined boundary for multipart request
 		}
- 		// should only be there if the request header size is equal to whole request size at this point
 		// MULTISTEP REQUEST (expect a 100 continue before sending the request body)
 		if ((res = req.info.get_header_var_by_name("Expect")).first && res.second == "100-continue")
 		{
@@ -117,6 +113,7 @@ static void setPostOptions(Message &req)
 			return ;
 		}
 	}
+	else req.response_override = 411;
 };
 
 void Client::handleEvent(uint32_t revents)

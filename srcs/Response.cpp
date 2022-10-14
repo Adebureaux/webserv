@@ -117,7 +117,6 @@ static bool create_filu(std::string const &content, std::string const &path)
 	fs.open(path.c_str(), std::fstream::out | std::fstream::trunc | std::fstream::binary);
 	if (!fs.is_open())
 		return false;
-	std::cout << "HELLO                     dasdasd  \n" ;
 	fs << content;
 	fs.close();
 	return true;
@@ -125,8 +124,7 @@ static bool create_filu(std::string const &content, std::string const &path)
 
 void Response::create_post(Message& request, Server_block& config)
 {
-	// (void)request;
-	(void)config;
+	// (void)config;
 	if (_location)
 	{
 		// Redirect should check location redirect
@@ -136,6 +134,8 @@ void Response::create_post(Message& request, Server_block& config)
 			_construct_response(request, 405);
 		else if (!_file.not_found && !(_file.permissions & R))
 			_construct_response(request, 403);
+		else if (request.indicated_content_size > config.body_size)
+			_construct_response(request, 413);
 		else if (request.continue_100 == READY) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
 		{
 			_construct_response(request, 100);
@@ -147,17 +147,13 @@ void Response::create_post(Message& request, Server_block& config)
 			{
 				try
 				{
-					Multipart multipass(std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end()), request.boundary);
-					std::map<std::string, File_Multipart> multipart_map = multipass.get_files();
+					Multipart moultipass(std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end()), request.boundary);
+					std::map<std::string, File_Multipart> multipart_map = moultipass.get_files();
 					std::map<std::string, File_Multipart>::iterator it = multipart_map.begin();
 					std::string path = _location->upload.second;
 					while (it != multipart_map.end())
 					{
-
-						// # response Location = location + upload path
-						// # real upload Location = location root + upload path
 						std::string pathandfilename = _location->root + _location->upload.second + it->second._filename; // should append filename instead
-						std::cout <<pathandfilename <<std::endl;
 						if (!create_filu(it->second._file, pathandfilename))
 							throw std::exception();
 						it++;
@@ -170,8 +166,6 @@ void Response::create_post(Message& request, Server_block& config)
 					_construct_response(request, 500);
 				}
 			}
-			// _construct_response(request, 201); // should specify to client to close the connection or that we'll keep it alive
-
 		}
 		else
 			_construct_response(request, 200);
@@ -242,7 +236,7 @@ location_map::iterator Response::_find_longest_location(Server_block& config, st
 
 void Response::_load_errors(Server_block& config)
 {
-	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 500, 501 , 505};
+	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 413, 500, 501 , 505};
 	std::map<int, std::string>::iterator find;
 	for (int i = 0; i < ERROR_NUMBER; i++)
 	{
@@ -316,7 +310,9 @@ void Response::_construct_response(const Message& request, int status)
 			_construct_error(500, false);
 	}
 	else if (!(status == 100))
+	{
 		_construct_error(status, false);
+	}
 	_generate_response(status);
 }
 
@@ -407,8 +403,8 @@ void Response::_init_start_lines(void) const
 	start_lines.insert(std::make_pair(403, "HTTP/1.1 403 Forbidden\n"));
 	start_lines.insert(std::make_pair(404, "HTTP/1.1 404 Not Found\n"));
 	start_lines.insert(std::make_pair(405, "HTTP/1.1 405 Method Not Allowed\n"));
+	start_lines.insert(std::make_pair(413, "HTTP/1.1 413 Request Entity Too Large\n"));
 	start_lines.insert(std::make_pair(500, "HTTP/1.1 500 Internal Server Error\n"));
 	start_lines.insert(std::make_pair(501, "HTTP/1.1 501 Not Implemented\n"));
 	start_lines.insert(std::make_pair(505, "HTTP/1.1 505 HTTP Version not supported\n"));
-
 }
