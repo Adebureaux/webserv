@@ -23,7 +23,7 @@ with telnetlib.Telnet(host, port, 1) as session:
 		session.write(l.encode('ascii') + b"")
 		session.write(bytes("\r\n", 'ascii'))
 	session.write(bytes("\r\n\r\n", 'ascii'))
-	output = session.read_all()
+	output = session.read_some()
 	session.close()
 	start_line = output.decode().partition('\n')[0]
 	status = start_line.split()
