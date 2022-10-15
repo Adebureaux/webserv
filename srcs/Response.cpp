@@ -54,6 +54,34 @@ size_t Response::get_size(void) const
 	return (_response.size());
 }
 
+// static bool is_cgi_request(Message& request, Server_block& config)
+// {
+//	checker if requested file mime_type correspond to the mime_type of cgi in config
+// 	std::pair<bool, std::string> res = request.info.get_var_by_name("QUERY_STRING");
+// 	if (res.first)
+// 	{
+//
+// 	}
+// }
+
+void _cgi_get(Message& request, Server_block& config)
+{
+	(void)request;
+	(void)config;
+}
+
+void _cgi_post(Message& request, Server_block& config)
+{
+	(void)request;
+	(void)config;
+}
+
+void _cgi_delete(Message& request, Server_block& config)
+{
+	(void)request;
+	(void)config;
+}
+
 void Response::create(Message& request, config_map& config)
 {
 	config_map::iterator it = config.find(_parse_host(request.info.get_host()));

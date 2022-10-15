@@ -34,6 +34,9 @@ class Response
 	std::string	_merge_path(const std::string& root, std::string path);
 	std::string	 _parse_host(std::string host);
 	void _setup_redirection(const Request& request);
+	void _cgi_get(Message& request, Server_block& config);
+	void _cgi_post(Message& request, Server_block& config);
+	void _cgi_delete(Message& request, Server_block& config);
 
 	private:
 	Location					*_location;
