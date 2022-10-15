@@ -70,11 +70,14 @@ void Response::create(Message& request, config_map& config)
 	}
 	_load_errors(it->second);
 	_find_location(request.info, it->second);
-	// Should trigger 400 in case of invalid request
+
+
 	if (!request.info.is_valid())
 		_construct_error(400, true);
 	else if (request.info.get_var_by_name("HTTP_VERSION").second != "1.1")
 		_construct_error(505, true);
+	else if (!_location)
+		_construct_response(request, 404);
 	else if (request.info.get_method() == GET)
 		create_get(request);
 	else if (request.info.get_method() == POST)
@@ -85,30 +88,18 @@ void Response::create(Message& request, config_map& config)
 
 void Response::create_get(const Message& request)
 {
-	if (_location)
-	{
-		// std::cout << C_G_BLUE << "Current location is " << _location->uri << C_RES << std::endl;
-		// std::cout << C_G_BLUE << "Current searched file is " << _file.uri << C_RES << std::endl;
-
-		// Redirect should check location redirect
-		if (_file.redirect || !_location->redirect.empty())
-			_construct_response(request, 302);
-		else if (!_location->get_method)
-			_construct_response(request, 405);
-		else if (!_file.not_found && !(_file.permissions & R))
-			_construct_response(request, 403);
-		else if (_file.valid && _file.type == FILE_TYPE)
-			_construct_response(request, 200);
-		else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-			_construct_autoindex(_file.path, request.info.get_request_target());
-		else
-			_construct_response(request, 404);
-	}
+	if (_file.redirect || !_location->redirect.empty())
+		_construct_response(request, 302);
+	else if (!_location->get_method)
+		_construct_response(request, 405);
+	else if (!_file.not_found && !(_file.permissions & R))
+		_construct_response(request, 403);
+	else if (_file.valid && _file.type == FILE_TYPE)
+		_construct_response(request, 200);
+	else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
+		_construct_autoindex(_file.path, request.info.get_request_target());
 	else
-	{
 		_construct_response(request, 404);
-		std::cout << C_G_BLUE << "No Location Found" << C_RES << std::endl;
-	}
 }
 
 static bool create_filu(std::string const &content, std::string const &path)
@@ -124,57 +115,47 @@ static bool create_filu(std::string const &content, std::string const &path)
 
 void Response::create_post(Message& request, Server_block& config)
 {
-	// (void)config;
-	if (_location)
+	if (_file.redirect || !_location->redirect.empty())
+		_construct_response(request, 302);
+	else if (!_location->post_method)
+		_construct_response(request, 405);
+	else if (!_file.not_found && !(_file.permissions & R))
+		_construct_response(request, 403);
+	else if (request.indicated_content_size > config.body_size)
+		_construct_response(request, 413);
+	else if (request.continue_100 == READY)
 	{
-		// Redirect should check location redirect
-		if (_file.redirect || !_location->redirect.empty())
-			_construct_response(request, 302);
-		else if (!_location->post_method)
-			_construct_response(request, 405);
-		else if (!_file.not_found && !(_file.permissions & R))
-			_construct_response(request, 403);
-		else if (request.indicated_content_size > config.body_size)
-			_construct_response(request, 413);
-		else if (request.continue_100 == READY) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
+		_construct_response(request, 100);
+		request.continue_100 = DONE;
+	}
+	else if (request.current_content_size == request.indicated_content_size)
+	{ // checker si cest bien une multipart ndabord
+		if (_location->upload.first) // si upload autorise
 		{
-			_construct_response(request, 100);
-			request.continue_100 = DONE;
-		}
-		else if (request.current_content_size == request.indicated_content_size) // should check if post was successfuly fulfilled too cg: write file or CGI stuff
-		{ // checker si cest bien une multipart ndabord
-			if (_location->upload.first) // si upload autorise
+			try
 			{
-				try
+				Multipart moultipass(std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end()), request.boundary);
+				std::map<std::string, File_Multipart> multipart_map = moultipass.get_files();
+				std::map<std::string, File_Multipart>::iterator it = multipart_map.begin();
+				std::string path = _location->upload.second;
+				while (it != multipart_map.end())
 				{
-					Multipart moultipass(std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end()), request.boundary);
-					std::map<std::string, File_Multipart> multipart_map = moultipass.get_files();
-					std::map<std::string, File_Multipart>::iterator it = multipart_map.begin();
-					std::string path = _location->upload.second;
-					while (it != multipart_map.end())
-					{
-						std::string pathandfilename = _location->root + _location->upload.second + it->second._filename; // should append filename instead
-						if (!create_filu(it->second._file, pathandfilename))
-							throw std::exception();
-						it++;
-					}
-					_construct_response(request, 201); // should specify to client to close the connection or that we'll keep it alive
+					std::string pathandfilename = _location->root + _location->upload.second + it->second._filename;
+					if (!create_filu(it->second._file, pathandfilename))
+						throw std::exception();
+					it++;
 				}
-				catch (std::exception& e)
-				{
-					std::cout << C_G_RED << e.what() << C_RES<<std::endl;
-					_construct_response(request, 500);
-				}
+				_construct_response(request, 201);
+			}
+			catch (std::exception& e)
+			{
+				std::cout << C_G_RED << e.what() << C_RES<<std::endl;
+				_construct_response(request, 500);
 			}
 		}
-		else
-			_construct_response(request, 200);
 	}
 	else
-	{
-		_construct_response(request, 404);
-		std::cout << C_G_BLUE << "No Location Found" << C_RES << std::endl;
-	}
+		_construct_response(request, 200);
 }
 
 void Response::create_delete(const Message& request, Server_block& config)
@@ -187,10 +168,6 @@ void Response::create_delete(const Message& request, Server_block& config)
 		_file.content = "{success: true}";
 		_construct_response(request, 200);
 	}
-	// else if (request.continue100 == DONE && request.multipart && request.state == READY)
-	// {
-	// 	_construct_response(request, 204);
-	// }
 }
 
 void Response::_find_location(const Request& request, Server_block& config)
