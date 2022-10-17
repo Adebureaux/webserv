@@ -191,11 +191,21 @@ void Response::create_delete(const Message& request, Server_block& config)
 	(void)config;
 	//A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
 	// or 204 (No content) if the DELETE action has been completed but the response does not have a message body.
-	if (_location)
-	{
-		_file.content = "{success: true}";
-		_construct_response(request, 200);
-	}
+
+	// if (_file.redirect || !_location->redirect.empty())
+	// 	_construct_response(request, 302);
+	// else if (!_location->get_method)
+	// 	_construct_response(request, 405);
+	// else if (!_file.not_found && !(_file.permissions & R))
+	// 	_construct_response(request, 403);
+	// else if (_file.valid && _file.type == FILE_TYPE)
+	// 	_construct_response(request, 200);
+	// else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
+	// 	_construct_autoindex(_file.path, request.info.get_request_target());
+	// else
+	// 	_construct_response(request, 404);
+
+	_construct_response(request, 200);
 }
 
 void Response::_find_location(const Request& request, Server_block& config)

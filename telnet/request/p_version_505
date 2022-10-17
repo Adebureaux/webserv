@@ -1,2 +1,2 @@
-POST / HTTP/1.2
-Host: 127.0.0.1:8080
+POST / HTTP/9.2
+Host: localhost
