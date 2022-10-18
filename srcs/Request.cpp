@@ -205,6 +205,7 @@ void Request::request_line()
 
 void Request::method()
 {
+	size_t old_head = _head;
 	try
 	{
 		_or("nnnn", &Request::_get, &Request::_post, &Request::_delete, &Request::_other_method);
@@ -213,7 +214,7 @@ void Request::method()
 	{
 		throw EXECP;
 	}
-
+	CATCH_VAR("METHOD");
 }
 
 void Request::_other_method(void)

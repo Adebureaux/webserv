@@ -1,5 +1,6 @@
 #include "Multipart.hpp"
 #include "Response.hpp"
+#include  <sys/wait.h>
 
 
 // https://www.rfc-editor.org/rfc/rfc2616#section-6 --> reference
@@ -65,22 +66,88 @@ size_t Response::get_size(void) const
 // 	}
 // }
 
-void _cgi_get(Message& request, Server_block& config)
+
+std::string readToString(int fd)
 {
-	(void)request;
-	(void)config;
+	static char buffer[BUFFER_SIZE];
+	std::stringstream res;
+	int ret = 0;
+	while ((ret = read(fd, buffer, sizeof(buffer))) != 0)
+	{
+		res << buffer;
+		std::memset(buffer, 0, ret);
+	}
+	close(fd);
+	return res.str();
 }
 
-void _cgi_post(Message& request, Server_block& config)
+template<class T>
+const std::string itos(T number)
 {
-	(void)request;
-	(void)config;
+	std::stringstream stream;
+	stream << number;
+    return stream.str();
 }
 
-void _cgi_delete(Message& request, Server_block& config)
+static void cgi(const Message &request, Server_block& config, const std::string &script_path)
 {
-	(void)request;
-	(void)config;
+	int out[2], error[2], pid, status;
+	std::vector<std::string> vec(18);
+	
+	vec[0] = std::string("SERVER_SOFTWARE=webserv/1.0");
+	vec[1] = std::string(std::string("SERVER_NAME=") + config.server_names);
+	vec[2] = std::string(std::string("SERVER_PORT=") + itos(config.port));
+	vec[3] = std::string("SERVER_PROTOCOL=HTTP/1.1");
+	vec[4] = std::string("GATEWAY_INTERFACE=PHP/7.4.3");
+	vec[5] = std::string(std::string("REQUEST_METHOD=") + request.info.get_var_by_name("METHOD").second);
+	vec[6] = std::string(std::string("QUERY_STRING=") + request.info.get_var_by_name("QUERY_STRING").second);
+	vec[7] = std::string("REDIRECT_STATUS=200");
+	vec[8] = std::string(std::string("HTTP_REFERER=") + request.info.get_header_var_by_name("Http-referer").second);
+	vec[9] = std::string(std::string("HTTP_USER_AGENT=") + request.info.get_header_var_by_name("User-Agent").second);
+	vec[10] = std::string(std::string("HTTP_ACCEPT=") + request.info.get_header_var_by_name("Accept").second);
+	vec[11] = std::string(std::string("HTTP_ACCEPT_LANGUAGE=") + request.info.get_header_var_by_name("Accept-Language").second);
+	vec[12] = std::string(std::string("HTTP_ACCEPT_ENCODING=") + request.info.get_header_var_by_name("Accept-Encoding").second);
+	vec[13] = std::string("REMOTE_HOST=");
+	vec[14] = std::string(std::string("HTTP_COOKIE=") + request.info.get_header_var_by_name("Accept-Cookie").second);
+	if (request.info.get_method() == POST)
+	{
+		vec[15] = std::string(std::string("CONTENT_LENGTH=") + itos(request.indicated_content_size));
+		vec[16] = std::string(std::string("CONTENT_TYPE=") + request.info.get_header_var_by_name("Content-Type").second);
+	}
+	std::vector<char *> cvec;
+	cvec.reserve(vec.size());
+    for(size_t i = 0; i < vec.size(); ++i)
+    {
+	    cvec.push_back(const_cast<char*>(vec[i].c_str()));
+		std::cout << __FUNCTION__ <<"  " << vec[i].c_str() <<std::endl;
+	}
+	
+	pipe(out);// non, fichier
+	pipe(error); // non, fichier
+	if ((pid = fork()) == -1)
+		throw std::exception();
+	if (pid == 0)
+	{
+		// close(out[0]);
+		std::cout << "YYYoooooooooooooooooooooooooooooooooooooooooo     " << script_path.c_str() <<"\n";
+		std::vector<char *> cvec2;
+		cvec2.reserve(2);
+		cvec2.push_back(const_cast<char*>(script_path.c_str()));
+		cvec2.push_back(const_cast<char*>(""));
+		close(error[0]);
+		dup2(out[0], 0);
+		dup2(out[1], 1);
+		dup2(error[1], 2);
+		close(out[1]);
+		close(error[1]);
+		execve("/usr/bin/php-cgi", &cvec2[0], &cvec[0]);
+		exit(1);
+	}
+	waitpid(pid, &status, 0);
+	close(out[1]);
+	close(error[1]);
+	std::cout<< "CGI OUT:\n" << readToString(out[0]) << std::endl;
+	// std::cout<<std::endl << RED << "CGI ERROR:" << status << "\n" << readToString(error[0]) << CLEAR;
 }
 
 void Response::create(Message& request, config_map& config)
@@ -100,7 +167,11 @@ void Response::create(Message& request, config_map& config)
 	_load_errors(it->second);
 	_find_location(request.info, it->second);
 
-
+	if (_file.valid && _file.type == FILE_TYPE && _file.ext == "php")
+	{
+		cgi(request, it->second, _file.uri);
+		_construct_response(request, 200);
+	}
 	if (!request.info.is_valid())
 		_construct_error(400, true);
 	else if (request.info.get_method() == NO_METHOD)
