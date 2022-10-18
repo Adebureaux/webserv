@@ -276,7 +276,7 @@ void Request::origin_form()
 
 void Request::absolute_path()
 {
-	size_t old_head = _head;
+	size_t old_head = _head + 1;
 	try
 	{
 		n_star_m_and(1, STAR_NO_MAX, "cn", '/', &Request::segment);

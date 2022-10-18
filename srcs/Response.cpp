@@ -166,7 +166,8 @@ void Response::create(Message& request, config_map& config)
 	}
 	_load_errors(it->second);
 	_find_location(request.info, it->second);
-
+	std::cout  << C_G_CYAN << request.info.get_request_target()  << C_RES<< std::endl;
+	std::cout  << C_G_CYAN << request.info.get_var_by_name("ABSOLUTE_PATH").second  << C_RES<< std::endl;
 	if (_file.valid && _file.type == FILE_TYPE && _file.ext == "php")
 	{
 		cgi(request, it->second, _file.uri);
@@ -199,7 +200,7 @@ void Response::create_get(const Message& request)
 	else if (_file.valid && _file.type == FILE_TYPE)
 		_construct_response(request, 200);
 	else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-		_construct_autoindex(_file.path, request.info.get_request_target());
+		_construct_autoindex(_file.path, request.info.get_var_by_name("ABSULUTE_PATH").second);
 	else
 		_construct_response(request, 404);
 }
@@ -279,7 +280,7 @@ void Response::create_delete(const Message& request)
 
 void Response::_find_location(const Request& request, Server_block& config)
 {
-	File requested(request.get_request_target());
+	File requested(request.get_var_by_name("ABSULUTE_PATH").second);
 	location_map::iterator it = _find_longest_location(config, requested.path);
 	if (it != config.locations.end())
 	{
@@ -456,7 +457,7 @@ void Response::_setup_redirection(const Request& request)
 {
 	if (_file.type == DIRECTORY && !_file.valid)
 	{
-		_redirect = std::string("http://") + request.get_host() + "/" + request.get_request_target() + "/";
+		_redirect = std::string("http://") + request.get_host() + "/" + request.get_var_by_name("ABSULUTE_PATH").second + "/";
 		return;
 	}
 	if (_location->redirect == _location->uri)
@@ -467,8 +468,8 @@ void Response::_setup_redirection(const Request& request)
 			_redirect = _location->redirect;
 	}
 	else
-		_redirect = std::string("http://") + request.get_host() + "/" +  _location->redirect;
-	_redirect = _merge_path(_redirect, request.get_request_target());
+		_redirect = std::string("http://") + request.get_var_by_name("ABSULUTE_PATH").second + "/" +  _location->redirect;
+	_redirect = _merge_path(_redirect, request.get_var_by_name("ABSULUTE_PATH").second);
 	// std::cout << C_G_RED << _merge_path("", request.get_request_target()) << C_RES << std::endl;
 	// std::cout << C_G_RED << _location->redirect << " | " << _location->uri << " | " << _redirect << C_RES << std::endl;
 
