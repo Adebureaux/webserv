@@ -9,7 +9,7 @@ DELETE /index_permission.html HTTP/1.1
 POST/tmp_dir_for_php/index.php?truc=machin&foo=bar&jean-michel=francis HTTP1.1
 400
 GET /index.php?truc=machin&foo=bar&jean-michel=francis HTTP/1.1
-404
+200
 GET /index_example.html HTTP/1.1
 404
 GET /index_nofile.html HTTP/1.1
