@@ -1,6 +1,7 @@
 #include "Multipart.hpp"
 #include "Response.hpp"
 
+
 // https://www.rfc-editor.org/rfc/rfc2616#section-6 --> reference
     //    Response      = Status-Line               ; Section 6.1
     //                    *(( general-header        ; Section 4.5
@@ -102,6 +103,8 @@ void Response::create(Message& request, config_map& config)
 
 	if (!request.info.is_valid())
 		_construct_error(400, true);
+	else if (request.info.get_method() == NO_METHOD)
+		_construct_error(405, true);
 	else if (request.info.get_var_by_name("HTTP_VERSION").second != "1.1")
 		_construct_error(505, true);
 	else if (!_location)
@@ -111,7 +114,7 @@ void Response::create(Message& request, config_map& config)
 	else if (request.info.get_method() == POST)
 		create_post(request, it->second);
 	else if (request.info.get_method() == DELETE)
-		create_delete(request, it->second);
+		create_delete(request);
 }
 
 void Response::create_get(const Message& request)
@@ -183,29 +186,24 @@ void Response::create_post(Message& request, Server_block& config)
 		}
 	}
 	else
-		_construct_response(request, 200);
+		_construct_response(request, 404);
 }
 
-void Response::create_delete(const Message& request, Server_block& config)
+void Response::create_delete(const Message& request)
 {
-	(void)config;
-	//A successful response MUST be 200 (OK) if the server response includes a message body, 202 (Accepted) if the DELETE action has not yet been performed,
-	// or 204 (No content) if the DELETE action has been completed but the response does not have a message body.
-
-	// if (_file.redirect || !_location->redirect.empty())
-	// 	_construct_response(request, 302);
-	// else if (!_location->get_method)
-	// 	_construct_response(request, 405);
-	// else if (!_file.not_found && !(_file.permissions & R))
-	// 	_construct_response(request, 403);
-	// else if (_file.valid && _file.type == FILE_TYPE)
-	// 	_construct_response(request, 200);
-	// else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
-	// 	_construct_autoindex(_file.path, request.info.get_request_target());
-	// else
-	// 	_construct_response(request, 404);
-
-	_construct_response(request, 200);
+	if (_file.redirect || !_location->redirect.empty())
+		_construct_response(request, 302);
+	else if (!_location->delete_method)
+		_construct_response(request, 405);
+	else if (!_file.not_found && !(_file.permissions & R))
+		_construct_response(request, 403);
+	else if (_file.valid && _file.type == FILE_TYPE)
+	{
+		std::remove(_file.uri.c_str());
+		_construct_response(request, 200);
+	}
+	else
+		_construct_response(request, 404);
 }
 
 void Response::_find_location(const Request& request, Server_block& config)
@@ -251,7 +249,7 @@ location_map::iterator Response::_find_longest_location(Server_block& config, st
 
 void Response::_load_errors(Server_block& config)
 {
-	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 413, 500, 501 , 505};
+	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 413, 500, 501 , 505 };
 	std::map<int, std::string>::iterator find;
 	for (int i = 0; i < ERROR_NUMBER; i++)
 	{

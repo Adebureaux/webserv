@@ -1,11 +1,11 @@
 POST/tmp_dir_for_php/index.php?truc=machin&foo=bar&jean-michel=francis HTTP1.1
 400
 DELETE /index_example.html HTTP/1.1
-200
+404
 DELETE /index_nofile.html HTTP/1.1
-200
+404
 DELETE /index_permission.html HTTP/1.1
-200
+404
 POST/tmp_dir_for_php/index.php?truc=machin&foo=bar&jean-michel=francis HTTP1.1
 400
 GET /index.php?truc=machin&foo=bar&jean-michel=francis HTTP/1.1
@@ -25,50 +25,50 @@ GET /not_found HTTP/1.1
 POST/tmp_dir_for_php/index.php?truc=machin&foo=bar&jean-michel=francis HTTP1.1
 400
 HEAD /index_example.html HTTP/1.1
-400
+405
 HEAD /index_nofile.html HTTP/1.1
-400
+405
 HEAD /index_permission.html HTTP/1.1
-400
+405
 POST/tmp_dir_for_php/index.php?truc=machin&foo=bar&jean-michel=francis HTTP1.1
 400
 OPTIONS /index_example.html HTTP/1.1
-400
+405
 OPTIONS /index_nofile.html HTTP/1.1
-400
+405
 OPTIONS /index_permission.html HTTP/1.1
-400
+405
 POST /echo/post/json HTTP/1.1
-200
+404
 POST/tmp_dir_for_php/index.php?truc=machin&foo=bar&jean-michel=francisHTTP1.1
 400
 POST /index.php?truc=machin&foo=bar&jean-michel=francis HTTP/1.1
-200
+404
 POST /index_example.html HTTP/1.1
-200
+404
 POST /index_nofile.html HTTP/1.1
-200
+404
 POST /index_permission.html HTTP/1.1
-200
+404
 POST/tmp_dir_for_php/index.php?truc=machin&foo=bar&jean-michel=francis HTTP1.1
 400
 PUT /youpi.bla HTTP/1.1
-400
+405
 PUT /index_example.html HTTP/1.1
-400
+405
 PUT /index_nofile.html HTTP/1.1
-400
+405
 PUT /index_permission.html HTTP/1.1
-400
+405
 POST / HTTP/9.2
 505
 POST/tmp_dir_for_php/index.php?truc=machin&foo=bar&jean-michel=francis HTTP1.1
 400
 TRACE /index_example.html HTTP/1.1
-400
+405
 TRACE /index_nofile.html HTTP/1.1
-400
+405
 TRACE /index_permission.html HTTP/1.1
-400
+405
 54616 /\/\/\ HTTP/1.1
 400

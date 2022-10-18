@@ -19,7 +19,7 @@ class Response
 	size_t		get_size(void) const;
 	void		create_get(const Message& request);
 	void		create_post(Message& request, Server_block& config);
-	void		create_delete(const Message& request, Server_block& config);
+	void		create_delete(const Message& request);
 
 	private:
 	void	_find_location(const Request& request, Server_block& config);

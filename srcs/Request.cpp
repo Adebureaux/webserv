@@ -207,13 +207,26 @@ void Request::method()
 {
 	try
 	{
-		_or("nnn", &Request::_get, &Request::_post, &Request::_delete);
+		_or("nnnn", &Request::_get, &Request::_post, &Request::_delete, &Request::_other_method);
 	}
 	catch(const std::exception& e)
 	{
 		throw EXECP;
 	}
 
+}
+
+void Request::_other_method(void)
+{
+	try
+	{
+		_or("RRRRRR", "HEAD", "PUT", "CONNECT", "OPTIONS", "TRACE", "PATCH");
+	}
+	catch(const std::exception& e)
+	{
+		throw EXECP;
+	}
+	
 }
 
 void Request::_get()

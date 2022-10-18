@@ -59,6 +59,7 @@ class Request : public Parser
 					void _get();
 					void _post();
 					void _delete();
+					void _other_method();
 				void request_target();
 					void origin_form();
 						void absolute_path();
