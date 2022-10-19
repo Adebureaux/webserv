@@ -87,7 +87,6 @@ static void setPostOptions(Message &req)
 		req.indicated_content_size = std::atoi(res.second.c_str()); // must check later if this value doesnt exceed max_body_size (conf)
 
 		// should also check if second is a valid number
-		std::cout << "BITE\n";
 		req.header_size = req.header_end + 5; // (header + double clrf)
 		req.current_content_size -= req.header_size - 1;
 		res = req.info.get_header_var_by_name("Content-Type");
