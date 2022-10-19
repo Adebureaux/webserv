@@ -13,7 +13,7 @@
 
 static std::map<int, std::string> start_lines;
 
-Response::Response() :  _location(NULL), _file()
+Response::Response() :  _location(NULL), _file(), _isCGI(false)
 {
 	_init_start_lines();
 }
@@ -31,6 +31,7 @@ Response& Response::operator=(const Response& rhs)
 	_header = rhs._header;
 	_body = rhs._body;
 	_redirect = rhs._redirect;
+	_isCGI = rhs._isCGI;
 	return (*this);
 }
 
@@ -44,6 +45,7 @@ void Response::clear(void)
 	_redirect.clear();
 	_file = File();
 	_location = NULL;
+	_isCGI = false;
 }
 
 const void* Response::send(void) const
@@ -89,38 +91,107 @@ const std::string itos(T number)
     return stream.str();
 }
 
-static void cgi(const Message &request, Server_block& config, const std::string &script_path)
+// static int			word_count(char const *str, char c)
+// {
+// 	int				i;
+// 	int				nb;
+
+// 	i = 0;
+// 	nb = 0;
+// 	while (str[i] != '\0')
+// 	{
+// 		if (str[i] != c && (str[i + 1] == c || str[i + 1] == '\0'))
+// 			nb++;
+// 		i++;
+// 	}
+// 	return (nb);
+// }
+
+// static int			word_len(const char *str, char c)
+// {
+// 	int				i;
+
+// 	i = 0;
+// 	while (*str == c)
+// 		str++;
+// 	while (str[i] != c && str[i] != '\0')
+// 		i++;
+// 	return (i);
+// }
+
+// static const char	*word_copy(const char *str, char *tab, char c)
+// {
+// 	int				i;
+
+// 	i = -1;
+// 	while (*str == c)
+// 		str++;
+// 	while (*str != c && *str != '\0')
+// 		tab[++i] = *(str++);
+// 	tab[++i] = '\0';
+// 	return (str);
+// }
+
+// char				**ft_split(char const *s, char c)
+// {
+// 	int				i;
+// 	char			**tab;
+// 	int				nb;
+
+// 	if (!s)
+// 		return (NULL);
+// 	i = -1;
+// 	nb = word_count(s, c);
+// 	if (!(tab = (char**)malloc(sizeof(*tab) * (nb + 1))))
+// 		return (NULL);
+// 	while (++i < nb)
+// 	{
+// 		if (!(tab[i] = (char*)malloc(sizeof(**tab) * word_len(s, c) + 1)))
+// 			return (0);
+// 		s = word_copy(s, tab[i], c);
+// 	}
+// 	tab[i] = 0;
+// 	return (tab);
+// }
+
+void Response::_cgi(const Message &request, Server_block& config)
 {
-	int out[2], error[2], pid, status;
-	std::vector<std::string> vec(18);
-	
-	vec[0] = std::string("SERVER_SOFTWARE=webserv/1.0");
-	vec[1] = std::string(std::string("SERVER_NAME=") + config.server_names);
-	vec[2] = std::string(std::string("SERVER_PORT=") + itos(config.port));
-	vec[3] = std::string("SERVER_PROTOCOL=HTTP/1.1");
-	vec[4] = std::string("GATEWAY_INTERFACE=PHP/7.4.3");
-	vec[5] = std::string(std::string("REQUEST_METHOD=") + request.info.get_var_by_name("METHOD").second);
-	vec[6] = std::string(std::string("QUERY_STRING=") + request.info.get_var_by_name("QUERY_STRING").second);
-	vec[7] = std::string("REDIRECT_STATUS=200");
-	vec[8] = std::string(std::string("HTTP_REFERER=") + request.info.get_header_var_by_name("Http-referer").second);
-	vec[9] = std::string(std::string("HTTP_USER_AGENT=") + request.info.get_header_var_by_name("User-Agent").second);
-	vec[10] = std::string(std::string("HTTP_ACCEPT=") + request.info.get_header_var_by_name("Accept").second);
-	vec[11] = std::string(std::string("HTTP_ACCEPT_LANGUAGE=") + request.info.get_header_var_by_name("Accept-Language").second);
-	vec[12] = std::string(std::string("HTTP_ACCEPT_ENCODING=") + request.info.get_header_var_by_name("Accept-Encoding").second);
-	vec[13] = std::string("REMOTE_HOST=");
-	vec[14] = std::string(std::string("HTTP_COOKIE=") + request.info.get_header_var_by_name("Accept-Cookie").second);
+	int out[2], error[2]; 
+	int pid, status;
+	std::vector<std::string> vec;
+	std::string body = std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end());
+	std::cout << "CGI POST Body:\n" << body << "\n body end\n" << std::endl; 
+	vec.reserve(18);
+	vec.push_back(std::string("SERVER_SOFTWARE=webserv/1.0"));
+	vec.push_back(std::string(std::string("SERVER_NAME=") + config.server_names));
+	vec.push_back(std::string(std::string("SERVER_PORT=") + itos(config.port)));
+	vec.push_back(std::string("SERVER_PROTOCOL=HTTP/1.1"));
+	vec.push_back(std::string("GATEWAY_INTERFACE=PHP/7.4.3"));
+	vec.push_back(std::string(std::string("REQUEST_METHOD=") + request.info.get_var_by_name("METHOD").second));
+	vec.push_back(std::string(std::string("QUERY_STRING=") + request.info.get_var_by_name("QUERY_STRING").second));
+	vec.push_back(std::string("REDIRECT_STATUS=200"));
+	vec.push_back(std::string(std::string("HTTP_REFERER=") + request.info.get_header_var_by_name("Http-referer").second));
+	vec.push_back(std::string(std::string("HTTP_USER_AGENT=") + request.info.get_header_var_by_name("User-Agent").second));
+	vec.push_back(std::string(std::string("HTTP_ACCEPT=") + request.info.get_header_var_by_name("Accept").second));
+	vec.push_back(std::string(std::string("HTTP_ACCEPT_LANGUAGE=") + request.info.get_header_var_by_name("Accept-Language").second));
+	vec.push_back(std::string(std::string("HTTP_ACCEPT_ENCODING=") + request.info.get_header_var_by_name("Accept-Encoding").second));
+	vec.push_back(std::string(std::string("SCRIPT_FILENAME=") + _file.uri));
+	vec.push_back(std::string("REMOTE_HOST="));
+	vec.push_back(std::string(std::string("HTTP_COOKIE=") + request.info.get_header_var_by_name("Accept-Cookie").second));
+
 	if (request.info.get_method() == POST)
 	{
-		vec[15] = std::string(std::string("CONTENT_LENGTH=") + itos(request.indicated_content_size));
-		vec[16] = std::string(std::string("CONTENT_TYPE=") + request.info.get_header_var_by_name("Content-Type").second);
+		vec.push_back(std::string(std::string("CONTENT_LENGTH=") + itos(request.indicated_content_size)));
+		vec.push_back(std::string(std::string("CONTENT_TYPE=") + request.info.get_header_var_by_name("Content-Type").second));
 	}
 	std::vector<char *> cvec;
 	cvec.reserve(vec.size());
-    for(size_t i = 0; i < vec.size(); ++i)
+    for(size_t i = 0; i < vec.size(); i++)
     {
 	    cvec.push_back(const_cast<char*>(vec[i].c_str()));
-		std::cout << __FUNCTION__ <<"  " << vec[i].c_str() <<std::endl;
+		// std::cout << __FUNCTION__ <<"  " << vec[i].c_str() <<std::endl;
 	}
+	cvec.push_back(NULL);
 	
 	pipe(out);// non, fichier
 	pipe(error); // non, fichier
@@ -129,25 +200,42 @@ static void cgi(const Message &request, Server_block& config, const std::string 
 	if (pid == 0)
 	{
 		// close(out[0]);
-		std::cout << "YYYoooooooooooooooooooooooooooooooooooooooooo     " << script_path.c_str() <<"\n";
 		std::vector<char *> cvec2;
-		cvec2.reserve(2);
-		cvec2.push_back(const_cast<char*>(script_path.c_str()));
-		cvec2.push_back(const_cast<char*>(""));
+		cvec2.reserve(3);
+		cvec2.push_back(const_cast<char*>(_location->CGI.c_str()));
+		cvec2.push_back(const_cast<char*>(_file.uri.c_str()));
+		cvec2.push_back(NULL);
 		close(error[0]);
 		dup2(out[0], 0);
 		dup2(out[1], 1);
 		dup2(error[1], 2);
 		close(out[1]);
 		close(error[1]);
-		execve("/usr/bin/php-cgi", &cvec2[0], &cvec[0]);
-		exit(1);
+		if (request.info.get_method() == POST)
+			std::cout << body;
+		execve(cvec2[0], &cvec2[0], &cvec[0]);
+		exit(-1);
 	}
 	waitpid(pid, &status, 0);
 	close(out[1]);
 	close(error[1]);
-	std::cout<< "CGI OUT:\n" << readToString(out[0]) << std::endl;
-	// std::cout<<std::endl << RED << "CGI ERROR:" << status << "\n" << readToString(error[0]) << CLEAR;
+	std::string cgi_out = readToString(out[0]);
+	std::string cgi_err = readToString(error[0]);
+	close(out[0]);
+	close(error[0]);
+	if (cgi_err.empty() && !cgi_out.empty())
+	{
+		_file.content = cgi_out;
+		_construct_response(request, 200);
+	}
+	else if (!cgi_err.empty() && !cgi_out.empty())
+	{
+		// _file.content = cgi_out;
+		_isCGI = false;
+		_construct_error(500, true);
+	}
+	std::cout<< "CGI OUT:\n" << cgi_out << std::endl;
+	std::cout<< "CGI ERROR:" << status << "\n" << cgi_err << std::endl;
 }
 
 void Response::create(Message& request, config_map& config)
@@ -166,13 +254,7 @@ void Response::create(Message& request, config_map& config)
 	}
 	_load_errors(it->second);
 	_find_location(request.info, it->second);
-	std::cout  << C_G_CYAN << request.info.get_request_target()  << C_RES<< std::endl;
-	std::cout  << C_G_CYAN << request.info.get_var_by_name("ABSOLUTE_PATH").second  << C_RES<< std::endl;
-	if (_file.valid && _file.type == FILE_TYPE && _file.ext == "php")
-	{
-		cgi(request, it->second, _file.uri);
-		_construct_response(request, 200);
-	}
+
 	if (!request.info.is_valid())
 		_construct_error(400, true);
 	else if (request.info.get_method() == NO_METHOD)
@@ -182,23 +264,33 @@ void Response::create(Message& request, config_map& config)
 	else if (!_location)
 		_construct_response(request, 404);
 	else if (request.info.get_method() == GET)
-		create_get(request);
+		create_get(request, it->second);
 	else if (request.info.get_method() == POST)
 		create_post(request, it->second);
 	else if (request.info.get_method() == DELETE)
 		create_delete(request);
 }
 
-void Response::create_get(const Message& request)
+void Response::create_get(const Message& request, Server_block& config)
 {
 	if (_file.redirect || !_location->redirect.empty())
 		_construct_response(request, 302);
 	else if (!_location->get_method)
 		_construct_response(request, 405);
 	else if (!_file.not_found && !(_file.permissions & R))
+	{
+		std::cout << "__FUNCTION__ "<<" \thello\n";
 		_construct_response(request, 403);
+	}
 	else if (_file.valid && _file.type == FILE_TYPE)
+	{
+		if (_file.ext == "php" && !_location->CGI.empty())
+		{
+			_isCGI = true;
+			return _cgi(request, config);
+		}
 		_construct_response(request, 200);
+	}
 	else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
 		_construct_autoindex(_file.path, request.info.get_var_by_name("ABSOLUTE_PATH").second);
 	else
@@ -218,12 +310,17 @@ static bool create_filu(std::string const &content, std::string const &path)
 
 void Response::create_post(Message& request, Server_block& config)
 {
+	std::cout << "file extension: " << _file.ext << " content size: " << request.current_content_size << " indicated : " << request.indicated_content_size << std::endl;
+	// std::cout << "RAW DATA\n" << request.raw_data << std::endl;
 	if (_file.redirect || !_location->redirect.empty())
 		_construct_response(request, 302);
 	else if (!_location->post_method)
 		_construct_response(request, 405);
 	else if (!_file.not_found && !(_file.permissions & R))
+	{
+		std::cerr << "__FUNCTION__ "<<" \thello\n";
 		_construct_response(request, 403);
+	}
 	else if (request.indicated_content_size > config.body_size)
 		_construct_response(request, 413);
 	else if (request.continue_100 == READY)
@@ -231,8 +328,10 @@ void Response::create_post(Message& request, Server_block& config)
 		_construct_response(request, 100);
 		request.continue_100 = DONE;
 	}
-	else if (request.current_content_size == request.indicated_content_size)
+	else if (request.current_content_size == request.indicated_content_size && _file.ext != "php")
 	{ // checker si cest bien une multipart ndabord
+		std::cout << C_G_RED << "UPLOAD" << C_RES << std::endl;
+
 		if (_location->upload.first) // si upload autorise
 		{
 			try
@@ -257,8 +356,14 @@ void Response::create_post(Message& request, Server_block& config)
 			}
 		}
 	}
+	else if (request.current_content_size >= request.indicated_content_size && _file.ext == "php")
+	{
+		std::cout << C_G_RED << "CGI POST " << C_RES << std::endl;
+		_isCGI = true;
+		return _cgi(request, config);
+	}
 	else
-		_construct_response(request, 404);
+		_construct_response(request, 500);
 }
 
 void Response::create_delete(const Message& request)
@@ -356,7 +461,8 @@ void Response::_generate_response(int status)
 		_response.append(_header);
 		if (status != 201)
 		{
-			_response.append("\r\n");
+			if (!_isCGI)
+				_response.append("\r\n");
 			_response.append(_body);
 		}
 	}
@@ -371,7 +477,10 @@ void Response::_construct_response(const Message& request, int status)
 		_header_field("Connection", request.info.get_connection());
 	if (status == 200)
 	{
-		size << _file.content.size();
+		if (_isCGI)
+			size << _file.content.size() - (_file.content.find(__DOUBLE_CRLF) + 4);
+		else 
+			size << _file.content.size();
 		_header_field("Content-Type", _file.mime_type);
 		_header_field("Content-Length", size.str());
 		_body.append(_file.content);
@@ -421,7 +530,7 @@ void Response::_construct_error(int status, bool generate)
 	size << _errors[status].size();
 	_header_field("Content-Type", "text/html");
 	_header_field("Content-Length", size.str());
-	_body.append(_errors[status]);\
+	_body.append(_errors[status]);
 	if (generate)
 		_generate_response(status);
 }

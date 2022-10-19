@@ -316,14 +316,15 @@ void Request::query()
 
 void Request::absolute_form()
 {
-	try
-	{
-		absolute_URI();
-	}
-	catch(const std::exception& e)
-	{
-		throw EXECP;
-	}
+	throw std::invalid_argument("error: uri not supported");
+	// try
+	// {
+		// absolute_URI();
+	// }
+	// catch(const std::exception& e)
+	// {
+		// throw EXECP;
+	// }
 
 }
 

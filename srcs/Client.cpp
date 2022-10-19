@@ -56,10 +56,18 @@ ssize_t Client::_receive(void)
 		// std::cerr << "received:" << ret <<std::endl;
 		// if (_request.header_end)
 		// std::cout << C_G_MAGENTA << _request.raw_data << C_RES<< std::endl;
+		// while (1)
+		// 	;
 		_request.current_content_size += ret;
-		if (_request.header_end  != std::string::npos || (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF)) != std::string::npos)
+		if ((_request.header_end = _request.raw_data.find(__DOUBLE_CRLF, 0 , 4)) != std::string::npos)
 		{
-			std::cout << _request.raw_data <<std::endl;
+				std::cout << C_G_BLUE << _request.raw_data.find(__DOUBLE_CRLF, 0 , 4) << std::endl;
+			// if (_request.raw_data[_request.header_end] == '\r' && _request.raw_data[_request.header_end +1] == '\n' && _request.raw_data[_request.header_end+2] == '\r' && _request.raw_data[_request.header_end +3] == '\n')
+			if (_request.header_end == std::string::npos)
+				std::cout << "VAGIN" <<std::endl;
+			std::cout << C_G_GREEN << _request.header_end << C_RES << std::endl;
+			std::cout << C_G_CYAN << &_request.raw_data[_request.header_end] << C_RES << std::endl;
+			std::cout << C_G_RED << _request.raw_data << C_RES << std::endl;
 			_request.state = READY;
 
 		}
@@ -79,6 +87,7 @@ static void setPostOptions(Message &req)
 		req.indicated_content_size = std::atoi(res.second.c_str()); // must check later if this value doesnt exceed max_body_size (conf)
 
 		// should also check if second is a valid number
+		std::cout << "BITE\n";
 		req.header_size = req.header_end + 5; // (header + double clrf)
 		req.current_content_size -= req.header_size - 1;
 		res = req.info.get_header_var_by_name("Content-Type");
