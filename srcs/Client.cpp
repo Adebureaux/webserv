@@ -45,19 +45,11 @@ void Client::disconnect(void)
 
 ssize_t Client::_receive(void)
 {
-	// struct stat infos;
-	// fstat(_fd, &infos);
-	// std::cout << C_G_CYAN << "stat on client fd: "<< infos.st_blksize << C_RES << std::endl;
 	char buffer[BUFFER_SIZE + 1] = { 0 };
 	int ret = recv(_fd, buffer, BUFFER_SIZE, 0);
 	if (ret > 0)
 	{
 		_request.raw_data.append(buffer, ret);
-		// std::cerr << "received:" << ret <<std::endl;
-		// if (_request.header_end)
-		// std::cout << C_G_MAGENTA << _request.raw_data << C_RES<< std::endl;
-		// while (1)
-		// 	;
 		_request.current_content_size += ret;
 		if (_request.header_end != std::string::npos or (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF, 0 , 4)) != std::string::npos)
 		{
@@ -65,28 +57,19 @@ ssize_t Client::_receive(void)
 		}
 		else _request.state = INCOMPLETE;
 	}
-
-
 	return (ret);
 };
 
 static void setPostOptions(Message &req)
 {
-	// std::cout << C_G_BLUE << "setPostOptions()\n";
 	req.post_options_set = true;
 	std::pair<bool, std::string> res = req.info.get_header_var_by_name("Content-Length");
 	if (res.first)
 	{
-		req.indicated_content_size = std::atoi(res.second.c_str()); // must check later if this value doesnt exceed max_body_size (conf)
-
-		// should also check if second is a valid number
-		req.header_size = req.header_end + 5; // (header + double clrf)
+		req.indicated_content_size = std::atoi(res.second.c_str());
+		req.header_size = req.header_end + 5;
 		req.current_content_size -= req.header_size - 1;
 		res = req.info.get_header_var_by_name("Content-Type");
-
-		// MULTIPART REQUEST
-		// if (res.first and res.second.find("/x-www-form-urlencoded") != std::string::npos or res.second.find("/form-data") != std::string::npos)
-		// 	req.isCGI = true;
 		if (res.first and res.second.find("multipart/") != std::string::npos)
 		{
 			size_t pos = res.second.find("; boundary=");
@@ -103,9 +86,8 @@ static void setPostOptions(Message &req)
 				req.info._is_valid = false;
 				req.response_override = 400;
 				return ;
-			} // info: should have a defined boundary for multipart request
+			}
 		}
-		// MULTISTEP REQUEST (expect a 100 continue before sending the request body)
 		if ((res = req.info.get_header_var_by_name("Expect")).first and res.second == "100-continue")
 		{
 			req.continue_100 = READY;
@@ -138,21 +120,14 @@ void Client::handleEvent(uint32_t revents)
 	{
 
 		respond();
-		// std::cout << "--- REQUEST ---\n" << C_G_RED
-		// << _request.indicated_content_size << "\t" << _request.current_content_size << C_RES<< std::endl;
 		if (_request.continue_100 == READY)
-		{
 			_request.continue_100 = DONE;
-		}
 		else if (_request.state != INCOMPLETE)
 		{
-			std::cout << C_G_YELLOW << __FILE__ << ":" << __FUNCTION__ <<":"<< __LINE__ << C_RES << std::endl;
-			if (_request.info.get_connection() != "keep-alive") // should also check if we didnt just send a 100 continue response
+			if (_request.info.get_connection() != "keep-alive")
 				throw std::exception();
 			_request.reset();
-		}  // should not reset everything if we just sent a 100 continue
-
-
+		}
 	}
 };
 
@@ -169,30 +144,18 @@ void Client::handle_request(void)
 		{
 			if (!_request.post_options_set)
 				setPostOptions(_request);
-			// _request.current_content_size = (_request.raw_data.size() - _request.header_size) + 1;
 			if (_request.info.is_valid() and _request.current_content_size < _request.indicated_content_size)
 				_request.state = INCOMPLETE;
-
 		}
 	}
 	if (_request.indicated_content_size and _request.current_content_size >= _request.indicated_content_size)
 		_request.state = READY;
-
-	// std::cout << "HELLO FROM handle_request, state: " << (_request.state == READY ? "READY\n" : "INCOMPLETE\n") << _request.indicated_content_size << "\t" <<  _request.current_content_size << std::endl;
-
 };
 
 int Client::respond(void)
 {
 	_response.create(_request, *_config);
-	int ret = send(_fd, _response.send(), _response.get_size(), 0);
-	if (DEBUG)
-	{
-		std::cout << C_G_GREEN << "---------- RESPONSE ---------" << std::endl;
-		std::cout << ret << std::endl;
-		std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
-	}
+	send(_fd, _response.send(), _response.get_size(), 0);
 	_response.clear();
-
 	return (0);
 };
