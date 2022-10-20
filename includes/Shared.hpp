@@ -104,6 +104,7 @@ typedef enum e_file_type { FILE_TYPE, DIRECTORY, SYMLINK, UNKNOWN } file_type;
 */
 # define C_RES			"\033[0m"
 
+#define LOG std::cout << C_G_YELLOW << __FILE__ << ":" <<__LINE__ << ":" << __FUNCTION__ << C_RES << std::endl;
 
 /*
 ** DEBUG printf(TEST);

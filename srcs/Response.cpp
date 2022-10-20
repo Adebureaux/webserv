@@ -12,7 +12,6 @@
     //                    [ message-body ]
 
 static std::map<int, std::string> start_lines;
-
 Response::Response() :  _location(NULL), _file(), _isCGI(false)
 {
 	_init_start_lines();
@@ -86,7 +85,7 @@ void Response::_cgi(const Message &request, Server_block& config)
 	int pid, status;
 	std::vector<std::string> vec;
 	std::string body = std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end());
-	std::cout << "CGI POST Body:\n" << body << "\n body end\n" << std::endl;
+	std::cout << "CGI POST:\n" << request.raw_data << "\n" << std::endl;
 	vec.reserve(18);
 	vec.push_back(std::string("SERVER_SOFTWARE=webserv/1.0"));
 	vec.push_back(std::string(std::string("SERVER_NAME=") + config.server_names));
@@ -141,7 +140,10 @@ void Response::_cgi(const Message &request, Server_block& config)
 		execve(cvec2[0], &cvec2[0], &cvec[0]);
 		exit(-1);
 	}
+	LOG
+
 	waitpid(pid, &status, 0);
+	LOG
 	close(out[1]);
 	close(error[1]);
 	std::string cgi_out = readToString(out[0]);
