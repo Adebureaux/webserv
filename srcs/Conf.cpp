@@ -193,7 +193,7 @@ void Conf::CB(void)
 	{
 		std::cout << &_raw_str[_head] << std::endl;
 		throw EXECP;
-		
+
 	}
 }
 
@@ -243,14 +243,14 @@ void Conf::conf(void)
 		// std::cout << &_raw_str[_head] << std::endl;
 		throw EXECP;
 	}
-	
+
 }
 
 
 
 void Conf::server_block(void)
 {
-	
+
 	try
 	{
 		_and("nSnnn", &Conf::OWS, AND, STAR_NO_MIN, STAR_NO_MAX, "nn", &Conf::OWS, &Conf::server_var, &Conf::OWS, &Conf::CB, &Conf::end_of_line);
@@ -280,7 +280,7 @@ void Conf::server_var(void)
 		// std::cout << &_raw_str[_head] << std::endl;
 		throw EXECP;
 	}
-	
+
 }
 
 void Conf::location_block(void)
@@ -365,7 +365,7 @@ void Conf::location_catch_var(void)
 		// std::cout << C_G_RED << &_raw_str[_head] << C_RES <<std::endl;
 		throw EXECP;
 	}
-	
+
 }
 
 // method = 'method' ':' OWS catch_method OWS *2 ( OWS ',' OWS catch_method) end_of_line
@@ -381,7 +381,7 @@ void Conf::method(void)
 	catch(const std::exception& e)
 	{
 		throw EXECP;
-	}	
+	}
 }
 
 void Conf::catch_method(void)
@@ -520,7 +520,7 @@ void Conf::upload_value(void)
 			throw EXECP;
 		}
 	}
-	
+
 }
 
 // cgi = 'cgi' ':' OWS path end_of_line
@@ -647,14 +647,14 @@ void Conf::error_block(void)
 	{
 		throw EXECP;
 	}
-	
+
 }
 
 // error_var = OWS error_code ':' OWS path end_of_line
 
 void Conf::error_var(void)
 {
-	size_t old_head = _head;	
+	size_t old_head = _head;
 	try
 	{
 		_and("nncnnn", &Conf::OWS, &Conf::error_code, ':', &Conf::OWS, &Conf::file, &Conf::end_of_line);
@@ -756,7 +756,7 @@ void Conf::dec_octet()
 		// std::cout << __FUNCTION__ << " fail"<<std::endl;
 		throw EXECP;
 	}
-	
+
 }
 
 void Conf::path(void)
@@ -772,7 +772,7 @@ void Conf::path(void)
 	}
 }
 
-//path redirect =  http://path || https://path
+//path redirect =  http://path or https://path
 
 // "https://" 1*unreserved 0*1port path
 
@@ -835,7 +835,7 @@ void Conf::port_url()
 	{
 		throw EXECP;
 	}
-	
+
 }
 
 void Conf::location_redir(void)
@@ -850,7 +850,7 @@ void Conf::location_redir(void)
 	{
 		throw EXECP;
 	}
-	
+
 }
 
 void Conf::body_size(void)
@@ -864,7 +864,7 @@ void Conf::body_size(void)
 	{
 		throw EXECP;
 	}
-	
+
 }
 
 void Conf::body_size_value(void)
@@ -888,7 +888,7 @@ void Conf::_test_validity_block(void)
 	std::vector<Server_block>::const_iterator ite = _serv_vector.end();
 	for (; it != ite; it++)
 	{
-		if (it->port < 0 || it->port > 65535)
+		if (it->port < 0 or it->port > 65535)
 			throw EXECP_("port not valid");
 		if (it->address == "")
 			throw EXECP_("address not valid");
@@ -983,7 +983,7 @@ void Conf::relative_directory()
 	try
 	{
 		path();
-		if (_raw_str[_head - 1] != '/' || _raw_str[old_head] == '/')
+		if (_raw_str[_head - 1] != '/' or _raw_str[old_head] == '/')
 		{
 			_head = old_head;
 			// std::cout << C_G_RED <<__FUNCTION__ << C_RES<<std::endl;
@@ -1023,7 +1023,7 @@ void Conf::relative_path(void)
 	{
 		throw EXECP;
 	}
-	
+
 }
 // std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
 
@@ -1034,4 +1034,3 @@ sefesfsef.port(gdrkgdrg) = std::map<>
 
 
 */
-

@@ -75,7 +75,7 @@ void Message::reset(void)
 	raw_data.clear();
 	state = INCOMPLETE;
 	header_parsed = false,
-	header_end = 0;
+	header_end = std::string::npos;
 	response_override = 0;
 	continue_100 = UNDEFINED;
 	indicated_content_size = 0;
@@ -92,7 +92,7 @@ Message::~Message() {};
 
 File::File(std::string name, std::string path) : name(name), path(path), valid(false), type(UNKNOWN), permissions(0), not_found(false), redirect(false)
 {
-	if (!path.empty() && *(path.end() - 1) != '/')
+	if (!path.empty() and *(path.end() - 1) != '/')
 		uri = path + '/' + name;
 	else
 		uri = path + name;
@@ -124,7 +124,7 @@ void File::set_infos()
 			}
 			type = DIRECTORY;
 		}
-		else if (S_ISREG(infos.st_mode) || S_ISLNK(infos.st_mode))
+		else if (S_ISREG(infos.st_mode) or S_ISLNK(infos.st_mode))
 			type = FILE_TYPE;
 	}
 }

@@ -100,7 +100,7 @@ const std::string itos(T number)
 // 	nb = 0;
 // 	while (str[i] != '\0')
 // 	{
-// 		if (str[i] != c && (str[i + 1] == c || str[i + 1] == '\0'))
+// 		if (str[i] != c and (str[i + 1] == c or str[i + 1] == '\0'))
 // 			nb++;
 // 		i++;
 // 	}
@@ -114,7 +114,7 @@ const std::string itos(T number)
 // 	i = 0;
 // 	while (*str == c)
 // 		str++;
-// 	while (str[i] != c && str[i] != '\0')
+// 	while (str[i] != c and str[i] != '\0')
 // 		i++;
 // 	return (i);
 // }
@@ -126,7 +126,7 @@ const std::string itos(T number)
 // 	i = -1;
 // 	while (*str == c)
 // 		str++;
-// 	while (*str != c && *str != '\0')
+// 	while (*str != c and *str != '\0')
 // 		tab[++i] = *(str++);
 // 	tab[++i] = '\0';
 // 	return (str);
@@ -156,11 +156,11 @@ const std::string itos(T number)
 
 void Response::_cgi(const Message &request, Server_block& config)
 {
-	int out[2], error[2]; 
+	int out[2], error[2];
 	int pid, status;
 	std::vector<std::string> vec;
 	std::string body = std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end());
-	std::cout << "CGI POST Body:\n" << body << "\n body end\n" << std::endl; 
+	std::cout << "CGI POST Body:\n" << body << "\n body end\n" << std::endl;
 	vec.reserve(18);
 	vec.push_back(std::string("SERVER_SOFTWARE=webserv/1.0"));
 	vec.push_back(std::string(std::string("SERVER_NAME=") + config.server_names));
@@ -181,6 +181,7 @@ void Response::_cgi(const Message &request, Server_block& config)
 
 	if (request.info.get_method() == POST)
 	{
+		vec.push_back(std::string(std::string("PATH_INFO=") + _location->upload.second));
 		vec.push_back(std::string(std::string("CONTENT_LENGTH=") + itos(request.indicated_content_size)));
 		vec.push_back(std::string(std::string("CONTENT_TYPE=") + request.info.get_header_var_by_name("Content-Type").second));
 	}
@@ -192,7 +193,7 @@ void Response::_cgi(const Message &request, Server_block& config)
 		// std::cout << __FUNCTION__ <<"  " << vec[i].c_str() <<std::endl;
 	}
 	cvec.push_back(NULL);
-	
+
 	pipe(out);// non, fichier
 	pipe(error); // non, fichier
 	if ((pid = fork()) == -1)
@@ -223,12 +224,12 @@ void Response::_cgi(const Message &request, Server_block& config)
 	std::string cgi_err = readToString(error[0]);
 	close(out[0]);
 	close(error[0]);
-	if (cgi_err.empty() && !cgi_out.empty())
+	if (cgi_err.empty() and !cgi_out.empty())
 	{
 		_file.content = cgi_out;
 		_construct_response(request, 200);
 	}
-	else if (!cgi_err.empty() && !cgi_out.empty())
+	else if (!cgi_err.empty() and !cgi_out.empty())
 	{
 		// _file.content = cgi_out;
 		_isCGI = false;
@@ -273,25 +274,25 @@ void Response::create(Message& request, config_map& config)
 
 void Response::create_get(const Message& request, Server_block& config)
 {
-	if (_file.redirect || !_location->redirect.empty())
+	if (_file.redirect or !_location->redirect.empty())
 		_construct_response(request, 302);
 	else if (!_location->get_method)
 		_construct_response(request, 405);
-	else if (!_file.not_found && !(_file.permissions & R))
+	else if (!_file.not_found and !(_file.permissions & R))
 	{
 		std::cout << "__FUNCTION__ "<<" \thello\n";
 		_construct_response(request, 403);
 	}
-	else if (_file.valid && _file.type == FILE_TYPE)
+	else if (_file.valid and _file.type == FILE_TYPE)
 	{
-		if (_file.ext == "php" && !_location->CGI.empty())
+		if (_file.ext == "php" and !_location->CGI.empty())
 		{
 			_isCGI = true;
 			return _cgi(request, config);
 		}
 		_construct_response(request, 200);
 	}
-	else if (_file.valid && _file.type == DIRECTORY && _location->autoindex)
+	else if (_file.valid and _file.type == DIRECTORY and _location->autoindex)
 		_construct_autoindex(_file.path, request.info.get_var_by_name("ABSOLUTE_PATH").second);
 	else
 		_construct_response(request, 404);
@@ -312,11 +313,11 @@ void Response::create_post(Message& request, Server_block& config)
 {
 	std::cout << "file extension: " << _file.ext << " content size: " << request.current_content_size << " indicated : " << request.indicated_content_size << std::endl;
 	// std::cout << "RAW DATA\n" << request.raw_data << std::endl;
-	if (_file.redirect || !_location->redirect.empty())
+	if (_file.redirect or !_location->redirect.empty())
 		_construct_response(request, 302);
 	else if (!_location->post_method)
 		_construct_response(request, 405);
-	else if (!_file.not_found && !(_file.permissions & R))
+	else if (!_file.not_found and !(_file.permissions & R))
 	{
 		std::cerr << "__FUNCTION__ "<<" \thello\n";
 		_construct_response(request, 403);
@@ -328,7 +329,7 @@ void Response::create_post(Message& request, Server_block& config)
 		_construct_response(request, 100);
 		request.continue_100 = DONE;
 	}
-	else if (request.current_content_size == request.indicated_content_size && _file.ext != "php")
+	else if (request.current_content_size == request.indicated_content_size and _file.ext != "php")
 	{ // checker si cest bien une multipart ndabord
 		std::cout << C_G_RED << "UPLOAD" << C_RES << std::endl;
 
@@ -345,8 +346,14 @@ void Response::create_post(Message& request, Server_block& config)
 					std::string pathandfilename = _location->root + _location->upload.second + it->second._filename;
 					if (!create_filu(it->second._file, pathandfilename))
 						throw std::exception();
+					if (multipart_map.size() == 1)
+						_header_field("Location",  _location->uri + _location->upload.second + it->second._filename);
+					else if (it == multipart_map.begin() and multipart_map.size() > 1)
+						_header_field("Location",  _location->uri + _location->upload.second);
 					it++;
 				}
+				std::cout << C_G_RED << "UPLOAD END" << C_RES << std::endl;
+
 				_construct_response(request, 201);
 			}
 			catch (std::exception& e)
@@ -355,8 +362,9 @@ void Response::create_post(Message& request, Server_block& config)
 				_construct_response(request, 500);
 			}
 		}
+		else _construct_response(request, 403);
 	}
-	else if (request.current_content_size >= request.indicated_content_size && _file.ext == "php")
+	else if (request.current_content_size >= request.indicated_content_size and _file.ext == "php")
 	{
 		std::cout << C_G_RED << "CGI POST " << C_RES << std::endl;
 		_isCGI = true;
@@ -368,13 +376,13 @@ void Response::create_post(Message& request, Server_block& config)
 
 void Response::create_delete(const Message& request)
 {
-	if (_file.redirect || !_location->redirect.empty())
+	if (_file.redirect or !_location->redirect.empty())
 		_construct_response(request, 302);
 	else if (!_location->delete_method)
 		_construct_response(request, 405);
-	else if (!_file.not_found && !(_file.permissions & R))
+	else if (!_file.not_found and !(_file.permissions & R))
 		_construct_response(request, 403);
-	else if (_file.valid && _file.type == FILE_TYPE)
+	else if (_file.valid and _file.type == FILE_TYPE)
 	{
 		std::remove(_file.uri.c_str());
 		_construct_response(request, 200);
@@ -394,7 +402,7 @@ void Response::_find_location(const Request& request, Server_block& config)
 		if (requested.name.empty())
 		{
 			File file(_location->default_file, path);
-			if (file.valid && file.type == FILE_TYPE)
+			if (file.valid and file.type == FILE_TYPE)
 				_file = file;
 			else
 				_file = File(path);
@@ -434,7 +442,7 @@ void Response::_load_errors(Server_block& config)
 		if (find != config.error_pages.end())
 		{
 			File error_file(find->second);
-			if (error_file.valid && error_file.type == FILE_TYPE)
+			if (error_file.valid and error_file.type == FILE_TYPE)
 			{
 				error_file.set_content();
 				_errors.erase(errorn[i]);
@@ -457,14 +465,15 @@ void Response::_generate_response(int status)
 		_response = start_lines[status];
 	else
 	{
+		std::cout << C_G_RED << __FUNCTION__ << __LINE__ << C_RES << std::endl;
+
 		_response = start_lines[status];
 		_response.append(_header);
-		if (status != 201)
-		{
-			if (!_isCGI)
-				_response.append("\r\n");
-			_response.append(_body);
-		}
+		if (!_isCGI)
+			_response.append("\r\n");
+		_response.append(_body);
+		std::cout << C_G_RED << _response << C_RES << std::endl;
+
 	}
 }
 
@@ -475,26 +484,28 @@ void Response::_construct_response(const Message& request, int status)
 	_header_field("Server", "webserv/1.0 (Ubuntu)");
 	if (!request.info.get_connection().empty())
 		_header_field("Connection", request.info.get_connection());
-	if (status == 200)
+	if (status == 200 or status == 201)
 	{
 		if (_isCGI)
 			size << _file.content.size() - (_file.content.find(__DOUBLE_CRLF) + 4);
-		else 
+		else
 			size << _file.content.size();
 		_header_field("Content-Type", _file.mime_type);
 		_header_field("Content-Length", size.str());
+		// if (status == 201)
+		// 	_header_field("Location",  _location->uri + _location->upload.second);
 		_body.append(_file.content);
 	}
-	else if (status == 201)
-	{
-		_header_field("Location",  _location->uri + _location->upload.second);
-		// std::stringstream msg;
-		// msg << "<a href=\"/" <<  _location->uri + _location->upload.second << "\" type=\"text/html\">Uploaded Ressource(s)</a><br>";
-		// _body.append(msg.str());
-		// size << _body.size();
-		// _header_field("Content-Length", size.str());
+	// else if (status == 201)
+	// {
+	// 	std::cout << C_G_RED << __FUNCTION__ << C_RES << std::endl;
+	// 	// std::stringstream msg;
+	// 	// msg << "<a href=\"/" <<  _location->uri + _location->upload.second << "\" type=\"text/html\">Uploaded Ressource(s)</a><br>";
+	// 	// _body.append(msg.str());
+	// 	// size << _body.size();
+	// 	// _header_field("Content-Length", size.str());
 
-	}
+	// }
 	else if (status < 400)
 	{
 		_setup_redirection(request.info);
@@ -564,7 +575,7 @@ std::string Response::_parse_host(std::string host)
 
 void Response::_setup_redirection(const Request& request)
 {
-	if (_file.type == DIRECTORY && !_file.valid)
+	if (_file.type == DIRECTORY and !_file.valid)
 	{
 		_redirect = std::string("http://") + request.get_host() + "/" + request.get_var_by_name("ABSOLUTE_PATH").second + "/";
 		return;

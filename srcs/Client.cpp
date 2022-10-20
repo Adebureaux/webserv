@@ -59,20 +59,13 @@ ssize_t Client::_receive(void)
 		// while (1)
 		// 	;
 		_request.current_content_size += ret;
-		if ((_request.header_end = _request.raw_data.find(__DOUBLE_CRLF, 0 , 4)) != std::string::npos)
+		if (_request.header_end != std::string::npos or (_request.header_end = _request.raw_data.find(__DOUBLE_CRLF, 0 , 4)) != std::string::npos)
 		{
-				std::cout << C_G_BLUE << _request.raw_data.find(__DOUBLE_CRLF, 0 , 4) << std::endl;
-			// if (_request.raw_data[_request.header_end] == '\r' && _request.raw_data[_request.header_end +1] == '\n' && _request.raw_data[_request.header_end+2] == '\r' && _request.raw_data[_request.header_end +3] == '\n')
-			if (_request.header_end == std::string::npos)
-				std::cout << "VAGIN" <<std::endl;
-			std::cout << C_G_GREEN << _request.header_end << C_RES << std::endl;
-			std::cout << C_G_CYAN << &_request.raw_data[_request.header_end] << C_RES << std::endl;
-			std::cout << C_G_RED << _request.raw_data << C_RES << std::endl;
 			_request.state = READY;
-
 		}
+		else _request.state = INCOMPLETE;
 	}
-	else _request.state = INCOMPLETE;
+
 
 	return (ret);
 };
@@ -92,9 +85,9 @@ static void setPostOptions(Message &req)
 		res = req.info.get_header_var_by_name("Content-Type");
 
 		// MULTIPART REQUEST
-		// if (res.first && res.second.find("/x-www-form-urlencoded") != std::string::npos || res.second.find("/form-data") != std::string::npos)
+		// if (res.first and res.second.find("/x-www-form-urlencoded") != std::string::npos or res.second.find("/form-data") != std::string::npos)
 		// 	req.isCGI = true;
-		if (res.first && res.second.find("multipart/") != std::string::npos)
+		if (res.first and res.second.find("multipart/") != std::string::npos)
 		{
 			size_t pos = res.second.find("; boundary=");
 			if (pos != std::string::npos)
@@ -113,12 +106,12 @@ static void setPostOptions(Message &req)
 			} // info: should have a defined boundary for multipart request
 		}
 		// MULTISTEP REQUEST (expect a 100 continue before sending the request body)
-		if ((res = req.info.get_header_var_by_name("Expect")).first && res.second == "100-continue")
+		if ((res = req.info.get_header_var_by_name("Expect")).first and res.second == "100-continue")
 		{
 			req.continue_100 = READY;
 			req.response_override = 100;
 		}
-		if (req.continue_100 && !req.multipart)
+		if (req.continue_100 and !req.multipart)
 		{
 			req.info._is_valid = false;
 			req.response_override = 400;
@@ -141,7 +134,7 @@ void Client::handleEvent(uint32_t revents)
 			;
 		else handle_request();
 	}
-	if (revents & EPOLLOUT && (_request.state == READY || (_request.state == INCOMPLETE && _request.continue_100 == READY)))
+	if (revents & EPOLLOUT and (_request.state == READY or (_request.state == INCOMPLETE and _request.continue_100 == READY)))
 	{
 
 		respond();
@@ -153,6 +146,7 @@ void Client::handleEvent(uint32_t revents)
 		}
 		else if (_request.state != INCOMPLETE)
 		{
+			std::cout << C_G_YELLOW << __FILE__ << ":" << __FUNCTION__ <<":"<< __LINE__ << C_RES << std::endl;
 			if (_request.info.get_connection() != "keep-alive") // should also check if we didnt just send a 100 continue response
 				throw std::exception();
 			_request.reset();
@@ -171,17 +165,17 @@ void Client::handle_request(void)
 			_request.info = Request(_request.raw_data);
 			_request.header_parsed = true;
 		}
-		if (_request.info.is_valid() && _request.info.get_method() == POST)
+		if (_request.info.is_valid() and _request.info.get_method() == POST)
 		{
 			if (!_request.post_options_set)
 				setPostOptions(_request);
 			// _request.current_content_size = (_request.raw_data.size() - _request.header_size) + 1;
-			if (_request.info.is_valid() && _request.current_content_size < _request.indicated_content_size)
+			if (_request.info.is_valid() and _request.current_content_size < _request.indicated_content_size)
 				_request.state = INCOMPLETE;
 
 		}
 	}
-	if (_request.indicated_content_size && _request.current_content_size >= _request.indicated_content_size)
+	if (_request.indicated_content_size and _request.current_content_size >= _request.indicated_content_size)
 		_request.state = READY;
 
 	// std::cout << "HELLO FROM handle_request, state: " << (_request.state == READY ? "READY\n" : "INCOMPLETE\n") << _request.indicated_content_size << "\t" <<  _request.current_content_size << std::endl;
@@ -191,13 +185,13 @@ void Client::handle_request(void)
 int Client::respond(void)
 {
 	_response.create(_request, *_config);
-	send(_fd, _response.send(), _response.get_size(), 0);
-	// if (DEBUG)
-	// {
-	// 	std::cout << C_G_GREEN << "---------- RESPONSE ---------" << std::endl;
-	// 	std::cout << (const char*)_response.status << std::endl;
-	// 	std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
-	// }
+	int ret = send(_fd, _response.send(), _response.get_size(), 0);
+	if (DEBUG)
+	{
+		std::cout << C_G_GREEN << "---------- RESPONSE ---------" << std::endl;
+		std::cout << ret << std::endl;
+		std::cout << "-----------------------------" << C_RES << std::endl << std::endl;
+	}
 	_response.clear();
 
 	return (0);

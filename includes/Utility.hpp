@@ -49,7 +49,7 @@ class Message
 	Client			*client;
 	t_state			state;
 	std::string		raw_data;
-	Message			*ptr; // response || request
+	Message			*ptr; // response or request
 	bool			header_parsed;
 	Request			info;
 	size_t								header_end;
@@ -123,10 +123,10 @@ public:
 
 	void _set_continue_100()
 	{
-		if (multipart == true && valid)
+		if (multipart == true and valid)
 		{
 			std::map<std::string, std::string>::iterator it = fields.find("Expect");
-			if (it != fields.end() && it->second == "100-continue")
+			if (it != fields.end() and it->second == "100-continue")
 			continue_100 = READY;
 		}
 		else throw EXECP_("CESTPERDU\n");
@@ -134,7 +134,7 @@ public:
 	void _set_is_multipart()
 	{
 		std::map<std::string, std::string>::iterator it = fields.find("Content-type");
-		if (it != fields.end() && it->second.find("multipart/") != std::string::npos)
+		if (it != fields.end() and it->second.find("multipart/") != std::string::npos)
 		{
 			multipart = true;
 			// std::cout << "\tMULTIPART REQUEST DETECTED\n\n";

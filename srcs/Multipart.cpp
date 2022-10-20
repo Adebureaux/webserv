@@ -379,7 +379,7 @@ File_Multipart::File_Multipart(const std::string& var)
 	if (pos == std::string::npos)
 		throw EXECP_("request not valid");
 	pos += 13;
-	while (var[pos] == '\t' || var[pos] == ' ')
+	while (var[pos] == '\t' or var[pos] == ' ')
 		pos++;
 	_content_type = std::string(var.begin()+ pos,var.end());
 }

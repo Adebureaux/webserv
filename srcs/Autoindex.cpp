@@ -18,7 +18,7 @@ std::string Autoindex::_create_href(File file, std::string pseudo_root)
 	// (void)file;
 	// (void)pseudo_root;
 	std::stringstream output;
-	if (pseudo_root.size() != 1 && *pseudo_root.begin() != '/')
+	if (pseudo_root.size() != 1 and *pseudo_root.begin() != '/')
 		pseudo_root.insert(0, "/");
 	// std::cout << pseudo_root << std::endl;
 	if (pseudo_root.empty())
@@ -30,10 +30,10 @@ std::string Autoindex::_create_href(File file, std::string pseudo_root)
 		std::string::iterator it = pseudo_root.end();
 		std::string new_root;
 		it--;
-		if (pseudo_root.size() > 1 && *it == '/')
+		if (pseudo_root.size() > 1 and *it == '/')
 		{
 			it--;
-			while (it != pseudo_root.begin() && *it != '/')
+			while (it != pseudo_root.begin() and *it != '/')
 				it--;
 			new_root.insert(new_root.begin(), pseudo_root.begin(), it);
 		}
@@ -114,15 +114,15 @@ void Autoindex::ls(char const *root)
 
 bool FileCompare(const File &a, const File &b)
 {
-	if (a.type == DIRECTORY && b.type == DIRECTORY && a.name < b.name)
+	if (a.type == DIRECTORY and b.type == DIRECTORY and a.name < b.name)
 		return true;
-	else if (a.type == DIRECTORY && b.type == DIRECTORY && a.name > b.name)
+	else if (a.type == DIRECTORY and b.type == DIRECTORY and a.name > b.name)
 		return false;
-	else if (a.type == DIRECTORY && b.type != DIRECTORY)
+	else if (a.type == DIRECTORY and b.type != DIRECTORY)
 		return true;
-	else if (b.type == DIRECTORY && a.type != DIRECTORY)
+	else if (b.type == DIRECTORY and a.type != DIRECTORY)
 		return false;
-	else if (b.type != DIRECTORY && a.type != DIRECTORY && a.name < b.name)
+	else if (b.type != DIRECTORY and a.type != DIRECTORY and a.name < b.name)
 		return true;
 	return false;
 };

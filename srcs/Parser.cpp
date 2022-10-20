@@ -100,7 +100,7 @@ void Parser::_is_str(std::string const &str)
 
 void Parser::_range(char start, char end)
 {
-	if (_raw_str[_head] < start || _raw_str[_head] > end)
+	if (_raw_str[_head] < start or _raw_str[_head] > end)
 		throw std::invalid_argument("char between '" + std::string(&start, 1) + "' and '" + std::string(&end, 1) + "' was expected");
 	else if (_head >= _raw_str.size())
 		throw std::out_of_range(" out of range ");
@@ -294,7 +294,7 @@ void Parser::n_star_m_or(int n, int m, va_list *arg)
 	{
 		va_end(ap);
 		finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
-		if(i < n || (m != -1 && i > m))
+		if(i < n or (m != -1 and i > m))
 			throw std::invalid_argument(e.what());
 		else
 			return;
@@ -331,7 +331,7 @@ void Parser::n_star_m_and(int n, int m, va_list *arg)
 		finish_expand(fct_ptr_tag.begin(), fct_ptr_tag.end(), arg);
 		if (i == n)
 			return;
-		else if(i < n || (m != -1 && i > m))
+		else if(i < n or (m != -1 and i > m))
 			throw std::invalid_argument(e.what());
 		return;
 	}
