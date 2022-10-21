@@ -26,7 +26,7 @@ Location &Location::operator=(const Location &cpy)
 }
 
 Server_block::Server_block()
-: port(-1), address(), server_names(), main(false), error_pages(), root(), body_size(BUFFER_SIZE), locations()
+	: port(-1), address(), server_names(), main(false), error_pages(), root(), body_size(4294967295), locations()
 {}
 
 Server_block::Server_block(const Server_block &cpy)

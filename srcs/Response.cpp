@@ -89,7 +89,7 @@ void Response::_cgi(const Message &request, Server_block& config)
 	// long	    fd_temp_error = fileno(temp_error);
 	std::vector<std::string> vec;
 	std::string body = std::string(request.raw_data.begin() + request.header_size, request.raw_data.end());
-	std::cout << "CGI POST:\n" << request.raw_data << std::endl;
+	// std::cout << "CGI POST:\n" << request.raw_data << std::endl;
 	vec.reserve(18);
 	vec.push_back(std::string("SERVER_SOFTWARE=webserv/1.0"));
 	vec.push_back(std::string(std::string("SERVER_NAME=") + config.server_names));
@@ -133,7 +133,7 @@ void Response::_cgi(const Message &request, Server_block& config)
 	if (pid == 0)
 	{
 		std::vector<char *> cvec2;
-		cvec2.reserve(3);
+		cvec2.reserve(4);
 		cvec2.push_back(const_cast<char*>(_location->CGI.c_str()));
 		cvec2.push_back(const_cast<char*>(_file.uri.c_str()));
 		cvec2.push_back(NULL);
@@ -142,10 +142,6 @@ void Response::_cgi(const Message &request, Server_block& config)
 		close(out[0]);
 		dup(out[1]);
 		dup2(fd_temp, 0);
-
-		// close(2);
-		// dup2(fd_temp_out, 1);
-		// dup2(fd_temp_out, 1);
 		dup2(error[1], 2);
 		close(out[1]);
 		close(error[1]);
@@ -160,7 +156,7 @@ void Response::_cgi(const Message &request, Server_block& config)
 	{
 		waitpid(pid, &status, WNOHANG);
 		sleep(1);
-		std::cout << i << std::endl;
+		// std::cout << i << std::endl;
 		i++;
 	}
 	while (i < 10 &&  WIFEXITED(status));
@@ -176,7 +172,6 @@ void Response::_cgi(const Message &request, Server_block& config)
 	_file.content = cgi_out;
 	std::cout<< C_G_GREEN << status <<std::endl << cgi_out << C_RES <<std::endl;
 	std::cout<< C_G_CYAN << cgi_out_error << C_RES <<std::endl;
-	_construct_response(request, 200);
 	fclose(temp);
 	// close(error[0]);
 	if (cgi_out_error.empty() and !cgi_out.empty())
@@ -266,14 +261,15 @@ static bool create_filu(std::string const &content, std::string const &path)
 void Response::create_post(Message& request, Server_block& config)
 {
 	// std::cout << "file extension: " << _file.ext << " content size: " << request.current_content_size << " indicated : " << request.indicated_content_size << std::endl;
-	// std::cout << "RAW DATA\n" << request.raw_data << std::endl;
+	std::cout << "conf body_size\n"
+			  << config.body_size << std::endl;
 	if (_file.redirect or !_location->redirect.empty())
 		_construct_response(request, 302);
 	else if (!_location->post_method)
 		_construct_response(request, 405);
 	else if (!_file.not_found and !(_file.permissions & R))
 		_construct_response(request, 403);
-	else if (request.indicated_content_size > config.body_size)
+	else if (config.body_size > 0 && request.indicated_content_size > config.body_size)
 		_construct_response(request, 413);
 	else if (request.continue_100 == READY)
 	{
