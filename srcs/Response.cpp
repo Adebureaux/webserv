@@ -400,6 +400,7 @@ void Response::_load_errors(Server_block& config)
 	_errors.insert(std::make_pair(403, ERROR_HTML_403));
 	_errors.insert(std::make_pair(404, ERROR_HTML_404));
 	_errors.insert(std::make_pair(405, ERROR_HTML_405));
+	_errors.insert(std::make_pair(413, ERROR_HTML_413));
 	_errors.insert(std::make_pair(500, ERROR_HTML_500));
 	_errors.insert(std::make_pair(501, ERROR_HTML_501));
 	_errors.insert(std::make_pair(505, ERROR_HTML_505));
