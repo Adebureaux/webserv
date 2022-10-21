@@ -14,7 +14,6 @@
     $fileExtension = strtolower(end($exploded));
 
     $uploadPath = $currentDirectory . $uploadDirectory . basename($fileName); 
-    echo $uploadPath;
 
     if (isset($_POST['submit'])) {
 
