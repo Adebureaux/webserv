@@ -154,7 +154,18 @@ void Response::_cgi(const Message &request, Server_block& config)
 		exit(-1);
 	}
 	LOG
-	waitpid(pid, &status, 0);
+	// waitpid(pid, &status, WNOHANG);
+	int i = 0;
+	do
+	{
+		waitpid(pid, &status, WNOHANG);
+		sleep(1);
+		std::cout << i << std::endl;
+		i++;
+	}
+	while (i < 10 &&  WIFEXITED(status));
+	if (i == 10)
+		kill(pid, SIGKILL);
 	LOG
 	close(out[1]);
 	close(error[1]);

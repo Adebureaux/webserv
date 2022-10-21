@@ -6,9 +6,9 @@ void signal_handler(int sig) {
 	if (sig == SIGINT)
 	{
 		run = false;
-		close(0);
-		close(1);
-		close(2);
+		// close(0);
+		// close(1);
+		// close(2);
 	}
 	
 }

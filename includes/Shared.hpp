@@ -49,7 +49,7 @@
 
 #define STAR_NO_MIN				 0
 #define STAR_NO_MAX				-1
-#define EXECP					std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
+#define EXECP					std::invalid_argument(std::string(e.what()))  //std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
 #define EXECP_(X)				std::invalid_argument(std::string(__FUNCTION__) + "/" + X)
 #define CATCH_HEADER_VAR(X)		_header_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)
 #define CATCH_VAR(X)			_var_map[X] = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head)

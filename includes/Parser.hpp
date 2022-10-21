@@ -1,7 +1,7 @@
 #pragma once
 #include "Shared.hpp"
 
-#define EXECP					std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
+// #define EXECP					std::invalid_argument(std::string(__FUNCTION__) + "/"+ std::string(e.what()))
 #define STAR_NO_MIN				 0
 #define STAR_NO_MAX				-1
 #define OR						 1
@@ -15,9 +15,9 @@ class Parser
 	Parser(const Parser &cpy);
 	Parser &operator=(const Parser &src);
 	virtual ~Parser();
+	size_t								_head;
 
 	protected :
-	size_t								_head;
 	std::string							_raw_str;
 
 	void ft_va_copy(va_list *dest, va_list *src);																		// ✓

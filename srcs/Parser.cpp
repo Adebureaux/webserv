@@ -365,6 +365,7 @@ void Parser::_or(const std::string &fct_ptr_tag, va_list *arg)
 {
 	std::string::const_iterator start = fct_ptr_tag.begin();
 	std::string::const_iterator end = fct_ptr_tag.end();
+	// std::string first_error = "";
 	static int i = -1;
 	i++;
 	size_t old_head = _head;

@@ -20,7 +20,7 @@ Conf::Conf(const std::string& raw_Conf)
 		_ret.clear();
 		_serv_vector.clear();
 		_error_msg = e.what();
-		std::cout << C_G_CYAN <<_error_msg << C_RES << std::endl;
+		// std::cout << C_G_CYAN <<std::string(_raw_str.begin() +_head,_raw_str.end()) << C_RES << std::endl;
 	}
 }
 
@@ -191,7 +191,7 @@ void Conf::CB(void)
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << &_raw_str[_head] << std::endl;
+		// std::cout << &_raw_str[_head] << std::endl;
 		throw EXECP;
 
 	}
@@ -504,7 +504,8 @@ void Conf::upload_value(void)
 		_is_str("on");
 		OWS();
 		size_t old_head = _head;
-		directory();
+		relative_directory();
+		// directory();
 		_current_location.upload = std::pair<bool, std::string>(true, std::string(_raw_str.begin() + old_head,_raw_str.begin() + _head));
 		// // std::cout << __FUNCTION__ << std::endl;
 	}
@@ -543,6 +544,8 @@ void Conf::cgi(void)
 	old_head = _head;
 	file();
 	_current_location.CGI = std::string(_raw_str.begin()+ old_head,_raw_str.begin() + _head);
+	if (_current_location.CGI != "/usr/bin/php-cgi")
+		throw EXECP_("invalid cgi path");
 	end_of_line();
 }
 
