@@ -78,14 +78,16 @@ const std::string itos(T number)
 	stream << number;
     return stream.str();
 }
-
+// name=asdasd&email=rballage%40student.42.fr&website=asdasd.com&comment=asdasdasdas&gender=male&submit=Submit
 void Response::_cgi(const Message &request, Server_block& config)
 {
-	int out[2], error[2];
+	int out[2]; //, error[2];
 	int pid, status;
+	FILE	    *temp = tmpfile();
+	long	    fd_temp = fileno(temp);
 	std::vector<std::string> vec;
-	std::string body = std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end());
-	std::cout << "CGI POST:\n" << request.raw_data << "\n" << std::endl;
+	std::string body = std::string(request.raw_data.begin() + request.header_size, request.raw_data.end());
+	std::cout << "CGI POST:\n" << request.raw_data << std::endl;
 	vec.reserve(18);
 	vec.push_back(std::string("SERVER_SOFTWARE=webserv/1.0"));
 	vec.push_back(std::string(std::string("SERVER_NAME=") + config.server_names));
@@ -101,11 +103,11 @@ void Response::_cgi(const Message &request, Server_block& config)
 	vec.push_back(std::string(std::string("HTTP_ACCEPT_LANGUAGE=") + request.info.get_header_var_by_name("Accept-Language").second));
 	vec.push_back(std::string(std::string("HTTP_ACCEPT_ENCODING=") + request.info.get_header_var_by_name("Accept-Encoding").second));
 	vec.push_back(std::string(std::string("SCRIPT_FILENAME=") + _file.uri));
-	vec.push_back(std::string("REMOTE_HOST="));
+	// vec.push_back(std::string("REMOTE_HOST="));
 	vec.push_back(std::string(std::string("HTTP_COOKIE=") + request.info.get_header_var_by_name("Accept-Cookie").second));
 	if (request.info.get_method() == POST)
 	{
-		vec.push_back(std::string(std::string("PATH_INFO=") + _location->upload.second));
+		// vec.push_back(std::string(std::string("PATH_INFO=") + _location->upload.second));
 		vec.push_back(std::string(std::string("CONTENT_LENGTH=") + itos(request.indicated_content_size)));
 		vec.push_back(std::string(std::string("CONTENT_TYPE=") + request.info.get_header_var_by_name("Content-Type").second));
 	}
@@ -117,8 +119,13 @@ void Response::_cgi(const Message &request, Server_block& config)
 		// std::cout << __FUNCTION__ <<"  " << vec[i].c_str() <<std::endl;
 	}
 	cvec.push_back(NULL);
+	if (request.info.get_method() == POST)
+	{
+		write(fd_temp, body.c_str(), request.indicated_content_size);
+		lseek(fd_temp, 0, SEEK_SET);
+	}
 	pipe(out);// non, fichier
-	pipe(error); // non, fichier
+	// pipe(error); // non, fichier
 	if ((pid = fork()) == -1)
 		throw std::exception();
 	if (pid == 0)
@@ -129,14 +136,16 @@ void Response::_cgi(const Message &request, Server_block& config)
 		cvec2.push_back(const_cast<char*>(_location->CGI.c_str()));
 		cvec2.push_back(const_cast<char*>(_file.uri.c_str()));
 		cvec2.push_back(NULL);
-		close(error[0]);
-		dup2(out[0], 0);
-		dup2(out[1], 1);
-		dup2(error[1], 2);
-		close(out[1]);
-		close(error[1]);
-		if (request.info.get_method() == POST)
-			std::cout << body;
+		// close(error[0]);
+		close(1);
+		close(out[0]);
+		dup(out[1]);
+		dup2(fd_temp, 0);
+		// dup2(temp, );
+		// dup2(error[1], 2);
+		// close(out[1]);
+		// close(error[1]);
+
 		execve(cvec2[0], &cvec2[0], &cvec[0]);
 		exit(-1);
 	}
@@ -145,21 +154,23 @@ void Response::_cgi(const Message &request, Server_block& config)
 	waitpid(pid, &status, 0);
 	LOG
 	close(out[1]);
-	close(error[1]);
+	// close(error[1]);
 	std::string cgi_out = readToString(out[0]);
-	std::string cgi_err = readToString(error[0]);
+	// std::string cgi_err = readToString(error[0]);
 	close(out[0]);
-	close(error[0]);
-	if (cgi_err.empty() and !cgi_out.empty())
-	{
-		_file.content = cgi_out;
-		_construct_response(request, 200);
-	}
-	else if (!cgi_err.empty() and !cgi_out.empty())
-	{
-		_isCGI = false;
-		_construct_error(500, true);
-	}
+	_file.content = cgi_out;
+	_construct_response(request, 200);
+	// close(error[0]);
+	// if (cgi_err.empty() and !cgi_out.empty())
+	// {
+	// 	_file.content = cgi_out;
+	// 	_construct_response(request, 200);
+	// }
+	// else if (!cgi_err.empty() and !cgi_out.empty())
+	// {
+	// 	_isCGI = false;
+	// 	_construct_error(500, true);
+	// }
 }
 
 void Response::create(Message& request, config_map& config)
@@ -252,7 +263,7 @@ void Response::create_post(Message& request, Server_block& config)
 		{
 			try
 			{
-				Multipart moultipass(std::string(request.raw_data.begin() + request.header_size - 1, request.raw_data.end()), request.boundary);
+				Multipart moultipass(std::string(request.raw_data.begin() + request.header_size, request.raw_data.end()), request.boundary);
 				std::map<std::string, File_Multipart> multipart_map = moultipass.get_files();
 				std::map<std::string, File_Multipart>::iterator it = multipart_map.begin();
 				std::string path = _location->upload.second;
@@ -277,7 +288,7 @@ void Response::create_post(Message& request, Server_block& config)
 		}
 		else _construct_response(request, 403);
 	}
-	else if (request.current_content_size >= request.indicated_content_size and _file.ext == "php")
+	else if (request.current_content_size == request.indicated_content_size and _file.ext == "php")
 	{
 		if (_location->upload.first)
 		{

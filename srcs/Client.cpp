@@ -67,8 +67,8 @@ static void setPostOptions(Message &req)
 	if (res.first)
 	{
 		req.indicated_content_size = std::atoi(res.second.c_str());
-		req.header_size = req.header_end + 5;
-		req.current_content_size -= req.header_size - 1;
+		req.header_size = req.header_end + 4;
+		req.current_content_size -= req.header_size;
 		res = req.info.get_header_var_by_name("Content-Type");
 		if (res.first and res.second.find("multipart/") != std::string::npos)
 		{
