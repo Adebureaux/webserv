@@ -81,10 +81,12 @@ const std::string itos(T number)
 // name=asdasd&email=rballage%40student.42.fr&website=asdasd.com&comment=asdasdasdas&gender=male&submit=Submit
 void Response::_cgi(const Message &request, Server_block& config)
 {
-	int out[2]; //, error[2];
+	int out[2], error[2];
 	int pid, status;
 	FILE	    *temp = tmpfile();
 	long	    fd_temp = fileno(temp);
+	// FILE	    *temp_error = tmpfile();
+	// long	    fd_temp_error = fileno(temp_error);
 	std::vector<std::string> vec;
 	std::string body = std::string(request.raw_data.begin() + request.header_size, request.raw_data.end());
 	std::cout << "CGI POST:\n" << request.raw_data << std::endl;
@@ -125,52 +127,62 @@ void Response::_cgi(const Message &request, Server_block& config)
 		lseek(fd_temp, 0, SEEK_SET);
 	}
 	pipe(out);// non, fichier
-	// pipe(error); // non, fichier
+	pipe(error); // non, fichier
 	if ((pid = fork()) == -1)
 		throw std::exception();
 	if (pid == 0)
 	{
-		// close(out[0]);
 		std::vector<char *> cvec2;
 		cvec2.reserve(3);
 		cvec2.push_back(const_cast<char*>(_location->CGI.c_str()));
 		cvec2.push_back(const_cast<char*>(_file.uri.c_str()));
 		cvec2.push_back(NULL);
-		// close(error[0]);
+		close(error[0]);
 		close(1);
 		close(out[0]);
 		dup(out[1]);
 		dup2(fd_temp, 0);
-		// dup2(temp, );
-		// dup2(error[1], 2);
-		// close(out[1]);
-		// close(error[1]);
+
+		// close(2);
+		// dup2(fd_temp_out, 1);
+		// dup2(fd_temp_out, 1);
+		dup2(error[1], 2);
+		close(out[1]);
+		close(error[1]);
 
 		execve(cvec2[0], &cvec2[0], &cvec[0]);
 		exit(-1);
 	}
 	LOG
-
 	waitpid(pid, &status, 0);
 	LOG
 	close(out[1]);
-	// close(error[1]);
+	close(error[1]);
 	std::string cgi_out = readToString(out[0]);
-	// std::string cgi_err = readToString(error[0]);
+	std::string cgi_out_error = readToString(error[0]);
 	close(out[0]);
+	close(error[0]);
 	_file.content = cgi_out;
+	std::cout<< C_G_GREEN << status <<std::endl << cgi_out << C_RES <<std::endl;
+	std::cout<< C_G_CYAN << cgi_out_error << C_RES <<std::endl;
 	_construct_response(request, 200);
+	fclose(temp);
 	// close(error[0]);
-	// if (cgi_err.empty() and !cgi_out.empty())
-	// {
-	// 	_file.content = cgi_out;
-	// 	_construct_response(request, 200);
-	// }
-	// else if (!cgi_err.empty() and !cgi_out.empty())
-	// {
-	// 	_isCGI = false;
-	// 	_construct_error(500, true);
-	// }
+	if (cgi_out_error.empty() and !cgi_out.empty())
+	{
+		_file.content = cgi_out;
+		_construct_response(request, 200);
+	}
+	else if (!cgi_out_error.empty() and !cgi_out.empty() && !status)
+	{
+		_isCGI = false;
+		_construct_error(400, true);
+	}
+	else
+	{
+		_isCGI = false;
+		_construct_error(500, true);
+	}
 }
 
 void Response::create(Message& request, config_map& config)
@@ -290,7 +302,7 @@ void Response::create_post(Message& request, Server_block& config)
 	}
 	else if (request.current_content_size == request.indicated_content_size and _file.ext == "php")
 	{
-		if (_location->upload.first)
+		if (!_location->CGI.empty())
 		{
 			_isCGI = true;
 			return _cgi(request, config);

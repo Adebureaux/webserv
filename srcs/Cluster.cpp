@@ -4,7 +4,13 @@ bool run = true;
 
 void signal_handler(int sig) {
 	if (sig == SIGINT)
+	{
 		run = false;
+		close(0);
+		close(1);
+		close(2);
+	}
+	
 }
 
 Cluster::Cluster(server_map& config)
