@@ -47,6 +47,16 @@ size_t Response::get_size(void) const
 	return (_response.size());
 }
 
+static bool create_filu(std::string const &content, std::string const &path)
+{
+	std::fstream fs;
+	fs.open(path.c_str(), std::fstream::out | std::fstream::trunc | std::fstream::binary);
+	if (!fs.is_open())
+		return false;
+	fs << content;
+	fs.close();
+	return true;
+}
 
 void Response::create(Message& request, config_map& config)
 {
@@ -78,7 +88,7 @@ void Response::create(Message& request, config_map& config)
 	else if (request.info.get_method() == POST)
 		create_post(request, it->second);
 	else if (request.info.get_method() == DELETE)
-		create_delete(request);
+		create_delete(request, it->second);
 }
 
 void Response::create_get(const Message& request, Server_block& config)
@@ -104,22 +114,8 @@ void Response::create_get(const Message& request, Server_block& config)
 		_construct_response(request, 404);
 }
 
-static bool create_filu(std::string const &content, std::string const &path)
-{
-	std::fstream fs;
-	fs.open(path.c_str(), std::fstream::out | std::fstream::trunc | std::fstream::binary);
-	if (!fs.is_open())
-		return false;
-	fs << content;
-	fs.close();
-	return true;
-}
-
 void Response::create_post(Message& request, Server_block& config)
 {
-	// std::cout << "file extension: " << _file.ext << " content size: " << request.current_content_size << " indicated : " << request.indicated_content_size << std::endl;
-	std::cout << "conf body_size\n"
-			  << config.body_size << std::endl;
 	if (_file.redirect or !_location->redirect.empty())
 		_construct_response(request, 302);
 	else if (!_location->post_method)
@@ -177,7 +173,7 @@ void Response::create_post(Message& request, Server_block& config)
 		_construct_response(request, 400);
 }
 
-void Response::create_delete(const Message& request)
+void Response::create_delete(const Message &request, Server_block &config)
 {
 	if (_file.redirect or !_location->redirect.empty())
 		_construct_response(request, 302);
@@ -187,6 +183,16 @@ void Response::create_delete(const Message& request)
 		_construct_response(request, 403);
 	else if (_file.valid and _file.type == FILE_TYPE)
 	{
+		if (_file.ext == "php")
+		{
+			if (!_location->CGI.empty())
+			{
+				_isCGI = true;
+				return _cgi(request, config);
+			}
+			else
+				return _construct_response(request, 403);
+		}
 		std::remove(_file.uri.c_str());
 		_construct_response(request, 200);
 	}
@@ -234,7 +240,6 @@ location_map::iterator Response::_find_longest_location(Server_block& config, st
 
 
 
-
 void Response::_load_errors(Server_block& config)
 {
 	int errorn[ERROR_NUMBER] = { 400, 403, 404, 405, 413, 500, 501 , 505 };
@@ -269,14 +274,14 @@ void Response::_generate_response(int status)
 		_response = start_lines[status];
 	else
 	{
-		std::cout << C_G_RED << __FUNCTION__ << __LINE__ << C_RES << std::endl;
+		// std::cout << C_G_RED << __FUNCTION__ << __LINE__ << C_RES << std::endl;
 
 		_response = start_lines[status];
 		_response.append(_header);
 		if (!_isCGI)
 			_response.append("\r\n");
 		_response.append(_body);
-		std::cout << C_G_RED << _response << C_RES << std::endl;
+		// std::cout << C_G_RED << _response << C_RES << std::endl;
 
 	}
 }

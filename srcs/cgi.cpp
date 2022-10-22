@@ -22,9 +22,8 @@ const std::string itos(T number)
 {
 	std::stringstream stream;
 	stream << number;
-    return stream.str();
+	return stream.str();
 }
-// name=asdasd&email=rballage%40student.42.fr&website=asdasd.com&comment=asdasdasdas&gender=male&submit=Submit
 
 void Response::_cgi(const Message &request, Server_block& config)
 {
@@ -36,13 +35,10 @@ void Response::_cgi(const Message &request, Server_block& config)
 		_construct_error(500, true); 
 	}
 
-	FILE	    *temp = tmpfile();
-	long	    fd_temp = fileno(temp);
-	// FILE	    *temp_error = tmpfile();
-	// long	    fd_temp_error = fileno(temp_error);
+	FILE	*temp = tmpfile();
+	long	fd_temp = fileno(temp);
 	std::vector<std::string> vec;
 	std::string body = std::string(request.raw_data.begin() + request.header_size, request.raw_data.end());
-	// std::cout << "CGI POST:\n" << request.raw_data << std::endl;
 	vec.reserve(18);
 	vec.push_back(std::string("SERVER_SOFTWARE=webserv/1.0"));
 	vec.push_back(std::string(std::string("SERVER_NAME=") + config.server_names));
@@ -60,27 +56,26 @@ void Response::_cgi(const Message &request, Server_block& config)
 	vec.push_back(std::string(std::string("SCRIPT_FILENAME=") + _file.uri));
 	// vec.push_back(std::string("REMOTE_HOST="));
 	vec.push_back(std::string(std::string("HTTP_COOKIE=") + request.info.get_header_var_by_name("Accept-Cookie").second));
-	if (request.info.get_method() == POST)
+	if (request.info.get_method() == POST || request.info.get_method() == DELETE)
 	{
-		// vec.push_back(std::string(std::string("PATH_INFO=") + _location->upload.second));
+		vec.push_back(std::string(std::string("PATH_INFO=") + _location->upload.second));
 		vec.push_back(std::string(std::string("CONTENT_LENGTH=") + itos(request.indicated_content_size)));
 		vec.push_back(std::string(std::string("CONTENT_TYPE=") + request.info.get_header_var_by_name("Content-Type").second));
 	}
 	std::vector<char *> cvec;
 	cvec.reserve(vec.size());
-    for(size_t i = 0; i < vec.size(); i++)
-    {
-	    cvec.push_back(const_cast<char*>(vec[i].c_str()));
-		// std::cout << __FUNCTION__ <<"  " << vec[i].c_str() <<std::endl;
+	for(size_t i = 0; i < vec.size(); i++)
+	{
+		cvec.push_back(const_cast<char*>(vec[i].c_str()));
 	}
 	cvec.push_back(NULL);
-	if (request.info.get_method() == POST)
+	if (request.info.get_method() == POST || request.info.get_method() == DELETE)
 	{
 		write(fd_temp, body.c_str(), request.indicated_content_size);
 		lseek(fd_temp, 0, SEEK_SET);
 	}
-	pipe(out);// non, fichier
-	pipe(error); // non, fichier
+	pipe(out);
+	pipe(error);
 	if ((pid = fork()) == -1)
 		throw std::exception();
 	if (pid == 0)
@@ -105,32 +100,25 @@ void Response::_cgi(const Message &request, Server_block& config)
 
 	pid_t ret = pid;
 	int wait_iterations = 0;
-	do {
+	do
+	{
 		if ((ret = waitpid(ret, &status, WNOHANG)) == -1)
 			std::cerr << ("wait() error") << std::endl;
 		else if (ret == 0)
 		{
 			wait_iterations++;
-			std::cout << "waiting - " << wait_iterations << "\n";
 			usleep(100);
 		}
-		else 
-		{
-			if (WIFEXITED(status))
-			{
-				std::cout << "child exited with status code:" << WEXITSTATUS(status) << std::endl;
-				break;
-			}
-			else std::cout << "child exited did not exited successfuly with status code:" << WEXITSTATUS(status) << std::endl;
-		}
-	} while (ret == 0 && wait_iterations < _MAX_ITERATIONS);
+		else if (WIFEXITED(status))
+			break;
+	}
+	while (ret == 0 && wait_iterations < _MAX_ITERATIONS);
 	
 	if (wait_iterations >= _MAX_ITERATIONS)
 	{
 		status = -1;
 		kill(pid, SIGKILL);
 	}
-	LOG
 	close(out[1]);
 	close(error[1]);
 	std::string cgi_out = readToString(out[0]);

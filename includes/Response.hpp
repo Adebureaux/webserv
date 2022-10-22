@@ -19,9 +19,9 @@ class Response
 	size_t		get_size(void) const;
 	void		create_get(const Message& request, Server_block& config);
 	void		create_post(Message& request, Server_block& config);
-	void		create_delete(const Message& request);
+	void		create_delete(const Message &request, Server_block &config);
 
-	private:
+private:
 	void	_find_location(const Request& request, Server_block& config);
 	location_map::iterator _find_longest_location(Server_block& config, std::string path) const;
 	void	_generate_response(int status);
