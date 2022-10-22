@@ -64,7 +64,7 @@ void Cluster::event_loop(void)
 		{
 			if (errno == EINTR)
 			{
-				std::cout << std::endl << C_G_MAGENTA << "Closing websev..." << C_RES << std::endl;
+				std::cout << std::endl << C_G_MAGENTA << "Closing webserv..." << C_RES << std::endl;
 				continue;
 			}
 			break;

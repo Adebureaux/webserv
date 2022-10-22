@@ -1,7 +1,7 @@
 #include "Response.hpp"
 #include  <sys/wait.h>
 
-#define _MAX_ITERATIONS 5000
+#define _MAX_ITERATIONS 500000
 
 static std::string readToString(int fd)
 {
@@ -56,7 +56,7 @@ void Response::_cgi(const Message &request, Server_block& config)
 	vec.push_back(std::string(std::string("SCRIPT_FILENAME=") + _file.uri));
 	// vec.push_back(std::string("REMOTE_HOST="));
 	vec.push_back(std::string(std::string("HTTP_COOKIE=") + request.info.get_header_var_by_name("Accept-Cookie").second));
-	if (request.info.get_method() == POST || request.info.get_method() == DELETE)
+	if (request.info.get_method() == POST)
 	{
 		vec.push_back(std::string(std::string("PATH_INFO=") + _location->upload.second));
 		vec.push_back(std::string(std::string("CONTENT_LENGTH=") + itos(request.indicated_content_size)));
@@ -69,7 +69,7 @@ void Response::_cgi(const Message &request, Server_block& config)
 		cvec.push_back(const_cast<char*>(vec[i].c_str()));
 	}
 	cvec.push_back(NULL);
-	if (request.info.get_method() == POST || request.info.get_method() == DELETE)
+	if (request.info.get_method() == POST)
 	{
 		write(fd_temp, body.c_str(), request.indicated_content_size);
 		lseek(fd_temp, 0, SEEK_SET);

@@ -175,6 +175,7 @@ void Response::create_post(Message& request, Server_block& config)
 
 void Response::create_delete(const Message &request, Server_block &config)
 {
+	std::cout << request.raw_data << std::endl;
 	if (_file.redirect or !_location->redirect.empty())
 		_construct_response(request, 302);
 	else if (!_location->delete_method)
@@ -194,7 +195,7 @@ void Response::create_delete(const Message &request, Server_block &config)
 				return _construct_response(request, 403);
 		}
 		std::remove(_file.uri.c_str());
-		_construct_response(request, 200);
+		_construct_response(request, 204);
 	}
 	else
 		_construct_response(request, 404);
@@ -302,6 +303,21 @@ void Response::_construct_response(const Message& request, int status)
 		_header_field("Content-Type", _file.mime_type);
 		_header_field("Content-Length", size.str());
 		_body.append(_file.content);
+	}
+	else if (status == 204)
+	{
+		if (_isCGI)
+		{
+			size << _file.content.size() - (_file.content.find(__DOUBLE_CRLF) + 4);
+
+			_header_field("Content-Type", _file.mime_type);
+			_header_field("Content-Length", size.str());
+		}
+		// else
+		// 	size << _file.content.size();
+		// _header_field("Content-Type", _file.mime_type);
+		// _header_field("Content-Length", size.str());
+		// _body.append(_file.content);
 	}
 	else if (status < 400)
 	{

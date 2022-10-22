@@ -113,7 +113,7 @@ void Client::handleEvent(uint32_t revents)
 		if ((ret = _receive()) < 0)
 			throw std::exception();
 		else if (ret == 0)
-			;
+			throw std::exception();
 		else handle_request();
 	}
 	if (revents & EPOLLOUT and (_request.state == READY or (_request.state == INCOMPLETE and _request.continue_100 == READY)))

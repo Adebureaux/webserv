@@ -10,7 +10,7 @@
         <?php
         echo "start";
         sleep(10);
-        echo " fini";
+        echo " finiqqqqq";
         ?>
     </body>
 </html>
