@@ -44,6 +44,7 @@ SRCS_LIST				=	\
 							Conf.cpp		\
 							Autoindex.cpp	\
 							Multipart.cpp	\
+							cgi.cpp	\
 
 SRCS					=	$(addprefix $(SRCS_DIR), $(SRCS_LIST))
 

@@ -9,7 +9,7 @@
         <p>Today's date is <?php echo date('d/m/Y h:i:s'); ?>.</p>
         <?php
         echo "start";
-        sleep(100);
+        sleep(10);
         echo " fini";
         ?>
     </body>
