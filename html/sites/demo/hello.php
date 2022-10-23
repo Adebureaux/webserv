@@ -8,9 +8,7 @@
         <h1>PHP date</h1>
         <p>Today's date is <?php echo date('d/m/Y h:i:s'); ?>.</p>
         <?php
-        echo "start";
-        sleep(10);
-        echo " finiqqqqq";
+        // sleep(10);
         ?>
     </body>
 </html>

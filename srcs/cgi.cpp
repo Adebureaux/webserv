@@ -28,7 +28,7 @@ const std::string itos(T number)
 void Response::_cgi(const Message &request, Server_block& config)
 {
 	int out[2], error[2];
-	int pid, status;
+	int pid = 0, status = 0;
 	if (access(_location->CGI.c_str(), F_OK) || access(_location->CGI.c_str(), X_OK))
 	{
 		_isCGI = false;

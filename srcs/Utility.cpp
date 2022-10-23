@@ -60,6 +60,7 @@ Message::Message(Client *c) :
 	header_end(std::string::npos),
 	response_override(0),
 	continue_100(UNDEFINED),
+	header_size(0),
 	indicated_content_size(0),
 	current_content_size(0),
 	multipart(false),
@@ -78,6 +79,7 @@ void Message::reset(void)
 	header_end = std::string::npos;
 	response_override = 0;
 	continue_100 = UNDEFINED;
+	header_size = 0;
 	indicated_content_size = 0;
 	current_content_size = 0;
 	multipart = false;
