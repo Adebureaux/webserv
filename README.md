@@ -1,5 +1,7 @@
 # Webserv
 
+This project is designed to run on linux systems due to epoll usage.
+
 ## Rules
 - Use explicit variables and functions names
 - Use explicit messages for commits
