@@ -8,11 +8,3 @@
 
 ## Sources
 [DOCS.md](DOCS.md)
-
-## To Do
-- Request
-- Response
-- epoll / select / poll --> multi IO
-- CGI
-- Parsing .conf
-- multiserver
