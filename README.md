@@ -1,6 +1,6 @@
 # Webserv
 
-> :warning: **This project is designed to run on Linux systems due to epoll usage.**
+:warning: **Please be advised that the intended operating system for this project is Linux as it utilizes epoll.**
 
 ## Introduction
 
