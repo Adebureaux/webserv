@@ -22,7 +22,7 @@ While the primary function is to serve content, full implementation of HTTP also
 
 ## Features
 - Configuration file that can be created or edited
-- Non-blocking
+- Non-blocking I/O
 - Error handling
 - Persistent server
 - GET, POST, DELETE methods
