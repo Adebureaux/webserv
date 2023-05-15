@@ -21,6 +21,7 @@ A user agent, commonly a web browser or web crawler, initiates communication by 
 While the primary function is to serve content, full implementation of HTTP also includes ways of receiving content from clients. This feature is used for submitting web forms, including the uploading of files.
 
 ## Features
+
 - Configuration file that can be created or edited
 - Non-blocking I/O
 - Error handling
@@ -31,8 +32,11 @@ While the primary function is to serve content, full implementation of HTTP also
 - Multiple ports
 
 ## Usage
+
 Use ```git clone https://github.com/Adebureaux/webserv.git``` to get the project files on your computer.
+
 Use ```make``` to compile source files.
+
 Use ```./webserv``` to run the server executable.
 
 You can edit webserv.conf file to edit your server configuration. You can also create your own configuration file and use it with: ```./webserv myconf.conf```
