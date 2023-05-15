@@ -31,11 +31,9 @@ While the primary function is to serve content, full implementation of HTTP also
 - Multiple ports
 
 ## Usage
-```git clone https://github.com/Adebureaux/webserv.git```
-
-```make```
-
-```./webserv```
+```git clone https://github.com/Adebureaux/webserv.git```\
+```make```\
+```./webserv```\
 
 You can edit webserv.conf file to edit your server configuration. You can also create your own configuration file and use it with: ```./webserv myconf.conf```
 
