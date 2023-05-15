@@ -31,17 +31,17 @@ While the primary function is to serve content, full implementation of HTTP also
 - Multiple ports
 
 ## Usage
-```git clone https://github.com/Adebureaux/webserv.git```\
-```make```\
-```./webserv```\
+Use ```git clone https://github.com/Adebureaux/webserv.git``` to get the project files on your computer.
+Use ```make``` to compile source files.
+Use ```./webserv``` to run the server executable.
 
 You can edit webserv.conf file to edit your server configuration. You can also create your own configuration file and use it with: ```./webserv myconf.conf```
 
 ## Rules
-- Use explicit variables and functions names
-- Use explicit messages for commits
-- Working on different branches, then merge changes on the master branch
-- Provide documentation in DOCS.md
+- Use explicit variables and functions names.
+- Use explicit messages for commits.
+- Working on different branches, then merge changes on the master branch.
+- Provide documentation in DOCS.md file.
 
 ## Ressources
 [DOCS.md](DOCS.md)
