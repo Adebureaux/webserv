@@ -10,7 +10,10 @@ The Hypertext Transfer Protocol (HTTP) is an application protocol for distribute
 
 
 ## Usage
-use ```make```
+```git clone https://github.com/Adebureaux/webserv.git```
+```make```
+```./webserv```
+You can edit webserv.conf file to edit your server configuration.
 
 ## Rules
 - Use explicit variables and functions names
